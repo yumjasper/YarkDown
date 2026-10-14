@@ -18,7 +18,7 @@ const keybindings: Map<string, string> = new Map([
   ['file.save-as', 'Ctrl+Shift+S'],
   ['file.move-file', ''],
   ['file.rename-file', ''],
-  ['file.print', 'Ctrl+P'],
+  ['file.print', ''],
   ['file.preferences', 'Ctrl+,'],
   ['file.close-tab', 'Ctrl+W'],
   ['file.close-window', 'Ctrl+Shift+W'],
@@ -48,14 +48,12 @@ const keybindings: Map<string, string> = new Map([
   ['edit.screenshot', ''], // macOS only
 
   // Paragraph menu
-  // NOTE: We cannot set a default value for heading size because `Ctrl+Alt` is an alias
-  //       to `AltGr` on Windows and `Ctrl+Shift+1` is mapped to the underlying character.
-  ['paragraph.heading-1', ''],
-  ['paragraph.heading-2', ''],
-  ['paragraph.heading-3', ''],
-  ['paragraph.heading-4', ''],
-  ['paragraph.heading-5', ''],
-  ['paragraph.heading-6', ''],
+  ['paragraph.heading-1', 'Ctrl+1'],
+  ['paragraph.heading-2', 'Ctrl+2'],
+  ['paragraph.heading-3', 'Ctrl+3'],
+  ['paragraph.heading-4', 'Ctrl+4'],
+  ['paragraph.heading-5', 'Ctrl+5'],
+  ['paragraph.heading-6', 'Ctrl+6'],
   ['paragraph.upgrade-heading', 'Ctrl+Plus'],
   ['paragraph.degrade-heading', 'Ctrl+-'],
   ['paragraph.table', 'Ctrl+Shift+T'],
@@ -95,7 +93,7 @@ const keybindings: Map<string, string> = new Map([
 
   // View menu
   ['view.command-palette', 'Ctrl+Shift+P'],
-  ['view.source-code-mode', 'Ctrl+E'],
+  ['view.source-code-mode', 'Ctrl+/'],
   ['view.typewriter-mode', 'Ctrl+Shift+G'],
   ['view.focus-mode', 'Ctrl+Shift+J'],
   ['view.toggle-sidebar', 'Ctrl+J'],
@@ -110,16 +108,16 @@ const keybindings: Map<string, string> = new Map([
   ['tabs.cycleBackward', 'Ctrl+Shift+Tab'],
   ['tabs.switchToLeft', 'Ctrl+PageUp'],
   ['tabs.switchToRight', 'Ctrl+PageDown'],
-  ['tabs.switchToFirst', 'Ctrl+1'],
-  ['tabs.switchToSecond', 'Ctrl+2'],
-  ['tabs.switchToThird', 'Ctrl+3'],
-  ['tabs.switchToFourth', 'Ctrl+4'],
-  ['tabs.switchToFifth', 'Ctrl+5'],
-  ['tabs.switchToSixth', 'Ctrl+6'],
-  ['tabs.switchToSeventh', 'Ctrl+7'],
-  ['tabs.switchToEighth', 'Ctrl+8'],
-  ['tabs.switchToNinth', 'Ctrl+9'],
-  ['tabs.switchToTenth', 'Ctrl+0'],
+  ['tabs.switchToFirst', ''],
+  ['tabs.switchToSecond', ''],
+  ['tabs.switchToThird', ''],
+  ['tabs.switchToFourth', ''],
+  ['tabs.switchToFifth', ''],
+  ['tabs.switchToSixth', ''],
+  ['tabs.switchToSeventh', ''],
+  ['tabs.switchToEighth', ''],
+  ['tabs.switchToNinth', ''],
+  ['tabs.switchToTenth', ''],
   ['file.quick-open', 'Ctrl+P']
 ])
 

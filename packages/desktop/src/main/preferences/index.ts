@@ -70,14 +70,9 @@ class Preference extends TypedEmitter<PreferenceEvents> {
         defaultSettings!.theme = 'dark'
       }
 
-      // First start: leave `language` unset so it can be detected from the
-      // system language once the app is ready. `app.getLocale()` returns an
-      // empty string before the ready event, so detecting here would always
-      // fall back to English. The key stays in preference.json, so the
-      // hasSameKeys cleanup below keeps treating it as a known setting.
-      if (!this.hasPreferencesFile) {
-        delete defaultSettings!.language
-      }
+      // The default language is zh-CN (see static/preference.json), so it is
+      // kept on first start: the renderer bundles zh-CN and paints in it
+      // immediately instead of flashing English until a locale loads.
     } catch (err) {
       log.error(err)
     }

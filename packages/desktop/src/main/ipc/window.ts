@@ -7,7 +7,17 @@ import {
   type WebContents
 } from 'electron'
 import log from 'electron-log'
+import { type CommandManager } from '../commands'
 import type { MenuTemplate, MenuTemplateItem, MenuPopupPosition } from '@shared/types/menu'
+import type AppMenu from '../menu'
+
+// The AppMenu instance is created after the sandbox IPC handlers are
+// registered, so the menu bar channels below resolve it lazily.
+let menuProvider: (() => AppMenu | null) | null = null
+
+export const setMenuProvider = (provider: () => AppMenu | null): void => {
+  menuProvider = provider
+}
 
 const windowFromEvent = (event: IpcMainEvent): BrowserWindow | null =>
   BrowserWindow.fromWebContents(event.sender)
@@ -47,7 +57,7 @@ const buildMenu = (template: MenuTemplate | undefined, windowId: number): Menu =
   return menu
 }
 
-export const registerWindowHandlers = (): void => {
+export const registerWindowHandlers = (commandManager: CommandManager): void => {
   ipcMain.on('mt::win::minimize', (event) => {
     const win = windowFromEvent(event)
     if (win) win.minimize()
@@ -85,6 +95,16 @@ export const registerWindowHandlers = (): void => {
   ipcMain.handle('mt::win::is-fullscreen', (event) => {
     const win = windowFromEvent(event as unknown as IpcMainEvent)
     return !!win && win.isFullScreen()
+  })
+
+  ipcMain.on('mt::execute-main-command', (event, commandId: string) => {
+    const win = windowFromEvent(event)
+    if (!win || !commandManager.has(commandId)) return
+    try {
+      commandManager.execute(commandId, win)
+    } catch (err) {
+      log.error(`execute-main-command "${commandId}" failed:`, err)
+    }
   })
 
   ipcMain.on('mt::menu::popup', (event, template: MenuTemplate, position?: MenuPopupPosition) => {
@@ -125,6 +145,29 @@ export const registerWindowHandlers = (): void => {
       appMenu.popup({ window: win, x: position?.x, y: position?.y })
     } catch (err) {
       log.error('application menu popup failed:', err)
+    }
+  })
+
+  ipcMain.handle('mt::menu::get-menu-bar', (event) => {
+    const win = windowFromEvent(event as unknown as IpcMainEvent)
+    const menu = menuProvider?.()
+    if (!win || !menu) return []
+    try {
+      return menu.getMenuBar(win.id)
+    } catch (err) {
+      log.error('get menu bar failed:', err)
+      return []
+    }
+  })
+
+  ipcMain.on('mt::menu::popup-top-menu', (event, topIndex: number, position?: MenuPopupPosition) => {
+    const win = windowFromEvent(event)
+    const menu = menuProvider?.()
+    if (!win || !menu) return
+    try {
+      menu.popupTopMenu(win.id, topIndex, position)
+    } catch (err) {
+      log.error('top menu popup failed:', err)
     }
   })
 }

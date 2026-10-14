@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="editor-with-tabs"
-    :style="{ 'max-width': `calc(100vw - ${effectiveSideBarWidth}px)` }"
-  >
+  <div class="editor-with-tabs">
     <tabs v-show="showTabBar" />
     <div class="container">
       <editor
@@ -18,17 +15,28 @@
         :text-direction="textDirection"
       />
     </div>
+    <bottom-toolbar :source-code="sourceCode" />
+    <div class="editor-status-bar">
+      <word-counter
+        :word-count="currentFile?.wordCount"
+        :selection-word-count="selectionWordCount"
+      />
+    </div>
+    <editor-context-menu :source-code="sourceCode" />
     <tab-notifications />
   </div>
 </template>
 
 <script setup lang="ts">
-import { useLayoutStore } from '@/store/layout'
+import { useEditorStore } from '@/store/editor'
 import { storeToRefs } from 'pinia'
 import Tabs from './tabs.vue'
 import Editor from './editor.vue'
 import SourceCode from './sourceCode.vue'
 import TabNotifications from './notifications.vue'
+import BottomToolbar from '../bottomToolbar/index.vue'
+import EditorContextMenu from '../editorContextMenu/index.vue'
+import WordCounter from '../wordCounter/index.vue'
 
 defineProps<{
   markdown: string
@@ -43,7 +51,7 @@ defineProps<{
   platform: string
 }>()
 
-const { effectiveSideBarWidth } = storeToRefs(useLayoutStore())
+const { currentFile, selectionWordCount } = storeToRefs(useEditorStore())
 </script>
 
 <style scoped>
@@ -51,14 +59,26 @@ const { effectiveSideBarWidth } = storeToRefs(useLayoutStore())
   position: relative;
   height: 100%;
   flex: 1;
+  min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
 
   overflow: hidden;
   background: var(--editorBgColor);
   & > .container {
+    position: relative;
     flex: 1;
+    min-height: 0;
     overflow: hidden;
   }
+}
+.editor-status-bar {
+  flex: none;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  border-top: 1px solid var(--editorColor04);
 }
 </style>

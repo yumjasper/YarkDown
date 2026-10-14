@@ -183,6 +183,16 @@
     }
   },
   "contextMenu": {
+    "editorMenu": "Menú contextual del editor",
+    "copyPasteAs": "Copiar / Pegar como…",
+    "copyAsMarkdown": "Copiar como Markdown",
+    "copyAsPlainText": "Copiar como texto sin formato",
+    "insert": "Insertar",
+    "footnote": "Nota al pie",
+    "referenceLink": "Enlace de referencia",
+    "toc": "Tabla de contenidos",
+    "footnoteText": "Texto de la nota",
+    "linkText": "Texto del enlace",
     "cut": "Cortar",
     "copy": "Copiar",
     "paste": "Pegar",
@@ -1020,5 +1030,22 @@
       "switchError": "Error del corrector ortográfico para {languageCode}, {error}",
       "title": "Corrector ortográfico"
     }
+  },
+  "bottomToolbar": {
+    "title": "Barra de edición",
+    "more": "Más acciones",
+    "show": "Mostrar barra",
+    "lists": "Listas",
+    "source": "Código",
+    "rendered": "Vista",
+    "sourceMode": "Modo código fuente",
+    "renderedMode": "Modo edición visual",
+    "insertAbove": "Insertar párrafo arriba",
+    "insertBelow": "Insertar párrafo abajo",
+    "copy": "Copiar",
+    "paste": "Pegar",
+    "clearFormat": "Borrar formato",
+    "deleteBlock": "Eliminar bloque",
+    "hide": "Ocultar barra de herramientas"
   }
 }

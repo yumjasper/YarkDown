@@ -12,6 +12,8 @@ import { showEditorContextMenu } from '../contextMenu/editor'
 import { loadMarkdownFile } from '../filesystem/markdown'
 import { switchLanguage } from '../spellchecker'
 import fs from 'fs'
+import os from 'os'
+import { editorBackdropOptions } from './backdrop'
 
 type RawMarkdownDocument = Awaited<ReturnType<typeof loadMarkdownFile>>
 
@@ -133,6 +135,8 @@ class EditorWindow extends BaseWindow {
       // winOptions.webPreferences is set by editorWinOptions spread above
       ;(winOptions.webPreferences as { spellcheck: boolean }).spellcheck = false
     }
+
+    Object.assign(winOptions, editorBackdropOptions(process.platform, os.release(), titleBarStyle ?? 'custom'))
 
     let win: BrowserWindow | null = (this.browserWindow = new BrowserWindow(winOptions))
 

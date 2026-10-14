@@ -1,4 +1,21 @@
 {
+  "bottomToolbar": {
+    "title": "编辑工具栏",
+    "more": "更多操作",
+    "show": "显示工具栏",
+    "lists": "列表",
+    "source": "源码",
+    "rendered": "预览",
+    "sourceMode": "源代码模式",
+    "renderedMode": "预览编辑模式",
+    "insertAbove": "在上方插入段落",
+    "insertBelow": "在下方插入段落",
+    "copy": "复制",
+    "paste": "粘贴",
+    "clearFormat": "清除样式",
+    "deleteBlock": "删除块",
+    "hide": "隐藏工具栏"
+  },
   "menu": {
     "counter": {
       "words": "字数",
@@ -183,6 +200,16 @@
     }
   },
   "contextMenu": {
+    "editorMenu": "编辑区右键菜单",
+    "copyPasteAs": "复制 / 粘贴为…",
+    "copyAsMarkdown": "复制为 Markdown",
+    "copyAsPlainText": "复制为纯文本",
+    "insert": "插入",
+    "footnote": "脚注",
+    "referenceLink": "链接引用",
+    "toc": "内容目录",
+    "footnoteText": "脚注内容",
+    "linkText": "链接文字",
     "cut": "剪切",
     "copy": "复制",
     "paste": "粘贴",

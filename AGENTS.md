@@ -173,7 +173,17 @@ All platform build scripts automatically run `minify-locales` and `electron-rebu
 
 ## Testing
 
+Use `pnpm test:quick` after routine changes: it runs desktop and Muya unit
+tests without opening Electron. For UI/IPC integration, use `pnpm test:smoke`,
+which rebuilds and runs one application journey with one Electron launch.
+Use relevant individual E2E specs for feature regressions; reserve the full
+desktop E2E suite for broad regression or release validation. Playwright's
+`headless` option does not hide Electron windows. See `docs/TESTING.md`.
+
 ```bash
+pnpm run test:quick    # Desktop + Muya unit tests; no application windows
+pnpm run test:check    # Unit tests, lint, types and Markdown conformance
+pnpm run test:smoke    # Fresh build + one Electron integration journey
 pnpm run test          # All unit tests (Vitest)
 pnpm run test:unit     # Unit tests only
 pnpm run test:e2e      # End-to-end tests (Playwright)
@@ -271,6 +281,13 @@ See `packages/website/content/docs/dev/IPC.md` for conventions and examples.
 - **Patches**: `patch-package` patches live at `packages/desktop/patches/`. The root `postinstall` calls patch-package with `cwd=packages/desktop` so the path resolves correctly.
 
 ## Contribution
+
+### 提交信息规范（长期约定）
+
+- 本工程所有新 Git Commit 的标题与正文必须使用中文；技术名称、文件路径和命令可以保留原文。
+- Commit 标题必须以中文方括号包围的版本号开头，格式为 `【版本号】中文修改说明`，例如 `【1.0】完善编辑器工具栏与快速测试流程`。
+- 版本号沿用当前开发阶段的约定；仅在明确升级版本时调整，不要求每次提交递增，也不自动修改应用版本。
+- 后续人工与 AI 提交均遵守此规范，不沿用历史提交的英文标题格式。
 
 - Submit PRs to the **`develop`** branch (not `main`).
 - Reference the related issue in the PR description.

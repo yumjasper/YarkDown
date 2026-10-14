@@ -30,6 +30,7 @@ import Footnote from './extra/footnote';
 import MathBlock from './extra/math';
 import MathContainer from './extra/math/mathContainer';
 import MathPreview from './extra/math/mathPreview';
+import TocBlock from './extra/toc';
 import Table from './gfm/table';
 import Cell from './gfm/table/cell';
 import TableRow from './gfm/table/row';
@@ -85,4 +86,6 @@ export function registerBlocks() {
     ScrollPage.register(DiagramPreview);
     // Footnote
     ScrollPage.register(Footnote);
+    // Table of contents
+    ScrollPage.register(TocBlock);
 }

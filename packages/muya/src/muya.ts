@@ -34,6 +34,7 @@ import { Ui } from './ui/ui';
 import { deepClone } from './utils';
 import { encodeImageSrc } from './utils/image';
 import './assets/styles/blockSyntax.css';
+import './assets/styles/toc.css';
 import './assets/styles/index.css';
 import './assets/styles/inlineSyntax.css';
 import './assets/styles/prismjs/light.theme.css';

@@ -186,6 +186,11 @@ export interface IFootnoteBlockMeta {
     identifier: string;
 }
 
+export interface ITocState {
+    name: 'toc';
+    text: string;
+}
+
 export interface IFootnoteBlockState {
     name: 'footnote';
     meta: IFootnoteBlockMeta;
@@ -203,6 +208,7 @@ export type TLeafState
         | IMathBlockState
         | IFrontmatterState
         | IDiagramState
+        | ITocState
         | ITableCellState;
 
 export type TContainerState
@@ -240,6 +246,7 @@ export const isLinkReferenceDefinitionState = (s: TState): s is ILinkReferenceDe
 export const isMathBlockState = (s: TState): s is IMathBlockState => s.name === 'math-block';
 export const isFrontmatterState = (s: TState): s is IFrontmatterState => s.name === 'frontmatter';
 export const isDiagramState = (s: TState): s is IDiagramState => s.name === 'diagram';
+export const isTocState = (s: TState): s is ITocState => s.name === 'toc';
 export const isTableCellState = (s: TState): s is ITableCellState => s.name === 'table.cell';
 
 export const isBlockQuoteState = (s: TState): s is IBlockQuoteState => s.name === 'block-quote';

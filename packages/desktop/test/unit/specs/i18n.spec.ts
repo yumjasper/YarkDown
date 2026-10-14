@@ -68,7 +68,7 @@ describe('renderer i18n language loading', () => {
     delete win.i18nUtils
   })
 
-  it('does not reload the default English locale', async() => {
+  it('does not reload a bundled locale (English)', async() => {
     const { setLanguage, getCurrentLanguage } = await import('../../../src/renderer/src/i18n')
 
     setLanguage('en')
@@ -77,14 +77,23 @@ describe('renderer i18n language loading', () => {
     expect(getCurrentLanguage()).to.equal('en')
   })
 
+  it('starts in Simplified Chinese without an async load', async() => {
+    const { setLanguage, getCurrentLanguage } = await import('../../../src/renderer/src/i18n')
+
+    setLanguage('zh-CN')
+
+    expect(win.i18nUtils!.loadTranslations).not.toHaveBeenCalled()
+    expect(getCurrentLanguage()).to.equal('zh-CN')
+  })
+
   it('loads an unavailable locale only once', async() => {
     const { setLanguage } = await import('../../../src/renderer/src/i18n')
 
-    setLanguage('zh-CN')
-    setLanguage('zh-CN')
+    setLanguage('ja')
+    setLanguage('ja')
 
     expect(win.i18nUtils!.loadTranslations).toHaveBeenCalledTimes(1)
-    expect(win.i18nUtils!.loadTranslations).toHaveBeenCalledWith('zh-CN')
+    expect(win.i18nUtils!.loadTranslations).toHaveBeenCalledWith('ja')
   })
 })
 

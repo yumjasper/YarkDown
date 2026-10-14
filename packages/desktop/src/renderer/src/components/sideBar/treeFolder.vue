@@ -153,7 +153,7 @@ onMounted(() => {
     user-select: none;
     display: flex;
     align-items: center;
-    height: 30px;
+    height: 28px;
     padding-right: 15px;
     & > .icon-arrow {
       flex-shrink: 0;

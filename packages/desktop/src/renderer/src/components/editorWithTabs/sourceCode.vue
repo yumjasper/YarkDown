@@ -405,9 +405,21 @@ onMounted(() => {
   // See src/renderer/src/codeMirror/markdownMathMode.ts.
   codeMirrorInstance.setOption('mode', markdownMathMode())
 
-  codeMirrorInstance.on('contextmenu', (_cm: CodeMirror.Editor, event: Event) => {
+  codeMirrorInstance.on('contextmenu', async(cm: CodeMirror.Editor, event: Event) => {
     event.preventDefault()
     event.stopPropagation()
+    if (!(event instanceof MouseEvent)) return
+    const x = event.clientX
+    const y = event.clientY
+    const selectionText = cm.getSelection()
+    const clipboardText = await window.electron.clipboard.readText()
+    bus.emit('source-context-menu', {
+      x, y, selectionText,
+      canCut: !!selectionText,
+      canCopy: !!selectionText,
+      canPaste: !!clipboardText,
+      nativeItems: []
+    })
   })
 
   if (isValidMuyaIndexCursor(muyaIndexCursor)) {
@@ -452,7 +464,7 @@ onBeforeUnmount(() => {
 
 <style>
 .source-code {
-  height: calc(100vh - var(--titleBarHeight));
+  height: 100%;
   box-sizing: border-box;
   overflow: auto;
 }

@@ -1,6 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+// main/i18n broadcasts to every BrowserWindow on setLanguage(); this spec runs
+// in jsdom, so stub the Electron surface it touches.
+vi.mock('electron', () => ({
+  BrowserWindow: { getAllWindows: () => [] }
+}))
+
 const { getLookUp, lookUpSelection } = await import('main_renderer/contextMenu/editor/menuItems')
+const { setLanguage } = await import('main_renderer/i18n')
 
 describe('editor context menu Look Up', () => {
   const showDefinitionForSelection = vi.fn()
@@ -12,8 +19,9 @@ describe('editor context menu Look Up', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    // Labels are asserted in English; the app default is zh-CN.
+    setLanguage('en')
   })
-
   it('shows the native macOS lookup panel for selected text', () => {
     expect(lookUpSelection(' apple ', targetWindow)).toBe(true)
 

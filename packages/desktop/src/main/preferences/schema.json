@@ -67,8 +67,9 @@
     "type": "string"
   },
   "language": {
-    "description": "General--The language MarkText uses. No default on purpose: the language is auto-detected from the system locale on first start (after app ready), so a schema default would always win over detection.",
-    "type": "string"
+    "description": "General--The language MarkText uses. Defaults to Simplified Chinese; the system locale is only consulted when the stored value is missing.",
+    "type": "string",
+    "default": "zh-CN"
   },
   "editorFontFamily": {
     "description": "Editor--editor font family",

@@ -1,5 +1,8 @@
 <template>
-  <div class="editor-container">
+  <div
+    class="editor-container"
+    :style="shellStyle"
+  >
     <side-bar v-if="init" />
 
     <div class="editor-middle">
@@ -62,6 +65,8 @@ import { useCommandCenterStore } from '@/store/commandCenter'
 import { useProjectStore } from '@/store/project'
 import { useAutoUpdatesStore } from '@/store/autoUpdates'
 import { useNotificationStore } from '@/store/notification'
+import { shellHeaderHeights } from '@/util/shellLayout'
+import { isMac } from '@/util'
 
 const mainStore = useMainStore()
 const editorStore = useEditorStore()
@@ -78,6 +83,10 @@ const timer = ref<ReturnType<typeof setTimeout> | null>(null)
 const { windowActive, platform, init } = storeToRefs(mainStore)
 const { showTabBar } = storeToRefs(layoutStore)
 const { sourceCode, theme, customCss, textDirection, zoom } = storeToRefs(preferencesStore)
+const shellStyle = computed(() => {
+  const heights = shellHeaderHeights(preferencesStore.titleBarStyle, isMac)
+  return { '--titleBarHeight': `${heights.title}px`, '--menuBarHeight': `${heights.menu}px` }
+})
 const { projectTree } = storeToRefs(projectStore)
 const { currentFile, selectionWordCount } = storeToRefs(editorStore)
 
@@ -240,14 +249,21 @@ onMounted(async () => {
   left: -10000px;
 }
 .editor-placeholder {
+  width: 100%;
+  height: 100%;
   background: var(--editorBgColor);
 }
 .editor-middle {
   display: flex;
   flex-direction: column;
   flex: 1;
-  min-height: 100vh;
+  min-width: 0;
+  min-height: 0;
+  height: calc(100vh - var(--titleBarHeight) - var(--menuBarHeight));
+  margin-top: calc(var(--titleBarHeight) + var(--menuBarHeight));
+  box-sizing: border-box;
   position: relative;
+  background: var(--editorBgColor);
   & > .editor {
     flex: 1;
   }

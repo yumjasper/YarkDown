@@ -127,6 +127,7 @@ import { useProjectStore } from '@/store/project'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import { SyntheticHistory, type IFileHistoryLike } from './syntheticHistory'
+import { clipboardHtmlToPlainText } from '../editorContextMenu/plainText'
 
 // Importing the engine entrypoint auto-injects its editor CSS (the muya.ts
 // module imports its stylesheets at load time). Desktop themes still target the
@@ -234,6 +235,7 @@ const {
 
 // Editor store refs
 const { currentFile, tabs } = storeToRefs(editorStore)
+
 
 // Project store refs
 const { projectTree } = storeToRefs(projectStore)
@@ -1107,6 +1109,39 @@ const insertImage = (src: unknown) => {
   }
 }
 
+const handleContextCopySelection = (type: unknown): void => {
+  const muya = editor.value
+  if (!muya || sourceCode.value) return
+  if (type !== 'markdown' && type !== 'plain') return
+  const { html, text } = muya.editor.clipboard.getClipboardData()
+  window.electron.clipboard.writeText(type === 'markdown' ? text : clipboardHtmlToPlainText(html))
+}
+
+const handleContextInsert = async(type: unknown): Promise<void> => {
+  const muya = editor.value
+  if (!muya || sourceCode.value) return
+  let markdown: string
+  if (type === 'toc') {
+    markdown = '[TOC]\n'
+  } else if (type === 'footnote' || type === 'reference-link') {
+    const prefix = type === 'footnote' ? 'note' : 'ref'
+    const documentMarkdown = muya.getMarkdown()
+    let index = 1
+    while (documentMarkdown.includes(`[${type === 'footnote' ? '^' : ''}${prefix}-${index}]`)) index++
+    const id = `${prefix}-${index}`
+    const selected = muya.getSelectedText()
+    markdown = type === 'footnote'
+      ? `${selected}[^${id}]\n\n[^${id}]: ${t('contextMenu.footnoteText')}\n`
+      : `[${selected || t('contextMenu.linkText')}][${id}]\n\n[${id}]: https://example.com\n`
+  } else {
+    return
+  }
+  // The paste pipeline parses Markdown and records undo; setContent would discard history.
+  const clipboardData = new DataTransfer()
+  clipboardData.setData('text/plain', markdown)
+  await muya.editor.clipboard.pasteHandler(new ClipboardEvent('paste', { clipboardData }))
+}
+
 // muya's search/replace/find return the live Search instance (circular:
 // Search -> muya -> ... -> ScrollPage) and each match carries a live `block`
 // reference. The store deep-clones (JSON.stringify) its payload, so extract
@@ -1875,6 +1910,8 @@ onMounted(() => {
   bus.on('replaceValue', handReplace)
   bus.on('find-action', handleFindAction)
   bus.on('insert-image', insertImage)
+  bus.on('context-copy-selection', handleContextCopySelection)
+  bus.on('context-insert', handleContextInsert)
   bus.on('image-uploaded', handleUploadedImage)
   bus.on('file-changed', handleFileChange)
   bus.on('flush-active-editor', flushActiveEditor)
@@ -1895,7 +1932,7 @@ onMounted(() => {
   bus.on('open-command-spellchecker-switch-language', openSpellcheckerLanguageCommand)
   bus.on('replace-misspelling', replaceMisspelling)
 
-  // The engine emits a low-level `json-change` ({ op, source, prevDoc, doc })
+// The engine emits a low-level `json-change` ({ op, source, prevDoc, doc })
   // on every document mutation; the desktop's content-change pipeline wants the
   // derived document snapshot (markdown / word count / cursor / history / TOC /
   // block AST), so we compute it here — mirroring the legacy engine's
@@ -2046,6 +2083,8 @@ onBeforeUnmount(() => {
   bus.off('replaceValue', handReplace)
   bus.off('find-action', handleFindAction)
   bus.off('insert-image', insertImage)
+  bus.off('context-copy-selection', handleContextCopySelection)
+  bus.off('context-insert', handleContextInsert)
   bus.off('image-uploaded', handleUploadedImage)
   bus.off('file-changed', handleFileChange)
   bus.off('flush-active-editor', flushActiveEditor)
@@ -2098,6 +2137,9 @@ onBeforeUnmount(() => {
   isolation: isolate;
   flex: 1;
   color: var(--editorColor);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .ag-insert-table-dialog {

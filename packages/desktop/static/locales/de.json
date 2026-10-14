@@ -183,6 +183,16 @@
     }
   },
   "contextMenu": {
+    "editorMenu": "Editor-Kontextmenü",
+    "copyPasteAs": "Kopieren / Einfügen als…",
+    "copyAsMarkdown": "Als Markdown kopieren",
+    "copyAsPlainText": "Als Klartext kopieren",
+    "insert": "Einfügen",
+    "footnote": "Fußnote",
+    "referenceLink": "Referenzlink",
+    "toc": "Inhaltsverzeichnis",
+    "footnoteText": "Fußnotentext",
+    "linkText": "Linktext",
     "cut": "Ausschneiden",
     "copy": "Kopieren",
     "paste": "Einfügen",
@@ -1020,5 +1030,22 @@
       "switchError": "Rechtschreibprüfung-Wechselfehler für {languageCode}, {error}",
       "title": "Rechtschreibprüfung"
     }
+  },
+  "bottomToolbar": {
+    "title": "Bearbeitungsleiste",
+    "more": "Weitere Aktionen",
+    "show": "Werkzeugleiste anzeigen",
+    "lists": "Listen",
+    "source": "Quelltext",
+    "rendered": "Vorschau",
+    "sourceMode": "Quelltextmodus",
+    "renderedMode": "Vorschau-Modus",
+    "insertAbove": "Absatz oben einfügen",
+    "insertBelow": "Absatz unten einfügen",
+    "copy": "Kopieren",
+    "paste": "Einfügen",
+    "clearFormat": "Formatierung löschen",
+    "deleteBlock": "Block löschen",
+    "hide": "Symbolleiste ausblenden"
   }
 }

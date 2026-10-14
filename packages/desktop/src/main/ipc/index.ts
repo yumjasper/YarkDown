@@ -7,6 +7,7 @@ import { registerFontsHandlers } from './fonts'
 import { registerShellHandlers } from './shell'
 import { registerWindowHandlers } from './window'
 import { registerCmdHandlers } from './cmd'
+import { CommandManager } from '../commands'
 import { registerI18nHandlers } from './i18n'
 import { registerDialogHandlers } from './dialog'
 import { registerDiagramHandlers } from './diagram'
@@ -19,7 +20,7 @@ export const registerSandboxIpcHandlers = (): void => {
   registerUploaderHandlers()
   registerFontsHandlers()
   registerShellHandlers()
-  registerWindowHandlers()
+  registerWindowHandlers(CommandManager)
   registerCmdHandlers()
   registerI18nHandlers()
   registerDialogHandlers()

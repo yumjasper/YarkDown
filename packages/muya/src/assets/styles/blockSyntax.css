@@ -15,7 +15,7 @@
 
 .mu-container {
     box-sizing: border-box;
-    max-width: var(--editor-area-width, 800px);
+    max-width: var(--editor-area-width, 1066px);
     min-height: 100%;
     margin: 0 auto;
     padding: 0 50px 100px;

@@ -130,7 +130,7 @@ onBeforeUnmount(() => {
   align-items: center;
   cursor: default;
   user-select: none;
-  height: 30px;
+  height: 28px;
   box-sizing: border-box;
   padding-right: 15px;
   &:hover {

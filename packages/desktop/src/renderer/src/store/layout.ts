@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import bus from '../bus'
 import { usePreferencesStore } from './preferences'
 import { debouncedSendBufferedState } from './bufferedState'
+import { SIDEBAR_RAIL_WIDTH, MIN_SIDEBAR_CONTENT_WIDTH } from '@/util/shellLayout'
 
 interface LayoutPartial {
   rightColumn?: string
@@ -17,7 +18,7 @@ interface SetLayoutOptions {
 
 const normalizeSideBarWidth = (width: unknown): number => {
   const numericWidth = Number(width)
-  return Number.isFinite(numericWidth) ? Math.max(numericWidth, 220) : 280
+  return Number.isFinite(numericWidth) ? Math.max(numericWidth, MIN_SIDEBAR_CONTENT_WIDTH) : 280
 }
 
 interface BufferedLayout {
@@ -57,8 +58,8 @@ export const useLayoutStore = defineStore('layout', () => {
   // subtract the sidebar from viewport space must use this, not the raw ref.
   const effectiveSideBarWidth = computed<number>(() => {
     if (!showSideBar.value) return 0
-    if (!rightColumn.value) return 45
-    return Number(sideBarWidth.value)
+    if (!rightColumn.value) return SIDEBAR_RAIL_WIDTH
+    return SIDEBAR_RAIL_WIDTH + Number(sideBarWidth.value)
   })
 
   function SET_LAYOUT(

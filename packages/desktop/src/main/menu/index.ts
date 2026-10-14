@@ -14,6 +14,7 @@ import { setLanguage } from '../i18n.js'
 import type Preference from '../preferences'
 import type Keybindings from '../keyboard/shortcutHandler'
 import type { IUserPreferences } from '@shared/types/preferences'
+import type { MenuBarItem, MenuPopupPosition } from '@shared/types/menu'
 
 const RECENTLY_USED_DOCUMENTS_FILE_NAME = 'recently-used-documents.json'
 const MAX_RECENTLY_USED_DOCUMENTS = 12
@@ -462,6 +463,98 @@ class AppMenu {
     } else {
       this._applyWindowMenus()
     }
+    this._broadcastMenuBar()
+  }
+
+  /**
+   * Tell every editor window to re-read its menu bar. The renderer draws the
+   * bar from a flat snapshot, so it goes stale whenever the main process
+   * rebuilds the menu (theme, recents, language, keybindings).
+   */
+  _broadcastMenuBar(): void {
+    for (const window of BrowserWindow.getAllWindows()) {
+      if (!window.isDestroyed()) {
+        window.webContents.send('mt::menu-bar-changed')
+      }
+    }
+  }
+
+  /**
+   * Serialize a window menu into the flat top-level shape the renderer's
+   * in-app menu bar renders.
+   */
+  getMenuBar(windowId: number): MenuBarItem[] {
+    let menu: Menu | null = null
+    if (this.windowMenus.has(windowId)) {
+      menu = this.getWindowMenuById(windowId)
+    }
+    if (!menu) {
+      menu = Menu.getApplicationMenu()
+    }
+    if (!menu) return []
+
+    return menu.items.map((item) => ({
+      label: item.label,
+      // Items carrying only a role still execute it through `click()`.
+      enabled: item.enabled !== false && !!item.submenu,
+      submenu: !!item.submenu && !!item.submenu.items.length
+    }))
+  }
+
+  /**
+   * Invoke a menu item by its position in the menu bar. Used by the renderer's
+   * in-app menu bar, which cannot ship click handlers across the bridge.
+   */
+  executeMenuItem(windowId: number, topIndex: number, subIndex: number): void {
+    let menu: Menu | null = null
+    if (this.windowMenus.has(windowId)) {
+      menu = this.getWindowMenuById(windowId)
+    }
+    if (!menu) {
+      menu = Menu.getApplicationMenu()
+    }
+    if (!menu) return
+
+    const window = BrowserWindow.fromId(windowId) ?? undefined
+    const top = menu.items[topIndex]
+    const target = subIndex >= 0 ? top?.submenu?.items[subIndex] : top
+    if (!target || !target.enabled) return
+
+    // `menuItem.click` is the documented way to run an item's click handler;
+    // for submenus it opens them, so the renderer only ever targets leaves.
+    target.click(target, window, { shiftKey: false, ctrlKey: false, altKey: false, metaKey: false })
+  }
+
+  /**
+   * Open a top-level menu as a native popup anchored under the in-app menu bar
+   * button the renderer drew at `position`. Delegating to `Menu.popup` keeps
+   * the behaviour (checkbox toggling, roles, accelerators) identical to the
+   * native menu bar instead of re-implementing it in the renderer.
+   */
+  popupTopMenu(windowId: number, topIndex: number, position?: MenuPopupPosition): void {
+    const window = BrowserWindow.fromId(windowId)
+    if (!window || window.isDestroyed()) return
+
+    let menu: Menu | null = null
+    if (this.windowMenus.has(windowId)) {
+      menu = this.getWindowMenuById(windowId)
+    }
+    if (!menu) {
+      menu = Menu.getApplicationMenu()
+    }
+    const submenu = menu?.items[topIndex]?.submenu
+    if (!submenu) return
+
+    submenu.popup({
+      window,
+      x: position?.x,
+      y: position?.y,
+      callback: () => {
+        if (!window.isDestroyed()) {
+          window.webContents.send('mt::menu::closed')
+        }
+      }
+    })
   }
 
   /**

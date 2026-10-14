@@ -91,7 +91,7 @@ renders the standalone defaults.
 
 Inline code (`code.mu-inline-rule`) is deliberately NOT driven by these — it
 keeps its relative `0.8em` / mono sizing. Editor column width
-(`--editor-area-width`) and the colour palette (`--editor-color-*`) are
+(`--editor-area-width`, default `1066px`) and the colour palette (`--editor-color-*`) are
 separate, pre-existing contracts owned by the host. All runtime changes go
 through `muya.setOptions({...})`.
 

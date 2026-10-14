@@ -183,6 +183,16 @@
     }
   },
   "contextMenu": {
+    "editorMenu": "Editorcontextmenu",
+    "copyPasteAs": "Kopiëren / Plakken als…",
+    "copyAsMarkdown": "Kopiëren als Markdown",
+    "copyAsPlainText": "Kopiëren als platte tekst",
+    "insert": "Invoegen",
+    "footnote": "Voetnoot",
+    "referenceLink": "Referentielink",
+    "toc": "Inhoudsopgave",
+    "footnoteText": "Voetnoottekst",
+    "linkText": "Linktekst",
     "cut": "Knippen",
     "copy": "Kopiëren",
     "paste": "Plakken",
@@ -1020,5 +1030,22 @@
       "switchError": "Spellingcontrole wisselfout voor {languageCode}, {error}",
       "title": "Spellingcontrole"
     }
+  },
+  "bottomToolbar": {
+    "title": "Bewerkingsbalk",
+    "more": "Meer acties",
+    "show": "Werkbalk tonen",
+    "lists": "Lijsten",
+    "source": "Bron",
+    "rendered": "Voorbeeld",
+    "sourceMode": "Broncodemodus",
+    "renderedMode": "Visuele bewerkmodus",
+    "insertAbove": "Paragraaf boven invoegen",
+    "insertBelow": "Paragraaf onder invoegen",
+    "copy": "Kopiëren",
+    "paste": "Plakken",
+    "clearFormat": "Opmaak wissen",
+    "deleteBlock": "Blok verwijderen",
+    "hide": "Werkbalk verbergen"
   }
 }

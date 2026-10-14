@@ -21,6 +21,8 @@ const { buildFromTemplate, setApplicationMenu, configureMenu, configSettingMenu 
 vi.mock('electron', () => ({
   app: { addRecentDocument: vi.fn(), clearRecentDocuments: vi.fn() },
   ipcMain: { on: vi.fn(), handle: vi.fn(), emit: vi.fn() },
+  // _broadcastMenuBar() iterates every window when menus are re-applied.
+  BrowserWindow: { getAllWindows: () => [] },
   Menu: { buildFromTemplate, setApplicationMenu, getApplicationMenu: vi.fn() }
 }))
 

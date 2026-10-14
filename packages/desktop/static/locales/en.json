@@ -1,4 +1,21 @@
 {
+  "bottomToolbar": {
+    "title": "Editing toolbar",
+    "more": "More actions",
+    "show": "Show toolbar",
+    "lists": "Lists",
+    "source": "Source",
+    "rendered": "Rendered",
+    "sourceMode": "Source code mode",
+    "renderedMode": "Rendered editing mode",
+    "insertAbove": "Insert Paragraph Above",
+    "insertBelow": "Insert Paragraph Below",
+    "copy": "Copy",
+    "paste": "Paste",
+    "clearFormat": "Clear Formatting",
+    "deleteBlock": "Delete Block",
+    "hide": "Hide Toolbar"
+  },
   "menu": {
     "counter": {
       "words": "Words",
@@ -183,6 +200,16 @@
     }
   },
   "contextMenu": {
+    "editorMenu": "Editor context menu",
+    "copyPasteAs": "Copy / Paste as…",
+    "copyAsMarkdown": "Copy as Markdown",
+    "copyAsPlainText": "Copy as Plain Text",
+    "insert": "Insert",
+    "footnote": "Footnote",
+    "referenceLink": "Reference Link",
+    "toc": "Table of Contents",
+    "footnoteText": "Footnote text",
+    "linkText": "Link text",
     "cut": "Cut",
     "copy": "Copy",
     "paste": "Paste",

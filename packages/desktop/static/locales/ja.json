@@ -183,6 +183,16 @@
     }
   },
   "contextMenu": {
+    "editorMenu": "エディターのコンテキストメニュー",
+    "copyPasteAs": "形式を指定してコピー / 貼り付け…",
+    "copyAsMarkdown": "Markdown としてコピー",
+    "copyAsPlainText": "プレーンテキストとしてコピー",
+    "insert": "挿入",
+    "footnote": "脚注",
+    "referenceLink": "参照リンク",
+    "toc": "目次",
+    "footnoteText": "脚注の内容",
+    "linkText": "リンクの文字",
     "cut": "切り取り",
     "copy": "コピー",
     "paste": "貼り付け",
@@ -1020,5 +1030,22 @@
       "switchError": "{languageCode} のスペルチェック切り替えエラー、{error}",
       "title": "スペルチェック"
     }
+  },
+  "bottomToolbar": {
+    "title": "編集ツールバー",
+    "more": "その他の操作",
+    "show": "ツールバーを表示",
+    "lists": "リスト",
+    "source": "ソース",
+    "rendered": "プレビュー",
+    "sourceMode": "ソースコードモード",
+    "renderedMode": "プレビュー編集モード",
+    "insertAbove": "上に段落を挿入",
+    "insertBelow": "下に段落を挿入",
+    "copy": "コピー",
+    "paste": "貼り付け",
+    "clearFormat": "書式をクリア",
+    "deleteBlock": "ブロックを削除",
+    "hide": "ツールバーを隠す"
   }
 }

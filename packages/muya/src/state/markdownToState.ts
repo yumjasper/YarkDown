@@ -431,6 +431,17 @@ export class MarkdownToState {
 
             case 'paragraph': {
                 value = token.text;
+                // A standalone `[TOC]` line is a table-of-contents marker, not
+                // body text. Typora/GFM-style: it renders the live outline in
+                // the editor and stays a `[TOC]` line in the markdown.
+                if (/^\s*\[TOC\]\s*$/i.test(value)) {
+                    state = {
+                        name: 'toc' as const,
+                        text: '[TOC]',
+                    };
+                    parentList[0].push(state);
+                    break;
+                }
                 state = {
                     name: 'paragraph' as const,
                     text: value,

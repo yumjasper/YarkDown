@@ -339,7 +339,6 @@ export const useEditorStore = defineStore('editor', {
       const { tabs, currentFile } = this
       const { data, pathname } = change
       const {
-        isMixedLineEndings,
         lineEnding,
         adjustLineEndingOnSave,
         trimTrailingNewline,
@@ -401,19 +400,6 @@ export const useEditorStore = defineStore('editor', {
       tab.scrollTop = oldScrollTop
       if (oldHistory) {
         tab.history = oldHistory
-      }
-
-      if (isMixedLineEndings && typeof lineEnding === 'string') {
-        this.pushTabNotification({
-          tabId: tab.id,
-          msg: t('store.editor.mixedLineEndingsNormalized', {
-            name: filename,
-            lineEnding: lineEnding.toUpperCase()
-          }),
-          showConfirm: false,
-          style: 'info',
-          exclusiveType: ''
-        })
       }
 
       // Reload the editor if the tab is currently opened.
@@ -1396,7 +1382,7 @@ export const useEditorStore = defineStore('editor', {
         this.SHOW_TAB_VIEW(false)
       }
 
-      const { markdown, isMixedLineEndings } = markdownDocument
+      const { markdown } = markdownDocument
       const docState = createDocumentState(
         Object.assign(
           {},
@@ -1414,19 +1400,6 @@ export const useEditorStore = defineStore('editor', {
         this.tabs.push(docState)
         this.updateTabIdToIndex()
         debouncedSendBufferedState()
-      }
-
-      if (isMixedLineEndings) {
-        const { filename, lineEnding } = markdownDocument
-        if (typeof lineEnding === 'string') {
-          this.pushTabNotification({
-            tabId: id,
-            msg: t('store.editor.mixedLineEndingsNormalized', {
-              name: filename,
-              lineEnding: lineEnding.toUpperCase()
-            })
-          })
-        }
       }
     },
 

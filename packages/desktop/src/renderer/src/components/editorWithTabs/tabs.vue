@@ -288,7 +288,9 @@ onBeforeUnmount(() => {
   flex-direction: row;
   height: 28px;
   user-select: none;
-  box-shadow: 0px 0px 9px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
+  border-bottom: 1px solid var(--editorColor10);
+  box-sizing: border-box;
   overflow: hidden;
   &:hover > .new-file {
     opacity: 1 !important;

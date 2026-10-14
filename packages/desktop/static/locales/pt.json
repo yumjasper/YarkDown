@@ -183,6 +183,16 @@
     }
   },
   "contextMenu": {
+    "editorMenu": "Menu de contexto do editor",
+    "copyPasteAs": "Copiar / Colar como…",
+    "copyAsMarkdown": "Copiar como Markdown",
+    "copyAsPlainText": "Copiar como texto simples",
+    "insert": "Inserir",
+    "footnote": "Nota de rodapé",
+    "referenceLink": "Link de referência",
+    "toc": "Sumário",
+    "footnoteText": "Texto da nota",
+    "linkText": "Texto do link",
     "cut": "Cortar",
     "copy": "Copiar",
     "paste": "Colar",
@@ -1020,5 +1030,22 @@
       "switchError": "Erro ao alternar corretor para {languageCode}, {error}",
       "title": "Verificação Ortográfica"
     }
+  },
+  "bottomToolbar": {
+    "title": "Barra de edição",
+    "more": "Mais ações",
+    "show": "Mostrar barra",
+    "lists": "Listas",
+    "source": "Código",
+    "rendered": "Visual",
+    "sourceMode": "Modo código-fonte",
+    "renderedMode": "Modo de edição visual",
+    "insertAbove": "Inserir parágrafo acima",
+    "insertBelow": "Inserir parágrafo abaixo",
+    "copy": "Copiar",
+    "paste": "Colar",
+    "clearFormat": "Limpar formatação",
+    "deleteBlock": "Excluir bloco",
+    "hide": "Ocultar barra de ferramentas"
   }
 }

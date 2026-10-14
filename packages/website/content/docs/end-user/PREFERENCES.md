@@ -32,7 +32,7 @@ Preferences can be controlled and modified in the settings window or via the `pr
 | fontSize                           | Number  | `16`               | Font size in pixels. Range `12`–`32`.                                                               |
 | lineHeight                         | Number  | `1.6`              | Line height. Range `1.2`–`2.0`.                                                                     |
 | wrapCodeBlocks                     | Boolean | `true`             | Wrap text inside code blocks.                                                                       |
-| editorLineWidth                    | String  | `""`               | Maximum editor area width. Empty or a value with a `ch`, `px` or `%` suffix.                        |
+| editorLineWidth                    | String  | `""`               | Maximum editor area width. Empty (uses the built-in default of `1000px`) or a value with a `ch`, `px` or `%` suffix. |
 | codeFontSize                       | Number  | `14`               | Font size inside code blocks. Range `12`–`28`.                                                      |
 | codeFontFamily                     | String  | `DejaVu Sans Mono` | Code-block font family.                                                                             |
 | codeBlockLineNumbers               | Boolean | `true`             | Show line numbers inside code blocks.                                                               |

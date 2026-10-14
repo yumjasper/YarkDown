@@ -13,6 +13,7 @@ import Accessor from './app/accessor'
 import App from './app'
 import { t } from './i18n'
 import { registerSandboxIpcHandlers } from './ipc'
+import { setMenuProvider } from './ipc/window'
 import { setPlantumlServerSource } from './ipc/diagram'
 
 // Set version strings into global and process.versions
@@ -117,6 +118,7 @@ try {
 // Preferences only exist now; the fetch handler refuses everything until it
 // knows which server the user configured.
 setPlantumlServerSource(() => accessor.preferences.getItem<string>('plantumlServer') ?? '')
+setMenuProvider(() => accessor.menu)
 
 const appController = new App(accessor, args as unknown as { _: string[] })
 appController.init()

@@ -1,7 +1,16 @@
 /* Common CSS use by both light and dark themes */
 :root {
+  --uiFontFamily: 'Segoe UI Variable Text', 'Segoe UI', 'Microsoft YaHei UI', system-ui, sans-serif;
+  --uiFontSize: 13px;
   --titleBarHeight: 32px;
-  --editorAreaWidth: 750px;
+  --menuBarHeight: 28px;
+  --editorAreaWidth: 1000px;
+
+  /* The WYSIWYG engine reads the kebab-case var for `.mu-container` max-width.
+     Base styles only declared the camelCase one, so themes that skip width
+     (notably the default `light`) fell through to muya's own fallback and
+     rendered a different column width than the coloured themes. */
+  --editor-area-width: var(--editorAreaWidth);
 
   /*editor*/
   /*Theme color cluster*/
@@ -130,6 +139,9 @@
 
 html,
 body {
+  font-family: var(--uiFontFamily);
+  font-size: var(--uiFontSize);
+  line-height: 1.5;
   margin: 0;
   padding: 0;
   background: transparent !important;

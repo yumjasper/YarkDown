@@ -12,7 +12,7 @@ import type {
   PlantumlFetchResult,
   SaveDialogRequest
 } from '@shared/types/ipc'
-import type { MenuTemplate, MenuPopupPosition } from '@shared/types/menu'
+import type { MenuTemplate, MenuPopupPosition, MenuBarItem } from '@shared/types/menu'
 import type { SerializedStat } from '@shared/types/files'
 
 declare global {
@@ -82,6 +82,8 @@ declare global {
     isFullScreen(): Promise<boolean>
     popupMenu(template: MenuTemplate, position?: MenuPopupPosition): void
     popupApplicationMenu(position?: MenuPopupPosition): void
+    getMenuBar(): Promise<MenuBarItem[]>
+    popupTopMenu(topIndex: number, position?: MenuPopupPosition): void
   }
 
   interface ElectronAPI {

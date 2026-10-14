@@ -163,7 +163,7 @@ const handleClick = (data: { slug?: unknown }): void => {
   color: var(--sideBarTitleColor);
   font-weight: 600;
   font-size: 16px;
-  margin: 37px 0 10px 0;
+  margin: 10px 0 10px 0;
   padding-left: 25px;
   flex-shrink: 0;
 }

@@ -150,6 +150,11 @@ export default class ExportMarkdown {
                 result.push(this._serializeFrontMatter(state));
                 break;
 
+            case 'toc':
+                this._insertLineBreak(result, indent);
+                result.push(`${indent}[TOC]`);
+                break;
+
             case 'paragraph':
 
             case 'thematic-break':

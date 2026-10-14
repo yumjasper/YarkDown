@@ -164,7 +164,7 @@ export const usePreferencesStore = defineStore('preferences', {
     defaultDirectoryToOpen: '',
     lastOpenedFolder: '',
     treePathExcludePatterns: [],
-    language: 'en',
+    language: 'zh-CN',
     showPandocConvert: false,
 
     editorFontFamily: 'Open Sans',

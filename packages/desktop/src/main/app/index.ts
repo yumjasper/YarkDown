@@ -150,11 +150,12 @@ class App {
   }
 
   /**
-   * Initialize the main process language from preferences, detecting the
-   * system language on first start. Must run after the app is ready —
-   * `app.getLocale()` returns an empty string before the ready event — and
-   * before the first window is created so menus and the renderer start in
-   * the right language.
+   * Initialize the main process language from preferences. The preference
+   * always carries a value (`zh-CN` by default, see static/preference.json), so
+   * the system locale is only consulted when a stored config is missing it.
+   * Must run after the app is ready — `app.getLocale()` returns an empty string
+   * before the ready event — and before the first window is created so menus
+   * and the renderer start in the right language.
    */
   private _initializeLanguage(): void {
     try {
@@ -163,7 +164,7 @@ class App {
       // If no language is set (first start), auto-detect from the system language
       if (!currentLanguage) {
         const systemLocale = app.getLocale()
-        currentLanguage = matchSupportedLanguage(systemLocale) ?? 'en'
+        currentLanguage = matchSupportedLanguage(systemLocale) ?? 'zh-CN'
         this._accessor.preferences.setItem('language', currentLanguage)
         log.info(
           `Auto-detected and set language to: ${currentLanguage} (system locale: ${systemLocale})`
@@ -174,8 +175,8 @@ class App {
       log.info(`Main process language initialized to: ${currentLanguage}`)
     } catch (error) {
       log.error('Failed to initialize main process language:', error)
-      // If an error occurs, use English as the default language
-      setLanguage('en')
+      // If an error occurs, fall back to the default Simplified Chinese UI.
+      setLanguage('zh-CN')
     }
   }
 

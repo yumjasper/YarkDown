@@ -23,3 +23,31 @@ export interface MenuPopupPosition {
   x: number
   y: number
 }
+
+/**
+ * Serialized top-level entry of a window's menu bar. Renderers use this to
+ * draw an in-app menu bar; clicks are resolved by index on the main side.
+ */
+export interface MenuBarItem {
+  label: string
+  enabled: boolean
+  submenu: boolean
+}
+
+export interface EditorContextNativeItem {
+  id: string
+  label: string
+  enabled: boolean
+  separator?: boolean
+  submenu?: EditorContextNativeItem[]
+}
+
+export interface EditorContextMenuRequest {
+  x: number
+  y: number
+  selectionText: string
+  canCut: boolean
+  canCopy: boolean
+  canPaste: boolean
+  nativeItems: EditorContextNativeItem[]
+}

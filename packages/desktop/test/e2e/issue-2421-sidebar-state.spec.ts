@@ -10,7 +10,7 @@ import { launchWithMarkdown } from './helpers'
 // These drive the real built app.
 
 const filesIcon = (page: Page) =>
-  page.locator('.side-bar .left-column > ul').first().locator('li').nth(0)
+  page.locator('.side-bar-rail .rail-icon').first()
 
 const sideBarWidth = (page: Page) =>
   page.evaluate(() => {

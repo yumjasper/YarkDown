@@ -32,7 +32,7 @@ import type {
   UnsavedFile
 } from './files'
 import type { BufferedState as BufferedStateType } from './bufferedState'
-import type { MenuTemplate, MenuPopupPosition } from './menu'
+import type { MenuTemplate, MenuPopupPosition, MenuBarItem, EditorContextMenuRequest } from './menu'
 import type { PandocCommandInfo } from './pandoc'
 
 export interface SaveDialogRequest {
@@ -100,6 +100,8 @@ export interface IpcInvokeChannels {
   'mt::uploader::upload': { args: [req: unknown]; ret: unknown }
   'mt::win::is-fullscreen': { args: []; ret: boolean }
   'mt::win::is-maximized': { args: []; ret: boolean }
+  'mt::menu::get-menu-bar': { args: []; ret: MenuBarItem[] }
+  'mt::menu::execute': { args: [topIndex: number, subIndex: number]; ret: void }
   // Main derives the BrowserWindow via BrowserWindow.fromWebContents(e.sender);
   // no need to pass windowId. Payload is the editor+project+layout snapshot.
   'update-buffer-state': { args: [payload: unknown]; ret: void }
@@ -139,6 +141,8 @@ export interface IpcSendChannels {
   'mt::cmd-open-folder': []
   'mt::cmd-toggle-autosave': []
   'mt::editor-selection-changed': [windowId: number, state: unknown]
+  'mt::execute-main-command': [commandId: string]
+  'mt::editor-context-native-action': [id: string]
   'mt::format-link-click': [payload: { data: unknown; dirname: string }]
   'mt::get-current-language': []
   'mt::handle-renderer-error': [error: unknown]
@@ -146,6 +150,7 @@ export interface IpcSendChannels {
   'mt::make-screenshot': []
   'mt::menu::popup': [template: MenuTemplate, position?: MenuPopupPosition]
   'mt::menu::popup-application': [position?: MenuPopupPosition]
+  'mt::menu::popup-top-menu': [topIndex: number, position?: MenuPopupPosition]
   'mt::open-file': [filePath: string, options?: unknown]
   'mt::open-file-by-window-id': [windowId: number, filePath: string, options?: unknown]
   'mt::open-keybindings-config': []
@@ -253,6 +258,7 @@ export interface IpcMainEventChannels {
   'mt::editor-ask-file-save-as': []
   'mt::editor-close-tab': [tabId?: string]
   'mt::editor-edit-action': [action: string]
+  'mt::editor-context-menu': [request: EditorContextMenuRequest]
   'mt::editor-format-action': [payload: { type: string }]
   'mt::editor-move-file': []
   'mt::editor-paragraph-action': [payload: { type: string }]
@@ -267,6 +273,7 @@ export interface IpcMainEventChannels {
   'mt::load-state': [state: BufferedStateType]
   'mt::menu::click': [menuId: string]
   'mt::menu::closed': []
+  'mt::menu-bar-changed': []
   'mt::new-untitled-tab': [selected?: boolean, markdown?: string]
   'mt::open-directory': [directoryPath: string]
   'mt::open-new-tab': [

@@ -12,7 +12,7 @@
     --editor-bg-color: rgb(255 255 255 / 100%);
 
     /* width of the centered editing column (`.mu-container` max-width) */
-    --editor-area-width: 800px;
+    --editor-area-width: 1066px;
     --delete-color: #ff6969;
 
     /* GitLab inline diff washes for `{+ … +}` / `[- … -]`. */

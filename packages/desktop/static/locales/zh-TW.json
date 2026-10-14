@@ -183,6 +183,16 @@
     }
   },
   "contextMenu": {
+    "editorMenu": "編輯區右鍵選單",
+    "copyPasteAs": "複製 / 貼上為…",
+    "copyAsMarkdown": "複製為 Markdown",
+    "copyAsPlainText": "複製為純文字",
+    "insert": "插入",
+    "footnote": "註腳",
+    "referenceLink": "連結參照",
+    "toc": "內容目錄",
+    "footnoteText": "註腳內容",
+    "linkText": "連結文字",
     "cut": "剪下",
     "copy": "複製",
     "paste": "貼上",
@@ -1020,5 +1030,22 @@
       "switchError": "{languageCode} 拼字檢查切換錯誤，{error}",
       "title": "拼字檢查"
     }
+  },
+  "bottomToolbar": {
+    "title": "編輯工具列",
+    "more": "更多操作",
+    "show": "顯示工具列",
+    "lists": "清單",
+    "source": "源碼",
+    "rendered": "預覽",
+    "sourceMode": "原始碼模式",
+    "renderedMode": "預覽編輯模式",
+    "insertAbove": "在上方插入段落",
+    "insertBelow": "在下方插入段落",
+    "copy": "複製",
+    "paste": "貼上",
+    "clearFormat": "清除樣式",
+    "deleteBlock": "刪除區塊",
+    "hide": "隱藏工具列"
   }
 }

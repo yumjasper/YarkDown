@@ -183,6 +183,16 @@
     }
   },
   "contextMenu": {
+    "editorMenu": "Düzenleyici bağlam menüsü",
+    "copyPasteAs": "Farklı biçimde kopyala / yapıştır…",
+    "copyAsMarkdown": "Markdown olarak kopyala",
+    "copyAsPlainText": "Düz metin olarak kopyala",
+    "insert": "Ekle",
+    "footnote": "Dipnot",
+    "referenceLink": "Başvuru bağlantısı",
+    "toc": "İçindekiler",
+    "footnoteText": "Dipnot metni",
+    "linkText": "Bağlantı metni",
     "cut": "Kes",
     "copy": "Kopyala",
     "paste": "Yapıştır",
@@ -1020,5 +1030,22 @@
       "switchError": "{languageCode} için yazım denetimi değiştirme hatası, {error}",
       "title": "Yazım Denetimi"
     }
+  },
+  "bottomToolbar": {
+    "title": "Düzenleme araç çubuğu",
+    "more": "Diğer işlemler",
+    "show": "Araç çubuğunu göster",
+    "lists": "Listeler",
+    "source": "Kaynak",
+    "rendered": "Önizleme",
+    "sourceMode": "Kaynak kod modu",
+    "renderedMode": "Görsel düzenleme modu",
+    "insertAbove": "Üste paragraf ekle",
+    "insertBelow": "Alta paragraf ekle",
+    "copy": "Kopyala",
+    "paste": "Yapıştır",
+    "clearFormat": "Biçimi temizle",
+    "deleteBlock": "Bloğu sil",
+    "hide": "Araç çubuğunu gizle"
   }
 }

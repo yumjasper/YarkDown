@@ -340,7 +340,7 @@ onMounted(() => {
 }
 .search-wrapper {
   display: flex;
-  margin: 37px 8px 10px 8px;
+  margin: 10px 8px 10px 8px;
   padding: 0 6px;
   border-radius: 4px;
   height: 28px;
