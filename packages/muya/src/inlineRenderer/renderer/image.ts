@@ -60,25 +60,23 @@ function isImageSelected(
     selectedImage: IImageSelectionData | null,
     block: Format,
     token: ImageToken,
-    id: string,
 ) {
     if (!selectedImage)
         return false;
 
-    const { imageId, block: selectedBlock, token: selectedToken } = selectedImage;
+    const { block: selectedBlock, token: selectedToken } = selectedImage;
 
     return (
-        imageId === `${id}_${token.range.start}`
-        && selectedBlock === block
+        selectedBlock === block
+        && (selectedToken.attrs?.src ?? selectedToken.src ?? token.attrs.src) === token.attrs.src
         && selectedToken.range.start === token.range.start
         && selectedToken.range.end === token.range.end
     );
 }
 
-// I don't want operate dom directly, is there any better way? need help!
 export default function image(
     this: Renderer,
-    { h, block, token }: ISyntaxRenderOptions & { token: ImageToken },
+    { h, block, token, cursor = {} }: ISyntaxRenderOptions & { token: ImageToken },
 ) {
     const imageSrc = getImageSrc(token.attrs.src);
     const selectedImage = this.muya.editor.selection.image;
@@ -123,17 +121,26 @@ export default function image(
         }`
         : `span.${CLASS_NAMES.MU_INLINE_IMAGE}`;
 
+    const anchor = cursor.anchor || cursor.start;
+    const focus = cursor.focus || cursor.end;
+    const caretTouchesImage = (!cursor.block || cursor.block === block)
+        && [anchor, focus].some(point => point
+            && point.offset >= token.range.start
+            && point.offset <= token.range.end);
+    if (caretTouchesImage || isImageSelected(selectedImage, block, token))
+        wrapperSelector += '.mu-image-editing';
+
+    const source = h('span.mu-image-source.mu-image-marked-text.mu-output-remove', {
+        attrs: { contenteditable: 'true', spellcheck: 'false' },
+    }, token.raw);
+
     const imageIcons = [
+        source,
         renderIcon(h, 'mu-image-icon-success', ImageIcon),
         renderIcon(h, 'mu-image-icon-fail', ImageFailIcon),
         renderIcon(h, 'mu-image-icon-close', DeleteIcon),
     ];
 
-    /**
-     * The image is used to wrap the img element.
-     * @param args
-     * @returns The wrapping span VNode containing the image element.
-     */
     const renderImageContainer = (...args: VNode[]) => {
         const data = {};
         if (title) {
@@ -142,6 +149,11 @@ export default function image(
             });
         }
 
+        if (title) {
+            args.push(h('span.mu-image-caption.mu-copy-remove', {
+                attrs: { contenteditable: 'false' },
+            }, title));
+        }
         return h(`span.${CLASS_NAMES.MU_IMAGE_CONTAINER}`, data, args);
     };
 
@@ -194,8 +206,10 @@ export default function image(
         }
 
         // Add image selected class name.
-        if (isImageSelected(selectedImage, block, token, id))
+        if (isImageSelected(selectedImage, block, token)) {
             wrapperSelector += `.${CLASS_NAMES.MU_INLINE_IMAGE_SELECTED}`;
+            selectedImage!.imageId = isSuccess ? `${id}_${token.range.start}` : id;
+        }
 
         const renderImage = () => {
             const data = {

@@ -24,7 +24,7 @@ call build.bat --no-pause
 
 ## 前置环境
 
-- Node.js 22。CLI 会优先使用当前 Node 22，或探测 `.tools/nodejs/node.exe`、`D:/Tools/nodejs22` 和 `YARKDOWN_NODE_ROOT`。
+- Node.js 22。CLI 会优先使用当前 Node 22，或探测 `.tools/nodejs/node.exe`、`D:/Tools/nodejs22` 和 `YARKTEXT_NODE_ROOT`。
 - 可用的 pnpm 10 和已安装的工作区依赖。
 - VS 2022 C++ 编译工具、Windows SDK，以及目标架构的 Spectre 缓解库。CLI 会选择装有该库的 MSVC 工具集，不需要删除原生模块的 Spectre 配置。
 - 可选的 `.tools/7zip/bin/7za.exe`，或通过 `ELECTRON_BUILDER_7ZIP_PATH` 指定 7za；未提供时由 electron-builder 自动获取。
@@ -32,7 +32,7 @@ call build.bat --no-pause
 显式指定构建用 Node：
 
 ```powershell
-$env:YARKDOWN_NODE = 'D:/Tools/nodejs22/node-v22.21.1-win-x64/node.exe'
+$env:YARKTEXT_NODE = 'D:/Tools/nodejs22/node-v22.21.1-win-x64/node.exe'
 node scripts/pack.mjs
 ```
 
@@ -56,7 +56,7 @@ Windows x64 为本机已验证目标，其他平台或架构需要各自的工�
 node scripts/smoke-packaged.mjs
 ```
 
-该脚本启动 `dist/win-unpacked/YarkDown.exe`，用临时用户配置和文档验证启动、项目文件名搜索、源码模式双向切换和六级标题命令，结束后清理测试数据。
+该脚本启动 `dist/win-unpacked/YarkText.exe`，用临时用户配置和文档验证启动、项目文件名搜索、源码模式双向切换和六级标题命令，结束后清理测试数据。
 它使用开发依赖 Playwright 连接 Chromium CDP。快捷键映射和冲突由 `windows-keybindings.spec.ts` 单独验证，CDP 合成键盘输入不等同于 Windows 原生快捷键输入。
 
 ## 默认快捷键

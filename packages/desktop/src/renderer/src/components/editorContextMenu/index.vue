@@ -149,6 +149,7 @@ import bus from '@/bus'
 import ToolbarIcon from '../bottomToolbar/toolbarIcon.vue'
 import type { EditorContextMenuRequest, EditorContextNativeItem } from '@shared/types/menu'
 import { fitContextMenu, fitContextSubmenu } from './position'
+import { tableActions } from '@muyajs/core'
 
 interface Item {
   id: string
@@ -166,6 +167,13 @@ const { t } = useI18n()
 const editorStore = useEditorStore()
 const commands = useCommandCenterStore()
 const request = ref<EditorContextMenuRequest | null>(null)
+const inTable = ref(false)
+let mousePoint: { x: number; y: number } | null = null
+const captureContextPoint = (event: MouseEvent): void => {
+  if ((event.target as Element)?.closest('.editor-component') && event.button === 2)
+    mousePoint = { x: event.clientX, y: event.clientY }
+}
+const tablePosition = ref({ row: 0, column: 0, rows: 0, columns: 0 })
 const panel = ref<HTMLElement | null>(null)
 const submenu = ref<HTMLElement | null>(null)
 const position = ref({ x: 8, y: 8 })
@@ -198,7 +206,9 @@ const pasteSourcePlain = async (): Promise<void> => {
 const viewport = () => ({ width: window.innerWidth, height: window.innerHeight })
 const positionStyle = (point: { x: number; y: number }) => ({
   left: `${point.x}px`,
-  top: `${point.y}px`
+  top: `${point.y}px`,
+  '--context-space-width': `${Math.max(1, window.innerWidth - point.x)}px`,
+  '--context-space-height': `${Math.max(1, window.innerHeight - point.y)}px`
 })
 const closeSubmenu = (): void => {
   activeId.value = ''
@@ -300,48 +310,79 @@ const specialInsert = (id: string, key: string): Item => ({
   run: () => bus.emit('context-insert', id)
 })
 const groups = computed(() => [
-  {
-    id: 'paragraph',
-    label: t('commands.paragraph.paragraph'),
-    items: [
-      ...Array.from({ length: 6 }, (_, i) => ({
-        ...command(
-          `heading-${i + 1}`,
-          `commands.paragraph.heading${i + 1}`,
-          `paragraph.heading-${i + 1}`
-        ),
-        checked: heading.value === i + 1
-      })),
-      {
-        ...command('plain-paragraph', 'commands.paragraph.paragraph', 'paragraph.paragraph'),
-        checked: heading.value === 0,
-        divided: true
-      }
-    ]
-  },
+  ...(inTable.value
+    ? [
+        {
+          id: 'table',
+          label: t('commands.paragraph.table'),
+          items: tableActions.map((action) => {
+            const { row, column, rows, columns } = tablePosition.value
+            return {
+              id: `table-${action}`,
+              label: t(`tableTools.${action}`),
+              divided: ['row-up', 'delete-row', 'copy', 'delete-table'].includes(action),
+              disabled:
+                (action === 'row-up' && row <= 1) ||
+                (action === 'row-down' && (row === 0 || row === rows - 1)) ||
+                (action === 'column-previous' && column === 0) ||
+                (action === 'column-next' && column === columns - 1),
+              run: () => bus.emit('table-action', action)
+            }
+          })
+        }
+      ]
+    : [
+        {
+          id: 'paragraph',
+          label: t('commands.paragraph.paragraph'),
+          items: [
+            ...Array.from({ length: 6 }, (_, i) => ({
+              ...command(
+                `heading-${i + 1}`,
+                `commands.paragraph.heading${i + 1}`,
+                `paragraph.heading-${i + 1}`
+              ),
+              checked: heading.value === i + 1
+            })),
+            {
+              ...command('plain-paragraph', 'commands.paragraph.paragraph', 'paragraph.paragraph'),
+              checked: heading.value === 0,
+              divided: true
+            }
+          ]
+        }
+      ]),
   {
     id: 'insert',
     label: t('contextMenu.insert'),
     items: [
       command('image', 'menu.format.image', 'format.image'),
-      specialInsert('footnote', 'contextMenu.footnote'),
-      specialInsert('reference-link', 'contextMenu.referenceLink'),
-      command('horizontal-line', 'commands.paragraph.horizontalLine', 'paragraph.horizontal-line'),
-      command('table', 'commands.paragraph.table', 'paragraph.table'),
-      command('code-block', 'commands.paragraph.codeFence', 'paragraph.code-fence'),
-      command('math-block', 'commands.paragraph.mathBlock', 'paragraph.math-formula'),
-      specialInsert('toc', 'contextMenu.toc'),
-      command('front-matter', 'commands.paragraph.frontMatter', 'paragraph.front-matter'),
+      ...(!inTable.value
+        ? [
+            specialInsert('footnote', 'contextMenu.footnote'),
+            specialInsert('reference-link', 'contextMenu.referenceLink'),
+            command(
+              'horizontal-line',
+              'commands.paragraph.horizontalLine',
+              'paragraph.horizontal-line'
+            ),
+            command('table', 'commands.paragraph.table', 'paragraph.table'),
+            command('code-block', 'commands.paragraph.codeFence', 'paragraph.code-fence'),
+            command('math-block', 'commands.paragraph.mathBlock', 'paragraph.math-formula'),
+            specialInsert('toc', 'contextMenu.toc'),
+            command('front-matter', 'commands.paragraph.frontMatter', 'paragraph.front-matter')
+          ]
+        : []),
       {
         id: 'insert-before',
         label: t('bottomToolbar.insertAbove'),
         divided: true,
-        run: () => bus.emit('insertParagraph', 'before')
+        run: () => bus.emit(inTable.value ? 'table-insert-paragraph' : 'insertParagraph', 'before')
       },
       {
         id: 'insert-after',
         label: t('bottomToolbar.insertBelow'),
-        run: () => bus.emit('insertParagraph', 'after')
+        run: () => bus.emit(inTable.value ? 'table-insert-paragraph' : 'insertParagraph', 'after')
       }
     ]
   }
@@ -416,7 +457,24 @@ const navigate = async (
   items[index]?.focus()
 }
 const openMenu = async (payload: EditorContextMenuRequest): Promise<void> => {
+  if (!props.sourceCode && mousePoint) {
+    payload = { ...payload, ...mousePoint }
+    mousePoint = null
+  }
   const target = document.elementFromPoint(payload.x, payload.y)
+  const tableCell = !props.sourceCode ? target?.closest<HTMLTableCellElement>('td,th') : null
+  inTable.value = !!tableCell
+  if (tableCell) {
+    const row = tableCell.parentElement as HTMLTableRowElement
+    const table = tableCell.closest('table')!
+    tablePosition.value = {
+      row: row.rowIndex,
+      column: tableCell.cellIndex,
+      rows: table.rows.length,
+      columns: row.cells.length
+    }
+    bus.emit('table-context-target', tableCell)
+  }
   if (!target?.closest('.editor-component, .source-code')) {
     close()
     return
@@ -473,6 +531,7 @@ onMounted(() => {
     void openMenu(payload)
   })
   document.addEventListener('pointerdown', outside, true)
+  document.addEventListener('contextmenu', captureContextPoint, true)
   document.addEventListener('keydown', keyboard, true)
   window.addEventListener('scroll', scroll, true)
   window.addEventListener('resize', close)
@@ -483,6 +542,7 @@ onBeforeUnmount(() => {
   bus.off('source-context-menu', sourceContextMenu)
   offRequest?.()
   document.removeEventListener('pointerdown', outside, true)
+  document.removeEventListener('contextmenu', captureContextPoint, true)
   document.removeEventListener('keydown', keyboard, true)
   window.removeEventListener('scroll', scroll, true)
   window.removeEventListener('resize', close)
@@ -495,8 +555,8 @@ onBeforeUnmount(() => {
   position: fixed;
   z-index: 10001;
   width: 220px;
-  max-width: calc(100vw - 16px);
-  max-height: calc(100vh - 16px);
+  max-width: var(--context-space-width, calc(100vw - 16px));
+  max-height: var(--context-space-height, calc(100vh - 16px));
   overflow-y: auto;
   box-sizing: border-box;
   padding: 6px 0;

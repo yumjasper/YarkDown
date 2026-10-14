@@ -234,8 +234,13 @@ del.mu-inline-diff-deletion {
     display: inline-block;
 
     color: var(--editor-color);
-    font-family: monospace;
+    font-family: 'Lucida Console', Consolas, Courier, monospace;
     vertical-align: middle;
+}
+
+.mu-math > .mu-math-text,
+.mu-math-marker {
+    font-family: 'Lucida Console', Consolas, Courier, monospace;
 }
 
 .mu-math > .mu-math-render,
@@ -257,14 +262,8 @@ del.mu-inline-diff-deletion {
     user-select: none;
 }
 
-/* A long inline-math formula must scroll horizontally (in the editing popup and
-   inline when hidden) instead of overflowing the editor area.
-
-   The bound is the text column, measured through `.mu-container`'s container
-   query. A percentage cannot say that here: the popup's containing block is the
-   inline `.mu-math` around the formula, so `--editor-area-width` carrying a
-   percentage — what the Max width preference stores — resolved against the
-   formula's own box and clipped even `$a+b$` (#5034). */
+/* Long formulas scroll within the text column. Its width can be a percentage,
+   so use the laid-out container width rather than the preference value. */
 .mu-math > .mu-math-render {
     max-width: 100cqw;
     overflow: auto hidden;
@@ -423,6 +422,26 @@ div .mu-math-error,
 blockquote .mu-hide.mu-ruby > .mu-ruby-render,
 blockquote .mu-hide.mu-math > .mu-math-render {
     color: var(--editor-color-50);
+}
+
+.mu-math:not(.mu-hide) {
+    display: inline;
+}
+
+.mu-math:not(.mu-hide) > .mu-math-render {
+    position: static;
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    margin: 0.5em 0;
+    z-index: auto;
+    background: var(--editor-bg-color);
+    border: 1px solid var(--editor-color-10);
+    box-shadow: none;
+}
+
+.mu-math:not(.mu-hide) > .mu-math-render::before {
+    content: none;
 }
 
 /* header space */
@@ -649,15 +668,54 @@ blockquote .mu-hide.mu-math > .mu-math-render {
 
     vertical-align: sub;
 
-    background: url('../icons/image_light.png');
-    background-size: cover;
+    background: currentcolor;
+    mask: url('../icons/ui/image.svg') center / contain no-repeat;
 
     content: '';
 }
 
 .mu-image-marked-text.mu-image-fail::before {
-    background-image: url('../icons/image_light_fail.png');
-    background-size: cover;
+    background-color: var(--delete-color);
+}
+
+.mu-inline-image > .mu-image-source {
+    display: none;
+}
+
+.mu-inline-image.mu-image-editing {
+    font-size: inherit;
+    line-height: inherit;
+    max-width: 100%;
+    background: transparent;
+}
+
+.mu-inline-image.mu-image-editing > .mu-image-source {
+    display: block;
+    padding: 0.2em 0;
+    font-family: var(--mu-code-font-family);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+/* Reserve room for the 36px toolbar and its 10px floating offset. */
+.mu-inline-image-selected.mu-image-editing .mu-image-container {
+    margin-top: 48px;
+}
+
+.mu-image-caption {
+    display: block;
+    max-width: 100%;
+    margin-top: 0.5em;
+    color: var(--editor-color-50);
+    font-size: var(--mu-font-size, 16px);
+    line-height: 1.5;
+    text-align: center;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.mu-inline-image:not(.mu-image-success) .mu-image-caption {
+    display: none;
 }
 
 /* text after ``` in paragraph content */

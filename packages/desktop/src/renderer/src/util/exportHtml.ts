@@ -15,6 +15,21 @@ import { sanitize, EXPORT_DOMPURIFY_CONFIG } from './dompurify'
 import { resolveLocalImageSrc } from './resolveImageSrc'
 import { resolveLocalLinkHref } from './resolveLinkHref'
 
+export const removeHtmlStyles = (html: string): string => {
+  const doc = new DOMParser().parseFromString(html, 'text/html')
+  doc.querySelectorAll('style, link[rel="stylesheet"]').forEach((node) => node.remove())
+  // MathML preserves the formula without the KaTeX presentation tree's CSS.
+  doc.querySelectorAll('.katex').forEach((node) => {
+    const math = node.querySelector('math')
+    if (math) node.replaceWith(math)
+  })
+  doc.querySelectorAll('[style], [class]').forEach((node) => {
+    node.removeAttribute('style')
+    node.removeAttribute('class')
+  })
+  return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML
+}
+
 export interface HeaderFooterPart {
   type?: number
   left?: string
@@ -89,9 +104,10 @@ const hf = (value: string): string => sanitize(value, EXPORT_DOMPURIFY_CONFIG) a
 
 const createTableHeader = (header: HeaderFooterPart, headerFooterStyled?: boolean): string => {
   const { type, left = '', center = '', right = '' } = header
-  const headerClass = `page-header ${(type === 1 ? 'single' : '') + styledClass(headerFooterStyled)}`
-    .replace(/\s+/g, ' ')
-    .trim()
+  const headerClass =
+    `page-header ${(type === 1 ? 'single' : '') + styledClass(headerFooterStyled)}`
+      .replace(/\s+/g, ' ')
+      .trim()
   return `<thead class="${headerClass}"><tr><th>
   <div class="hf-container">
     <div class="header-content-left">${hf(left)}</div>
@@ -103,9 +119,10 @@ const createTableHeader = (header: HeaderFooterPart, headerFooterStyled?: boolea
 
 const createRealFooter = (footer: HeaderFooterPart, headerFooterStyled?: boolean): string => {
   const { type, left = '', center = '', right = '' } = footer
-  const footerClass = `page-footer ${(type === 1 ? 'single' : '') + styledClass(headerFooterStyled)}`
-    .replace(/\s+/g, ' ')
-    .trim()
+  const footerClass =
+    `page-footer ${(type === 1 ? 'single' : '') + styledClass(headerFooterStyled)}`
+      .replace(/\s+/g, ' ')
+      .trim()
   return `<div class="${footerClass}">
   <div class="hf-container">
     <div class="footer-content-left">${hf(left)}</div>

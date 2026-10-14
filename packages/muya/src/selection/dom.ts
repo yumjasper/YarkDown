@@ -146,6 +146,9 @@ export function getTextContent(node: Node, blackList: string[] = []) {
         return node.textContent!;
 
     let text = '';
+    // Captions describe a preview; their text must never become Markdown input.
+    if (isElement(node) && node.classList.contains('mu-image-caption'))
+        return text;
     if (
         isElement(node)
         && blackList.some(
@@ -163,6 +166,9 @@ export function getTextContent(node: Node, blackList: string[] = []) {
         && node.classList.contains(`${CLASS_NAMES.MU_INLINE_IMAGE}`)
     ) {
     // handle inline image
+        const source = node.querySelector<HTMLElement>('.mu-image-source');
+        if (source && node.classList.contains('mu-image-editing'))
+            return source.textContent ?? '';
         const raw = node.getAttribute('data-raw');
         const imageContainer = node.querySelector(
             `.${CLASS_NAMES.MU_IMAGE_CONTAINER}`,
@@ -251,6 +257,9 @@ export function getNodeAndOffset(
                 const imageContainer = child.querySelector(
                     `.${CLASS_NAMES.MU_IMAGE_CONTAINER}`,
                 )!;
+                const source = child.querySelector<HTMLElement>('.mu-image-source');
+                if (source && child.classList.contains('mu-image-editing'))
+                    return getNodeAndOffset(source, offset - count);
                 const hasImg = imageContainer.querySelector('img');
 
                 if (!hasImg) {

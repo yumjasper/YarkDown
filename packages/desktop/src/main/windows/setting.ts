@@ -5,7 +5,7 @@ import { electronLocalshortcut } from '@hfelix/electron-localshortcut'
 import BaseWindow, { WindowLifecycle, WindowType, type EnvLike, type PreferenceLike } from './base'
 import type Accessor from '../app/accessor'
 import { centerWindowOptions } from './utils'
-import { TITLE_BAR_HEIGHT, preferencesWinOptions, isLinux, isOsx } from '../config'
+import { TITLE_BAR_HEIGHT, preferencesWinOptions, isLinux, isOsx, isWindows } from '../config'
 import log from 'electron-log'
 
 class SettingWindow extends BaseWindow {
@@ -33,7 +33,9 @@ class SettingWindow extends BaseWindow {
         y?: number
       }
     )
-    if (isLinux) {
+    // Same rationale as the editor window: dev mode on Windows would otherwise
+    // show Electron's default atom icon in the taskbar.
+    if (isLinux || isWindows) {
       winOptions.icon = path.join(
         (global as unknown as { __static: string }).__static,
         'logo-96px.png'

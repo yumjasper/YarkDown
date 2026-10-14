@@ -23,6 +23,8 @@
       "rename": "Renommer",
       "export": "Exporter",
       "exportHtml": "Exporter en HTML",
+      "exportHtmlPlain": "HTML (without styles)",
+      "exportImage": "Image (PNG)",
       "exportPdf": "Exporter en PDF",
       "convertWithPandoc": "Convertir avec Pandoc",
       "import": "Importer",
@@ -97,21 +99,21 @@
       "reportBug": "Signaler un bug",
       "viewSource": "Voir le code source",
       "followUs": "Suivez-nous",
-      "support": "Soutenir YarkDown",
+      "support": "Soutenir YarkText",
       "license": "Licence",
       "about": "À propos",
       "checkUpdates": "Vérifier les mises à jour"
     },
     "marktext": {
-      "title": "YarkDown",
-      "about": "À propos de YarkDown",
+      "title": "YarkText",
+      "about": "À propos de YarkText",
       "checkUpdates": "Vérifier les mises à jour...",
       "preferences": "Préférences",
       "services": "Services",
-      "hide": "Masquer YarkDown",
+      "hide": "Masquer YarkText",
       "hideOthers": "Masquer les autres",
       "showAll": "Tout afficher",
-      "quit": "Quitter YarkDown"
+      "quit": "Quitter YarkText"
     },
     "view": {
       "view": "Affichage",
@@ -363,7 +365,7 @@
   },
   "import": {
     "title": "Importer ou ouvrir",
-    "description": "Glissez-déposez ici pour importer votre contenu dans YarkDown"
+    "description": "Glissez-déposez ici pour importer votre contenu dans YarkText"
   },
   "preferences": {
     "title": "Préférences",
@@ -392,10 +394,10 @@
         "hideScrollbar": "Masquer les barres de défilement",
         "wordWrapInToc": "Activer le retour à la ligne dans la table des matières",
         "fileSortBy": "Trier les fichiers dans le dossier ouvert par heure de création, heure de modification et titre",
-        "startUpAction": "L'action après le démarrage de YarkDown, ouvrir le dernier contenu édité, ouvrir le dossier spécifié ou une page vierge",
+        "startUpAction": "L'action après le démarrage de YarkText, ouvrir le dernier contenu édité, ouvrir le dossier spécifié ou une page vierge",
         "restoreLayoutState": "Restaurer l'état précédent de l'éditeur au démarrage",
         "defaultDirectoryToOpen": "Le répertoire par défaut qui devrait être ouvert au démarrage quand startUp=folder",
-        "language": "La langue utilisée par YarkDown",
+        "language": "La langue utilisée par YarkText",
         "editorFontFamily": "Famille de police de l'éditeur",
         "fontSize": "Taille de police en pixels",
         "lineHeight": "Hauteur de ligne",
@@ -420,7 +422,7 @@
         "preferLooseListItem": "Le type de liste préféré",
         "bulletListMarker": "Le marqueur utilisé dans la liste à puces",
         "orderListDelimiter": "Le délimiteur utilisé dans la liste ordonnée",
-        "preferHeadingStyle": "Le style de titre préféré dans YarkDown",
+        "preferHeadingStyle": "Le style de titre préféré dans YarkText",
         "tabSize": "Remplacer la tabulation par x espaces",
         "listIndentation": "Sélectionner l'indentation de liste",
         "frontmatterType": "Le type de frontmatter",
@@ -437,7 +439,7 @@
         "softNewlineAsSpace": "Traiter les sauts de ligne simples comme des espaces",
         "sequenceTheme": "Thème du diagramme de séquence",
         "plantumlServer": "URL du serveur PlantUML",
-        "theme": "Sélectionner le thème utilisé dans YarkDown",
+        "theme": "Sélectionner le thème utilisé dans YarkText",
         "followSystemTheme": "Suivre le thème du système",
         "lightModeTheme": "Thème à utiliser lorsque le système est en mode clair",
         "darkModeTheme": "Thème à utiliser lorsque le système est en mode sombre",
@@ -658,7 +660,7 @@
         "neverDetected": "Jamais détecté",
         "neverSuccessful": "Jamais réussi"
       },
-      "defaultBehavior": "Comportement par défaut après avoir collé ou glissé une image dans YarkDown"
+      "defaultBehavior": "Comportement par défaut après avoir collé ou glissé une image dans YarkText"
     },
     "markdown": {
       "title": "Markdown",
@@ -782,7 +784,7 @@
   },
   "commands": {
     "mt": {
-      "hide": "Masquer YarkDown",
+      "hide": "Masquer YarkText",
       "hideOthers": "Masquer les autres"
     },
     "file": {
@@ -935,7 +937,7 @@
     "fileExists": "Le fichier existe déjà : {filename}",
     "files": "Fichiers",
     "importWarning": "Avertissement d'importation",
-    "installPandoc": "Pandoc est introuvable. Installez-le, ou définissez la variable d'environnement MARKTEXT_PANDOC sur le chemin du binaire pandoc, puis redémarrez YarkDown.",
+    "installPandoc": "Pandoc est introuvable. Installez-le, ou définissez la variable d'environnement MARKTEXT_PANDOC sur le chemin du binaire pandoc, puis redémarrez YarkText.",
     "exportWarning": "Avertissement d'exportation",
     "exportWarningMore": "…et {count} de plus",
     "keepOpen": "Garder ouvert",
@@ -952,7 +954,7 @@
     "configSchemaViolation": "Violation du schéma de configuration",
     "copyError": "Erreur de copie",
     "initializationFailed": "Échec de l'initialisation {hint}",
-    "otherInstanceDetected": "Une autre instance de YarkDown détectée en cours d'exécution",
+    "otherInstanceDetected": "Une autre instance de YarkText détectée en cours d'exécution",
     "report": "Signaler",
     "startupError": "Erreur de démarrage",
     "terminatedDueToError": "Terminé en raison d'une erreur",
@@ -1047,5 +1049,27 @@
     "clearFormat": "Effacer la mise en forme",
     "deleteBlock": "Supprimer le bloc",
     "hide": "Masquer la barre d’outils"
+  },
+  "tableTools": {
+    "resize": "Adjust table",
+    "left": "Align left",
+    "center": "Align center",
+    "right": "Align right",
+    "more": "More table actions",
+    "rows": "Rows (including header)",
+    "columns": "Columns",
+    "row-above": "Insert row above",
+    "row-below": "Insert row below",
+    "column-left": "Insert column left",
+    "column-right": "Insert column right",
+    "row-up": "Move row up",
+    "row-down": "Move row down",
+    "column-previous": "Move column left",
+    "column-next": "Move column right",
+    "delete-row": "Delete row",
+    "delete-column": "Delete column",
+    "copy": "Copy table",
+    "format": "Format table source",
+    "delete-table": "Delete table"
   }
 }

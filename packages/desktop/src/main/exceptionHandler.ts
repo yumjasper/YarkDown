@@ -101,7 +101,7 @@ const handleError = async(title: string, error: Error, type: ErrorType): Promise
       //
       // ### Version
       //
-      // YarkDown: ${MARKTEXT_VERSION_STRING}
+      // YarkText: ${MARKTEXT_VERSION_STRING}
       // Operating system: ${getOSInformation()}`
       //   )
       //   break
@@ -135,8 +135,8 @@ const setupExceptionHandler = (): void => {
 
   // start crashReporter to save core dumps to temporary folder
   crashReporter.start({
-    companyName: 'YarkDown',
-    productName: 'YarkDown',
+    companyName: 'YarkText',
+    productName: 'YarkText',
     submitURL: 'http://0.0.0.0/',
     uploadToServer: false,
     compress: true

@@ -120,7 +120,9 @@ export default function inlineMath(this: Renderer, {
                 {
                     attrs: { spellcheck: 'false' },
                 },
-                content,
+                className === CLASS_NAMES.MU_HIDE
+                    ? content
+                    : [...content, h(markerSelector, endMarker)],
             ),
             h(
                 previewSelector,
@@ -136,6 +138,6 @@ export default function inlineMath(this: Renderer, {
                 mathVnode,
             ),
         ]),
-        h(markerSelector, endMarker),
+        ...(className === CLASS_NAMES.MU_HIDE ? [h(markerSelector, endMarker)] : []),
     ];
 }

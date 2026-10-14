@@ -170,7 +170,7 @@ export interface PageOptions {
   [key: string]: unknown
 }
 
-export type ExportType = 'pdf' | 'html' | 'styledHtml' | 'png' | 'jpeg'
+export type ExportType = 'pdf' | 'html' | 'styledHtml' | 'png' | 'jpeg' | 'docx'
 
 /** Current document handed to the main process for a pandoc export. */
 export interface PandocExportPayload {

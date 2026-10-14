@@ -30,7 +30,7 @@
     /* `--editor-area-width` may be a percentage (marktext's Max width
        preference), so the text column's width is only known at layout time.
        Naming it a query container lets content that must not outgrow the
-       column — the inline-math popup — measure it in `cqw`. */
+       column — such as math previews — measure it in `cqw`. */
     container-type: inline-size;
 }
 
@@ -594,6 +594,8 @@ li.mu-task-list-item > span.mu-checkbox-checked::before {
 }
 
 .mu-table-inner {
+    width: 100%;
+    table-layout: auto;
     padding: 0;
 
     word-break: initial;
@@ -623,6 +625,15 @@ li.mu-task-list-item > span.mu-checkbox-checked::before {
     padding: 6px 13px;
 
     text-align: left;
+    vertical-align: top;
+}
+
+.mu-table-inner tr:nth-child(odd) {
+    background: var(--editor-color-04);
+}
+
+.mu-table-inner tr:nth-child(even) {
+    background: var(--editor-bg-color);
 }
 
 .mu-table-inner tr:first-child td {
@@ -847,7 +858,6 @@ figure.mu-diagram-block .mu-diagram-preview svg.sequence path[fill='#fff'] {
     fill: var(--editor-bg-color);
 }
 
-figure.mu-active.mu-math-block > div.mu-math-preview,
 figure.mu-active.mu-diagram-block > div.mu-diagram-preview {
     position: absolute;
     top: calc(100% + 20px);
@@ -863,6 +873,28 @@ figure.mu-active.mu-diagram-block > div.mu-diagram-preview {
     border-radius: 4px;
     box-shadow: 0 2px 12px 0 rgb(0 0 0 / 10%);
     transform: translateX(-50%);
+}
+
+figure.mu-active.mu-math-block > div.mu-math-preview {
+    position: relative;
+    box-sizing: border-box;
+    width: 100%;
+    margin-top: 0.75rem;
+    padding: 0.75rem 0.5rem;
+    background: var(--editor-bg-color);
+    border: 1px solid var(--editor-color-10);
+    border-radius: 4px;
+    order: 1;
+}
+
+figure.mu-active.mu-math-block {
+    display: flex;
+    flex-direction: column;
+}
+
+figure.mu-active.mu-math-block > .mu-math-container {
+    width: 100%;
+    box-sizing: border-box;
 }
 
 figure.mu-math-block span.mu-codeblock-content:first-of-type:empty::after {
@@ -889,6 +921,26 @@ pre.mu-active.mu-frontmatter::after {
 pre.mu-active.mu-math-container::before,
 pre.mu-active.mu-math-container::after {
     content: '$$';
+}
+
+.mu-math-container {
+    padding: 6px 12px;
+    color: var(--editor-color);
+    font-family: 'Lucida Console', Consolas, Courier, monospace;
+    font-size: 0.85em;
+    font-weight: 400;
+    line-height: 1.6;
+}
+
+.mu-math-container .mu-code {
+    display: block;
+    padding: 4px 0;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
 }
 
 pre.mu-active[data-role='mermaid']::before {
@@ -1004,7 +1056,7 @@ pre.mu-active.mu-fenced-code::after {
 
     min-width: 2em;
 
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
 }
 
 /* Footnote definition block — port of marktext's `figure[data-role='FOOTNOTE']`
@@ -1107,4 +1159,17 @@ pre.mu-active.mu-fenced-code::after {
 
 .mu-container figure.mu-footnote > i.mu-footnote-backlink:hover {
     color: var(--theme-color);
+}
+
+/* Delimiters belong to the source box's flow, so their height follows the
+   configured font size instead of protruding into neighbouring paragraphs. */
+pre.mu-active.mu-math-container::before,
+pre.mu-active.mu-math-container::after {
+    position: static;
+    display: block;
+    inset: auto;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: 400;
+    line-height: inherit;
 }

@@ -51,11 +51,11 @@ describe('Windows Markdown file association (build/windows/installer.nsh)', () =
   })
 
   it('quotes the executable path in every open command it writes', () => {
-    const commands = script.match(/shell\\open\\command[\s\S]*?YarkDown\.exe/g) ?? []
+    const commands = script.match(/shell\\open\\command[\s\S]*?YarkText\.exe/g) ?? []
     expect(commands.length, 'no open command is written').toBeGreaterThan(0)
     for (const command of commands) {
-      // Unquoted, `C:\Program Files\...\YarkDown.exe "%1"` runs `C:\Program`.
-      expect(command).toContain('"$INSTDIR\\YarkDown.exe')
+      // Unquoted, `C:\Program Files\...\YarkText.exe "%1"` runs `C:\Program`.
+      expect(command).toContain('"$INSTDIR\\YarkText.exe')
     }
   })
 

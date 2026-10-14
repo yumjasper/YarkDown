@@ -30,8 +30,21 @@ vi.hoisted(() => {
   w.window.DIRNAME = '/docs'
 })
 
-import { exportStyledHTML } from '@/util/exportHtml'
+import { exportStyledHTML, removeHtmlStyles } from '@/util/exportHtml'
 import { getHtmlToc, type TocEntry } from '@/util/pdf'
+
+describe('unstyled HTML', () => {
+  it('keeps semantic content and MathML without presentation styles or duplicate math', () => {
+    const html = removeHtmlStyles('<html><head><style>p{color:red}</style><link rel="stylesheet" href="theme.css"><title>中文</title></head><body><article class="markdown-body"><h1 style="color:red">标题</h1><table><tr><td>内容</td></tr></table><span class="katex"><span class="katex-mathml"><math><mi>x</mi></math></span><span class="katex-html">duplicate</span></span><img src="figure.png" alt="图片"></article></body></html>')
+    const doc = new DOMParser().parseFromString(html, 'text/html')
+    expect(doc.querySelectorAll('style, link[rel="stylesheet"], [style], [class]')).toHaveLength(0)
+    expect(doc.querySelector('math mi')?.textContent).toBe('x')
+    expect(doc.body.textContent).not.toContain('duplicate')
+    expect(doc.querySelector('td')?.textContent).toBe('内容')
+    expect(doc.querySelector('img')?.getAttribute('src')).toBe('figure.png')
+    expect(doc.title).toBe('中文')
+  })
+})
 
 // `exportStyledHTML(muya, markdown, options)` renders through the real
 // `@muyajs/core` `MarkdownToHtml` engine (which runs in jsdom). The first arg is

@@ -6,7 +6,7 @@ import { BLOCK_DOM_PROPERTY, CLASS_NAMES } from '../config';
 import { LINK_SELECTOR } from '../editor/linkMouseEvents';
 import { isHTMLElement, isKeyboardEvent } from '../utils';
 import { getImageInfo, getImageSrc } from '../utils/image';
-import { findContentDOM } from './dom';
+import { findContentDOM, getOffsetOfParagraph } from './dom';
 import { SelectionType } from './types';
 
 class ImageSelection {
@@ -26,7 +26,10 @@ class ImageSelection {
     }
 
     private _handleDocClick = (): void => {
+        const previous = this.selected;
         this.selected = null;
+        if (previous && previous.block !== this._muya.editor.activeContentBlock)
+            previous.block.update();
     };
 
     private _handleClick = (event: Event): void => {
@@ -34,7 +37,21 @@ class ImageSelection {
         if (!isHTMLElement(target))
             return;
         const imageWrapper = target.closest<HTMLElement>(`.${CLASS_NAMES.MU_INLINE_IMAGE}`);
+        if (!imageWrapper) {
+            this._handleDocClick();
+            const marker = target.tagName === 'IMG' ? target.previousElementSibling : null;
+            const content = marker ? findContentDOM(marker) : null;
+            if (marker?.classList.contains(CLASS_NAMES.MU_IMAGE_MARKED_TEXT) && content) {
+                const block = content[BLOCK_DOM_PROPERTY] as Format;
+                const offset = getOffsetOfParagraph(marker, content);
+                event.preventDefault();
+                block.setCursor(offset, offset, true);
+            }
+            return;
+        }
         this.selected = null;
+        if (target.closest('.mu-image-source'))
+            return;
         if (imageWrapper)
             this._handleClickInlineImage(event, imageWrapper);
     };
@@ -151,6 +168,7 @@ class ImageSelection {
             // the detached node the resize bar reads a zero rect and draws its
             // handles in the window's corner, and the toolbar a stale one (#5391).
             this._selection.selectImage(Object.assign({}, imageInfo, { block: contentBlock }));
+            contentBlock.update();
 
             const liveWrapper = this._imageWrappers(contentDom)[imageIndex] ?? imageWrapper;
             const imageContainer = liveWrapper.querySelector(

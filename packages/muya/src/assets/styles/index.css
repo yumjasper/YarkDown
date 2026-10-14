@@ -254,3 +254,43 @@ body {
 
     background: var(--highlight-color);
 }
+
+/* SVG masks inherit the same tint as their parent; bitmap shadow tinting would
+   shift the mask outside the icon box and hide it. */
+.mu-float-wrapper i[style*='mask-image'],
+.mu-front-button i[style*='mask-image'] {
+    left: 0 !important;
+    filter: none !important;
+}
+
+.mu-float-wrapper:is(
+    .mu-image-toolbar-container,
+    .mu-format-picker-container,
+    .mu-link-tools-container,
+    .mu-preview-tools-container
+) {
+    border-radius: 20px;
+}
+
+.mu-float-wrapper :is(.mu-format-picker, .mu-link-tools, .mu-preview-tools, .mu-table-column-tools) {
+    width: max-content;
+    height: auto;
+}
+
+.mu-float-wrapper :is(.mu-format-picker, .mu-link-tools, .mu-preview-tools, .mu-table-column-tools) > ul {
+    display: flex;
+    gap: 1px;
+    padding: 4px 7px;
+}
+
+.mu-float-wrapper :is(.mu-format-picker, .mu-link-tools, .mu-preview-tools, .mu-table-column-tools) li.item {
+    flex: none;
+    width: 28px;
+    height: 26px;
+    border-radius: 7px;
+}
+
+.mu-float-wrapper :is(.mu-format-picker, .mu-link-tools, .mu-preview-tools, .mu-table-column-tools) li.item::before {
+    top: 6px;
+    height: 14px;
+}

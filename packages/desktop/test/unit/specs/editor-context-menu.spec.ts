@@ -4,10 +4,10 @@ import { clipboardHtmlToPlainText } from '@/components/editorContextMenu/plainTe
 
 describe('editor context menu placement', () => {
   const viewport = { width: 800, height: 600 }
-  it('keeps a right-click near the bottom-right edge inside the window', () => {
+  it('keeps the origin exactly at the pointer even near an edge', () => {
     expect(fitContextMenu({ x: 790, y: 590 }, { width: 220, height: 230 }, viewport)).toEqual({
-      x: 572,
-      y: 362
+      x: 790,
+      y: 590
     })
   })
   it('flips submenus left when the right side has no space', () => {
@@ -15,10 +15,10 @@ describe('editor context menu placement', () => {
       fitContextSubmenu({ left: 570, right: 790, top: 580 }, { width: 260, height: 360 }, viewport)
     ).toEqual({ x: 306, y: 232 })
   })
-  it('keeps the menu origin visible even in a smaller viewport', () => {
+  it('does not add padding or shift the supplied origin', () => {
     expect(
       fitContextMenu({ x: -20, y: -10 }, { width: 220, height: 230 }, { width: 180, height: 160 })
-    ).toEqual({ x: 8, y: 8 })
+    ).toEqual({ x: -20, y: -10 })
   })
 })
 

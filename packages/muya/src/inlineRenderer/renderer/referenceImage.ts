@@ -34,7 +34,7 @@ export default function referenceImage(
     if (src) {
         ({ id, isSuccess, url: resolvedSrc } = this.loadImageAsync(
             imageSrc,
-            { alt },
+            { alt, title },
             className,
             CLASS_NAMES.MU_COPY_REMOVE,
         ));
@@ -62,6 +62,11 @@ export default function referenceImage(
                 // back to the raw src if the cache hasn't been populated for
                 // some reason.
                 h(`img.${CLASS_NAMES.MU_COPY_REMOVE}`, { props: { alt, src: resolvedSrc ?? src, title } }),
+                ...(title
+                    ? [h('span.mu-image-caption.mu-copy-remove', {
+                            attrs: { contenteditable: 'false' },
+                        }, title)]
+                    : []),
             ]
         : [h(selector, tag)];
 }

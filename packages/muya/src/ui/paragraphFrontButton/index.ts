@@ -3,16 +3,17 @@ import type Parent from '../../block/base/parent';
 import type { Muya } from '../../index';
 import type { IBaseOptions } from '../types';
 import { autoUpdate, computePosition, flip, offset } from '@floating-ui/dom';
-
-import dragIcon from '../../assets/icons/drag/2.png';
 import BulletList from '../../block/commonMark/bulletList';
 import OrderList from '../../block/commonMark/orderList';
 import { BLOCK_DOM_PROPERTY } from '../../config';
 import { isMouseEvent, throttle, verticalPositionInRect } from '../../utils';
 import { h, patch } from '../../utils/snabbdom';
+import { toolbarIconUrl } from '../toolbarIcons';
 import { getIcon } from './config';
 
 import './index.css';
+
+const dragIcon = toolbarIconUrl('drag');
 
 const LEFT_OFFSET = 100;
 
@@ -35,8 +36,10 @@ function renderIcon(i: string, className: string) {
             'i.icon-inner',
             {
                 style: {
-                    'background': `url(${i}) no-repeat`,
-                    'background-size': '100%',
+                    'mask-image': `url(${i})`,
+                    'mask-size': '100%',
+                    'mask-repeat': 'no-repeat',
+                    'background-color': 'currentColor',
                 },
             },
             '',

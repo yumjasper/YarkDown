@@ -11,7 +11,11 @@ import {
 } from 'electron'
 import log from 'electron-log'
 import { isDirectory, isFile, exists } from 'common/filesystem'
-import { MARKDOWN_EXTENSIONS, isDangerousExecutableFile, isMarkdownFile } from 'common/filesystem/paths'
+import {
+  MARKDOWN_EXTENSIONS,
+  isDangerousExecutableFile,
+  isMarkdownFile
+} from 'common/filesystem/paths'
 import { checkUpdates, userSetting } from './marktext'
 import { showTabBar } from './view'
 import { COMMANDS } from '../../commands'
@@ -30,6 +34,7 @@ import pandoc, {
   shouldMirrorMedia
 } from '../../utils/pandoc'
 import { t, getCurrentLanguage } from '../../i18n'
+import { exportDocumentBinary } from '../../utils/documentExport'
 import type { PandocExportPayload, TabOptions, UnsavedFile } from '@shared/types/files'
 
 type Win = BrowserWindow | null | undefined
@@ -53,13 +58,17 @@ const getExportExtensionFilter = (type: string): Electron.FileFilter[] | undefin
         extensions: ['pdf']
       }
     ]
-  } else if (type === 'styledHtml') {
+  } else if (type === 'styledHtml' || type === 'html') {
     return [
       {
         name: 'Hypertext Markup Language',
         extensions: ['html']
       }
     ]
+  }
+
+  if (type === 'png' || type === 'docx') {
+    return [{ name: type === 'png' ? 'PNG Image' : 'Word Document', extensions: [type] }]
   }
 
   // Allow all extensions.
@@ -103,6 +112,7 @@ const handleResponseForExport = async(e: IpcMainEvent, payload: ExportPayload): 
     return
   }
   const extension = (EXTENSION_HASN as Record<string, string>)[type]
+  if (!extension) return
   const dirname = pathname ? path.dirname(pathname) : getPath('documents')
   const nakedFilename = sanitizeFilename(pathname ? path.basename(pathname, '.md') : title)
 
@@ -132,7 +142,12 @@ const handleResponseForExport = async(e: IpcMainEvent, payload: ExportPayload): 
         if (!content) {
           throw new Error('No HTML content found.')
         }
-        await writeFile(filePath, content, extension!, 'utf8')
+        if (type === 'png' || type === 'docx') {
+          const data = await exportDocumentBinary(content, type)
+          await writeFile(filePath, data, extension, 'binary')
+        } else {
+          await writeFile(filePath, content, extension, 'utf8')
+        }
       }
       win.webContents.send('mt::export-success', { type, filePath })
     } catch (err) {

@@ -131,9 +131,9 @@ const paragraphItems = computed(() => [
   )
 ])
 const listItems = computed(() => [
-  commandItem('bullet-list', t('commands.paragraph.bulletList'), 'paragraph.bullet-list'),
-  commandItem('ordered-list', t('commands.paragraph.orderList'), 'paragraph.order-list'),
-  commandItem('task-list', t('commands.paragraph.taskList'), 'paragraph.task-list')
+  { ...commandItem('bullet-list', t('commands.paragraph.bulletList'), 'paragraph.bullet-list'), icon: 'list' },
+  { ...commandItem('ordered-list', t('commands.paragraph.orderList'), 'paragraph.order-list'), icon: 'ordered-list' },
+  { ...commandItem('task-list', t('commands.paragraph.taskList'), 'paragraph.task-list'), icon: 'task-list' }
 ])
 
 // Clipboard commands cross into main to use Electron's native clipboard.

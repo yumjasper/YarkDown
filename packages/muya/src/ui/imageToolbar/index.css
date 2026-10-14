@@ -1,12 +1,12 @@
 .mu-float-wrapper.mu-image-toolbar-container {
     overflow: visible;
 
-    border-radius: 2px;
+    border-radius: 20px;
 }
 
 .mu-image-toolbar {
-    width: 240px;
-    height: 30px;
+    width: max-content;
+    height: auto;
 }
 
 .mu-image-toolbar ul,
@@ -17,7 +17,8 @@
 
 .mu-image-toolbar ul {
     display: flex;
-    padding: 0 7px;
+    gap: 2px;
+    padding: 4px 8px;
 }
 
 .mu-image-toolbar li.item {
@@ -26,8 +27,10 @@
     display: flex;
     align-items: center;
     justify-content: space-around;
-    width: 28px;
-    height: 30px;
+    flex: 0 0 32px;
+    width: 32px;
+    height: 28px;
+    border-radius: 7px;
 
     list-style: none;
     cursor: pointer;
@@ -38,21 +41,21 @@
 }
 
 .mu-image-toolbar li.item.edit {
-    margin-right: 21px;
-    margin-left: 10px;
+    margin-right: 8px;
+    margin-left: 0;
 }
 
 .mu-image-toolbar li.item.inline {
-    margin-right: 8px;
+    margin-right: 0;
 }
 
 .mu-image-toolbar li.item:first-of-type::before {
     position: absolute;
-    top: 7px;
-    right: -10px;
+    top: 6px;
+    right: -4px;
 
     width: 1px;
-    height: 16px;
+    height: 14px;
 
     background: var(--editor-color-10);
 
@@ -60,17 +63,17 @@
 }
 
 .mu-image-toolbar li.item.delete {
-    margin-right: 10px;
-    margin-left: 21px;
+    margin-right: 0;
+    margin-left: 8px;
 }
 
 .mu-image-toolbar li.item:last-of-type::before {
     position: absolute;
-    top: 7px;
-    left: -10px;
+    top: 6px;
+    left: -4px;
 
     width: 1px;
-    height: 16px;
+    height: 14px;
 
     background: var(--editor-color-10);
 

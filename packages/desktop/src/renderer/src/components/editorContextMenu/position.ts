@@ -7,7 +7,9 @@ interface Size {
   height: number
 }
 
-export const fitContextMenu = (point: Point, size: Size, viewport: Size): Point => ({
+export const fitContextMenu = (point: Point, _size: Size, _viewport: Size): Point => ({ ...point })
+
+const fitSubmenu = (point: Point, size: Size, viewport: Size): Point => ({
   x: Math.max(8, Math.min(point.x, viewport.width - size.width - 8)),
   y: Math.max(8, Math.min(point.y, viewport.height - size.height - 8))
 })
@@ -17,7 +19,7 @@ export const fitContextSubmenu = (
   size: Size,
   viewport: Size
 ): Point =>
-  fitContextMenu(
+  fitSubmenu(
     {
       x:
         parent.right + size.width + 12 <= viewport.width

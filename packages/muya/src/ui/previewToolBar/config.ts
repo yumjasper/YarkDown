@@ -1,6 +1,8 @@
-import DeleteIcon from '../../assets/icons/delete/2.png';
-import EditIcon from '../../assets/icons/edit.png';
-import ViewIcon from '../../assets/icons/view/2.png';
+import { toolbarIconUrl } from '../toolbarIcons';
+
+const DeleteIcon = toolbarIconUrl('delete');
+const EditIcon = toolbarIconUrl('edit');
+const ViewIcon = toolbarIconUrl('view');
 
 export type TPreviewToolType = 'view' | 'edit' | 'delete';
 

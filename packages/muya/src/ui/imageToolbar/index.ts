@@ -77,8 +77,10 @@ export class ImageToolBar extends BaseFloat {
                     'i.icon-inner',
                     {
                         style: {
-                            'background': `url(${i.icon}) no-repeat`,
-                            'background-size': '100%',
+                            'mask-image': `url(${i.icon})`,
+                            'mask-size': '100%',
+                            'mask-repeat': 'no-repeat',
+                            'background-color': 'currentColor',
                         },
                     },
                     '',

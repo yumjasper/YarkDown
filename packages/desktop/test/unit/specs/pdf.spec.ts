@@ -182,8 +182,10 @@ describe('getCssForOptions', () => {
     const styledHtml = await getCssForOptions({ type: 'styledHtml' })
 
     expect(printable).toContain('@media print{@page{')
-    // type === 'styledHtml' is the only non-printable mode.
     expect(styledHtml).not.toContain('@media print')
+    for (const type of ['html', 'png', 'docx']) {
+      expect(await getCssForOptions({ type })).not.toContain('@media print')
+    }
   })
 })
 

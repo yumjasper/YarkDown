@@ -156,8 +156,10 @@ export class ParagraphQuickInsertMenu extends BaseScrollFloat {
                             `i.icon-${label.replace(/\s/g, '-')}`,
                             {
                                 style: {
-                                    'background': `url(${icon}) no-repeat`,
-                                    'background-size': '100%',
+                                    'mask-image': `url(${icon})`,
+                                    'mask-size': '100%',
+                                    'mask-repeat': 'no-repeat',
+                                    'background-color': 'currentColor',
                                 },
                             },
                             '',

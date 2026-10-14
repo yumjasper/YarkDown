@@ -156,16 +156,40 @@ export default function(
       label: t('menu.file.export'),
       submenu: [
         {
-          label: t('menu.file.exportHtml'),
+          id: 'export-pdf',
+          label: 'PDF',
+          accelerator: keybindings.getAccelerator('file.export-file.pdf') ?? undefined,
+          click(_menuItem, browserWindow) {
+            actions.exportFile(browserWindow as BrowserWindow | undefined, 'pdf')
+          }
+        },
+        {
+          id: 'export-styledHtml',
+          label: 'HTML',
           click(_menuItem, browserWindow) {
             actions.exportFile(browserWindow as BrowserWindow | undefined, 'styledHtml')
           }
         },
         {
-          label: t('menu.file.exportPdf'),
-          accelerator: keybindings.getAccelerator('file.export-file.pdf') ?? undefined,
+          id: 'export-html',
+          label: t('menu.file.exportHtmlPlain'),
           click(_menuItem, browserWindow) {
-            actions.exportFile(browserWindow as BrowserWindow | undefined, 'pdf')
+            actions.exportFile(browserWindow as BrowserWindow | undefined, 'html')
+          }
+        },
+        {
+          id: 'export-png',
+          label: t('menu.file.exportImage'),
+          click(_menuItem, browserWindow) {
+            actions.exportFile(browserWindow as BrowserWindow | undefined, 'png')
+          }
+        },
+        { type: 'separator' },
+        {
+          id: 'export-docx',
+          label: 'Word (.docx)',
+          click(_menuItem, browserWindow) {
+            actions.exportFile(browserWindow as BrowserWindow | undefined, 'docx')
           }
         }
       ]

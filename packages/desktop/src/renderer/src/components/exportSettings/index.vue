@@ -408,7 +408,7 @@ const updateTranslations = () => {
 const showDialog = (type: unknown) => {
   const exportTypeValue = String(type ?? '')
   exportType.value = exportTypeValue
-  isPrintable.value = exportTypeValue !== 'styledHtml'
+  isPrintable.value = exportTypeValue === 'pdf' || exportTypeValue === 'print'
   if (!isPrintable.value && (activeName.value === 'header' || activeName.value === 'page')) {
     activeName.value = 'info'
   }

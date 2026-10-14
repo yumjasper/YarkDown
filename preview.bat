@@ -1,6 +1,6 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
-title YarkDown - Development Preview
+title YarkText - Development Preview
 
 pushd "%~dp0"
 if errorlevel 1 (
@@ -35,7 +35,7 @@ if errorlevel 1 goto failed
 
 :launch
 echo.
-echo Starting YarkDown preview without packaging...
+echo Starting YarkText preview without packaging...
 echo Keep this window open while previewing.
 echo UI and style changes usually reload automatically.
 echo After main-process changes, stop with Ctrl+C and run this file again.

@@ -1,7 +1,7 @@
 {
-  "name": "yarkdown-monorepo",
-  "version": "1.0.1",
-  "description": "YarkDown monorepo root",
+  "name": "yarktext-monorepo",
+  "version": "1.0.2",
+  "description": "YarkText monorepo root",
   "private": true,
   "homepage": "https://github.com/marktext/marktext",
   "packageManager": "pnpm@10.33.4",

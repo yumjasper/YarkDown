@@ -1,10 +1,10 @@
-# Development Rules
+﻿# Development Rules
 
 This file provides guidance to AI agents when working with code in this repository.
 
 ## Project Overview
 
-YarkDown is a WYSIWYG markdown editor based on MarkText, built on Electron + Vue 3. It supports CommonMark, GitHub Flavored Markdown, math (KaTeX), Mermaid diagrams, PlantUML, and multiple editing modes (focus, typewriter, source-code).
+YarkText is a WYSIWYG markdown editor based on MarkText, built on Electron + Vue 3. It supports CommonMark, GitHub Flavored Markdown, math (KaTeX), Mermaid diagrams, PlantUML, and multiple editing modes (focus, typewriter, source-code).
 
 - **Version**: see `package.json`
 - **License**: MIT
@@ -286,9 +286,9 @@ See `packages/website/content/docs/dev/IPC.md` for conventions and examples.
 
 - 本工程所有新 Git Commit 的标题与正文必须使用中文；技术名称、文件路径和命令可以保留原文。
 - Commit 标题必须以中文方括号包围的三段数字版本号开头，格式为 `【主版本.次版本.修订号】中文修改说明`，例如 `【1.0.1】统一软件名称与版本号`；不再使用 `【1.0】` 等两段格式。
-- 应用名称统一为 `YarkDown`。每次提交时，根目录和 `packages/desktop/package.json` 的版本号必须与 Commit 前缀一致；同步更新版本，默认递增修订号，主版本和次版本升级按明确的开发计划执行。
+- 应用名称统一为 `YarkText`。每次提交时，根目录和 `packages/desktop/package.json` 的版本号必须与 Commit 前缀一致；同步更新版本，默认递增修订号，主版本和次版本升级按明确的开发计划执行。
 - 历史 `【1.0】` 提交对应 `1.0.0` 开发基线；本次品牌与版本统一提交为 `【1.0.1】`，不改写已有历史提交。
-- 内部工作区包名 `marktext`、IPC/环境变量名称和上游归属信息保留兼容；对用户展示的应用名称、安装包、快捷方式及可执行文件使用 YarkDown 品牌。
+- 内部工作区包名 `marktext`、IPC/环境变量名称和上游归属信息保留兼容；对用户展示的应用名称、安装包、快捷方式及可执行文件使用 YarkText 品牌。
 - 后续人工与 AI 提交均遵守此规范，不沿用历史提交的英文标题格式。
 
 - Submit PRs to the **`develop`** branch (not `main`).

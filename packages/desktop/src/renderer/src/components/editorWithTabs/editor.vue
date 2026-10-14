@@ -65,11 +65,16 @@
       </template>
     </el-dialog>
     <editor-search v-if="!sourceCode" />
+    <table-tools
+      v-if="!sourceCode"
+      :muya="editor"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, shallowRef, reactive, watch, onMounted, onBeforeUnmount, nextTick, markRaw } from 'vue'
+import TableTools from '../tableTools/index.vue'
 import log from 'electron-log'
 import {
   Muya,
@@ -87,7 +92,6 @@ import {
   ParagraphQuickInsertMenu,
   PreviewToolBar,
   TableChessboard,
-  TableColumnToolbar,
   TableDragBar,
   TableRowColumMenu,
   wordCount as muyaWordCount,
@@ -99,7 +103,7 @@ import {
   type ISerializedHistory
 } from '@muyajs/core'
 import { getMuyaLocale } from '@/util/muyaLocale'
-import { exportStyledHTML, type HeaderFooterPart } from '@/util/exportHtml'
+import { exportStyledHTML, removeHtmlStyles, type HeaderFooterPart } from '@/util/exportHtml'
 import { applyCursor, isIndexCursor } from '@/util/cursor'
 import EditorSearch from '../search/index.vue'
 import MediaViewer from '../mediaViewer/index.vue'
@@ -1335,7 +1339,7 @@ const handleExport = async (options: unknown) => {
   const opts = options as ExportOptions
   const { type, headerFooterStyled, htmlTitle } = opts
 
-  if (!/^pdf|print|styledHtml$/.test(type)) {
+  if (!['pdf', 'print', 'styledHtml', 'html', 'png', 'docx'].includes(type)) {
     throw new Error(`Invalid type to export: "${type}".`)
   }
 
@@ -1349,7 +1353,10 @@ const handleExport = async (options: unknown) => {
   const footer = (opts.footer ?? null) as HeaderFooterPart | null
 
   switch (type) {
-    case 'styledHtml': {
+    case 'styledHtml':
+    case 'html':
+    case 'png':
+    case 'docx': {
       try {
         const content = await exportStyledHTML(muya, markdown, {
           title: htmlTitle || '',
@@ -1358,7 +1365,7 @@ const handleExport = async (options: unknown) => {
           toc: htmlToc,
           dir: props.textDirection
         })
-        editorStore.EXPORT({ type, content })
+        editorStore.EXPORT({ type, content: type === 'html' ? removeHtmlStyles(content) : content })
       } catch (err) {
         log.error('Failed to export document:', err)
         notice.notify({
@@ -1790,7 +1797,6 @@ onMounted(() => {
       jumpClick
     })
     Muya.use(FootnoteTool)
-    Muya.use(TableColumnToolbar)
     Muya.use(TableDragBar)
     Muya.use(TableRowColumMenu)
   }

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import keybindings from '../../../src/main/keyboard/keybindingsWindows'
 import { isEqualAccelerator } from '../../../src/common/keybinding'
 
-describe('YarkDown Windows default shortcuts', () => {
+describe('YarkText Windows default shortcuts', () => {
   it('assigns Ctrl+1 through Ctrl+6 to headings', () => {
     for (let level = 1; level <= 6; level++) {
       expect(keybindings.get(`paragraph.heading-${level}`)).toBe(`Ctrl+${level}`)

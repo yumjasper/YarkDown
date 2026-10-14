@@ -23,6 +23,8 @@
       "rename": "名前の変更",
       "export": "エクスポート",
       "exportHtml": "HTML としてエクスポート",
+      "exportHtmlPlain": "HTML (without styles)",
+      "exportImage": "Image (PNG)",
       "exportPdf": "PDF としてエクスポート",
       "convertWithPandoc": "Pandoc で変換",
       "import": "インポート",
@@ -97,21 +99,21 @@
       "reportBug": "バグの報告",
       "viewSource": "ソースコードの表示",
       "followUs": "フォローする",
-      "support": "YarkDown を支援",
+      "support": "YarkText を支援",
       "license": "ライセンス",
       "about": "バージョン情報",
       "checkUpdates": "更新の確認"
     },
     "marktext": {
-      "title": "YarkDown",
-      "about": "YarkDown について",
+      "title": "YarkText",
+      "about": "YarkText について",
       "checkUpdates": "更新の確認...",
       "preferences": "環境設定",
       "services": "サービス",
-      "hide": "YarkDown を隠す",
+      "hide": "YarkText を隠す",
       "hideOthers": "他を隠す",
       "showAll": "すべて表示",
-      "quit": "YarkDown を終了"
+      "quit": "YarkText を終了"
     },
     "view": {
       "view": "表示",
@@ -363,7 +365,7 @@
   },
   "import": {
     "title": "インポートまたは開く",
-    "description": "ここにドラッグして YarkDown にコンテンツをインポート"
+    "description": "ここにドラッグして YarkText にコンテンツをインポート"
   },
   "preferences": {
     "title": "環境設定",
@@ -392,10 +394,10 @@
         "hideScrollbar": "スクロールバーを非表示にするかどうか",
         "wordWrapInToc": "目次で自動改行を有効にするかどうか",
         "fileSortBy": "開いたフォルダー内のファイルを作成時刻、変更時刻、タイトルで並べ替え",
-        "startUpAction": "YarkDown 起動後のアクション、最後に編集したコンテンツを開く、指定されたフォルダーを開く、または空白ページ",
+        "startUpAction": "YarkText 起動後のアクション、最後に編集したコンテンツを開く、指定されたフォルダーを開く、または空白ページ",
         "restoreLayoutState": "起動時に前回のエディター状態を復元",
         "defaultDirectoryToOpen": "startUp=folder の場合に起動時に開かれるデフォルトディレクトリ",
-        "language": "YarkDown が使用する言語",
+        "language": "YarkText が使用する言語",
         "editorFontFamily": "エディターのフォントファミリー",
         "fontSize": "フォントサイズ (ピクセル)",
         "lineHeight": "行の高さ",
@@ -420,7 +422,7 @@
         "preferLooseListItem": "優先されるリストタイプ",
         "bulletListMarker": "箇条書きリストで使用されるマーカー",
         "orderListDelimiter": "順序付きリストで使用される区切り文字",
-        "preferHeadingStyle": "YarkDown で優先される見出しスタイル",
+        "preferHeadingStyle": "YarkText で優先される見出しスタイル",
         "tabSize": "タブを x個 のスペースに置き換える",
         "listIndentation": "リストのインデントを選択",
         "frontmatterType": "フロントマターのタイプ",
@@ -437,7 +439,7 @@
         "softNewlineAsSpace": "ソフト改行をスペースとして扱う",
         "sequenceTheme": "シーケンス図のテーマ",
         "plantumlServer": "PlantUML サーバーの URL",
-        "theme": "YarkDown で使用するテーマの選択",
+        "theme": "YarkText で使用するテーマの選択",
         "followSystemTheme": "システムのテーマに従う",
         "lightModeTheme": "システムがライトモードの時に使用するテーマ",
         "darkModeTheme": "システムがダークモードの時に使用するテーマ",
@@ -658,7 +660,7 @@
         "neverDetected": "検出されたことがない",
         "neverSuccessful": "成功したことがない"
       },
-      "defaultBehavior": "YarkDown に画像を貼り付けまたはドラッグした後のデフォルト動作"
+      "defaultBehavior": "YarkText に画像を貼り付けまたはドラッグした後のデフォルト動作"
     },
     "markdown": {
       "title": "Markdown",
@@ -782,7 +784,7 @@
   },
   "commands": {
     "mt": {
-      "hide": "YarkDown を隠す",
+      "hide": "YarkText を隠す",
       "hideOthers": "他を隠す"
     },
     "file": {
@@ -935,7 +937,7 @@
     "fileExists": "ファイルが既に存在します: {filename}",
     "files": "ファイル",
     "importWarning": "インポート警告",
-    "installPandoc": "Pandoc が見つかりません。インストールするか、環境変数 MARKTEXT_PANDOC に pandoc の実行ファイルのパスを設定して YarkDown を再起動してください。",
+    "installPandoc": "Pandoc が見つかりません。インストールするか、環境変数 MARKTEXT_PANDOC に pandoc の実行ファイルのパスを設定して YarkText を再起動してください。",
     "exportWarning": "エクスポートの警告",
     "exportWarningMore": "…ほか {count} 件",
     "keepOpen": "開いたままにする",
@@ -952,7 +954,7 @@
     "configSchemaViolation": "設定スキーマ違反",
     "copyError": "コピーエラー",
     "initializationFailed": "初期化に失敗しました {hint}",
-    "otherInstanceDetected": "YarkDown の別のインスタンスが既に実行中です",
+    "otherInstanceDetected": "YarkText の別のインスタンスが既に実行中です",
     "report": "報告",
     "startupError": "起動エラー",
     "terminatedDueToError": "エラーにより終了",
@@ -1047,5 +1049,27 @@
     "clearFormat": "書式をクリア",
     "deleteBlock": "ブロックを削除",
     "hide": "ツールバーを隠す"
+  },
+  "tableTools": {
+    "resize": "Adjust table",
+    "left": "Align left",
+    "center": "Align center",
+    "right": "Align right",
+    "more": "More table actions",
+    "rows": "Rows (including header)",
+    "columns": "Columns",
+    "row-above": "Insert row above",
+    "row-below": "Insert row below",
+    "column-left": "Insert column left",
+    "column-right": "Insert column right",
+    "row-up": "Move row up",
+    "row-down": "Move row down",
+    "column-previous": "Move column left",
+    "column-next": "Move column right",
+    "delete-row": "Delete row",
+    "delete-column": "Delete column",
+    "copy": "Copy table",
+    "format": "Format table source",
+    "delete-table": "Delete table"
   }
 }

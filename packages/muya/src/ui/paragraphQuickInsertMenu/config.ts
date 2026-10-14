@@ -1,28 +1,30 @@
-import bulletListIcon from '../../assets/icons/bullet_list/2.png';
-import vegaIcon from '../../assets/icons/chart/2.png';
-import codeIcon from '../../assets/icons/code/2.png';
-import flowchartIcon from '../../assets/icons/flowchart/2.png';
-import frontMatterIcon from '../../assets/icons/front_matter/2.png';
-import header1Icon from '../../assets/icons/heading_1/2.png';
-import header2Icon from '../../assets/icons/heading_2/2.png';
-import header3Icon from '../../assets/icons/heading_3/2.png';
-import header4Icon from '../../assets/icons/heading_4/2.png';
-import header5Icon from '../../assets/icons/heading_5/2.png';
-import header6Icon from '../../assets/icons/heading_6/2.png';
-import hrIcon from '../../assets/icons/horizontal_line/2.png';
-import htmlIcon from '../../assets/icons/html/2.png';
-import mathBlockIcon from '../../assets/icons/math/2.png';
-import mermaidIcon from '../../assets/icons/mermaid/2.png';
-import newTableIcon from '../../assets/icons/new_table/2.png';
-import orderListIcon from '../../assets/icons/order_list/2.png';
-import paragraphIcon from '../../assets/icons/paragraph/2.png';
-import plantumlIcon from '../../assets/icons/plantuml/2.png';
-import quoteIcon from '../../assets/icons/quote_block/2.png';
-import sequenceIcon from '../../assets/icons/sequence/2.png';
-
-import todoListIcon from '../../assets/icons/todolist/2.png';
 import { isOsx } from '../../config';
 import { isKeyboardEvent } from '../../utils';
+import { toolbarIconUrl } from '../toolbarIcons';
+
+const bulletListIcon = toolbarIconUrl('list');
+const vegaIcon = toolbarIconUrl('chart');
+const codeIcon = toolbarIconUrl('code');
+const flowchartIcon = toolbarIconUrl('diagram');
+const frontMatterIcon = toolbarIconUrl('frontmatter');
+const header1Icon = toolbarIconUrl('heading-1');
+const header2Icon = toolbarIconUrl('heading-2');
+const header3Icon = toolbarIconUrl('heading-3');
+const header4Icon = toolbarIconUrl('heading-4');
+const header5Icon = toolbarIconUrl('heading-5');
+const header6Icon = toolbarIconUrl('heading-6');
+const hrIcon = toolbarIconUrl('line');
+const htmlIcon = toolbarIconUrl('code');
+const mathBlockIcon = toolbarIconUrl('math');
+const mermaidIcon = toolbarIconUrl('diagram');
+const newTableIcon = toolbarIconUrl('table');
+const orderListIcon = toolbarIconUrl('ordered-list');
+const paragraphIcon = toolbarIconUrl('paragraph');
+const plantumlIcon = toolbarIconUrl('diagram');
+const quoteIcon = toolbarIconUrl('quote');
+const sequenceIcon = toolbarIconUrl('diagram');
+
+const todoListIcon = toolbarIconUrl('task-list');
 
 const COMMAND_KEY = isOsx ? '⌘' : 'Ctrl';
 const OPTION_KEY = isOsx ? '⌥' : 'Alt';

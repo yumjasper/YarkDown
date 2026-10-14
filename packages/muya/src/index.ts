@@ -1,6 +1,8 @@
+export { getTableCell, performTableAction, resizeTable, tableActionDisabled, tableActions } from './block/gfm/table/actions';
+export type { TTableAction } from './block/gfm/table/actions';
+
 export type { ISerializedHistory } from './history';
 export type { ILocale } from './i18n/types';
-
 export { de, en, es, fr, ja, ko, nl, pt, ru, tr, zhCN, zhTW } from './locales';
 export { Muya } from './muya';
 export type { IMatch, IReplaceOption, ISearchOption } from './search/types';
@@ -10,9 +12,9 @@ export type { ITocItem } from './state/getTOC';
 export { MarkdownToHtml } from './state/markdownToHtml';
 export { renderToStaticHTML } from './state/renderToStaticHTML';
 export type { IRenderToStaticHTMLOptions } from './state/renderToStaticHTML';
+
 export type { TState } from './state/types';
 export type { IMuyaOptions } from './types';
-
 export { CodeBlockLanguageSelector } from './ui/codeBlockLanguageSelector';
 // Export ui tools.
 export { EmojiSelector } from './ui/emojiSelector';
@@ -33,6 +35,7 @@ export { default as TableChessboard } from './ui/tableChessboard';
 export { TableColumnToolbar } from './ui/tableColumnToolbar';
 export { TableDragBar } from './ui/tableDragBar';
 export { TableRowColumMenu } from './ui/tableRowColumMenu';
+export { EDITOR_ICON_PATHS } from './ui/toolbarIcons';
 export { renderDiagramForExport } from './utils/diagram/render';
 export type { IExportRenderOptions } from './utils/diagram/render';
 export type { IImageInfo } from './utils/image';

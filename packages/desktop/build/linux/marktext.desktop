@@ -1,17 +1,17 @@
 [Desktop Entry]
-Name=YarkDown
+Name=YarkText
 Comment=Next generation markdown editor
-Exec=yarkdown %F
+Exec=yarktext %F
 Terminal=false
 Type=Application
-Icon=yarkdown
+Icon=yarktext
 Categories=Office;TextEditor;Utility;
 MimeType=text/markdown;
-Keywords=yarkdown;
-StartupWMClass=yarkdown
+Keywords=yarktext;
+StartupWMClass=yarktext
 Actions=NewWindow;
 
 [Desktop Action NewWindow]
 Name=New Window
-Exec=yarkdown --new-window %F
-Icon=yarkdown
+Exec=yarktext --new-window %F
+Icon=yarktext

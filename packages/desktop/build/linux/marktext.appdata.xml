@@ -3,11 +3,11 @@
   <id>com.github.marktext.marktext</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>MIT</project_license>
-  <name>YarkDown</name>
+  <name>YarkText</name>
   <summary>Next generation markdown editor</summary>
   <description>
     <p>
-      YarkDown is a free and open-source realtime preview markdown editor which support both CommonMark Spec and GitHub Flavored Markdown Spec. It is a concise text editor, dedicated to improving your writing efficiency.
+      YarkText is a free and open-source realtime preview markdown editor which support both CommonMark Spec and GitHub Flavored Markdown Spec. It is a concise text editor, dedicated to improving your writing efficiency.
     </p>
     <p>Features:</p>
     <ul>

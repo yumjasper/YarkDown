@@ -29,12 +29,12 @@ test('desktop smoke: render, edit, source roundtrip, save and new tab', async() 
       }))
       const { default: metadata } = await import('../../package.json', { with: { type: 'json' } })
       expect(identity).toEqual({
-        name: 'YarkDown',
+        name: 'YarkText',
         version: metadata.version,
         compiledVersion: metadata.version
       })
       await sendIpcToRenderer(app, 'mt::about-dialog')
-      await expect(page.locator('.about-dialog .title')).toHaveText('YarkDown')
+      await expect(page.locator('.about-dialog .title')).toHaveText('YarkText')
       await expect(page.locator('.about-dialog .text').first()).toHaveText(`v${metadata.version}`)
       await page.keyboard.press('Escape')
       await expect(page.locator('.about-dialog .el-dialog')).not.toBeVisible()

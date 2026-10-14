@@ -2,14 +2,16 @@ import type Parent from '../../block/base/parent';
 import type {
     IQuickInsertMenuItem,
 } from '../paragraphQuickInsertMenu/config';
-import copyIcon from '../../assets/icons/copy/2.png';
-import deleteIcon from '../../assets/icons/delete/2.png';
-import newIcon from '../../assets/icons/paragraph/2.png';
 import { canTurnInto } from '../../block/blockTransforms';
 import { isOsx } from '../../config';
 import {
     MENU_CONFIG,
 } from '../paragraphQuickInsertMenu/config';
+import { toolbarIconUrl } from '../toolbarIcons';
+
+const copyIcon = toolbarIconUrl('copy');
+const deleteIcon = toolbarIconUrl('delete');
+const newIcon = toolbarIconUrl('paragraph');
 
 const ALL_MENU_CONFIG = MENU_CONFIG.reduce(
     (acc, section) => [...acc, ...section.children],

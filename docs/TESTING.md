@@ -38,6 +38,13 @@ pnpm test:watch:muya
 
 针对已知功能可先运行单个单元测试：
 
+默认导出的专项回归使用 `pnpm -C packages/desktop exec playwright test test/e2e/default-export.spec.ts`。
+先运行 `pnpm build:unpack` 更新代码。该用例只启动一次应用，替代原生保存对话框，
+检查五种导出文件的实际内容、Word 表格和公式资源、长图完整性、取消导出及隐藏窗口清理。
+默认菜单包含 PDF、HTML、无样式 HTML、PNG 和 Word（.docx），无需安装 Pandoc。
+Word 的正文和表格可编辑，公式作为图片保留显示效果；PNG 单张高度上限为 30000 像素，
+超过上限会提示使用 PDF，避免导出被截断的图片。
+
 ```sh
 pnpm -C packages/desktop exec vitest run test/unit/specs/editor-default-width.spec.ts
 pnpm -C packages/muya exec vitest run src/state/__tests__/tocBlock.spec.ts

@@ -42,7 +42,7 @@ export const getCssForOptions = async(options: PdfCssOptions): Promise<string> =
     theme,
     headerFooterFontSize
   } = options
-  const isPrintable = type !== 'styledHtml'
+  const isPrintable = type === undefined || type === 'pdf' || type === 'print'
 
   let output = ''
   if (isPrintable) {

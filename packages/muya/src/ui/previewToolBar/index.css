@@ -86,3 +86,30 @@
 
     filter: drop-shadow(16px 0 currentcolor);
 }
+
+.mu-float-wrapper .mu-preview-tools > ul,
+.mu-float-wrapper .mu-preview-tools > div > ul {
+    display: inline-flex;
+    gap: 0;
+    box-sizing: border-box;
+    width: max-content;
+    padding: 4px 7px;
+}
+
+.mu-float-wrapper .mu-preview-tools li.item {
+    flex: 0 0 28px;
+    margin: 0;
+}
+
+.mu-float-wrapper .mu-preview-tools li.item + li.item {
+    margin-left: 8px;
+}
+
+.mu-float-wrapper .mu-preview-tools li.item:last-of-type::before {
+    left: -4px;
+}
+
+/* The controls occupy their own row above KaTeX, including tagged equations. */
+figure.mu-math-block:not(.mu-active) .mu-math-preview {
+    padding-top: 34px;
+}

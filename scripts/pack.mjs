@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Release packer for YarkDown.
+ * Release packer for YarkText.
  *
  * Runs the same pipeline as `build:win` (locale minify -> native rebuild ->
  * electron-vite build -> electron-builder) and copies the distributables out
@@ -53,7 +53,7 @@ const IGNORED_ARTIFACTS = new Set(['builder-debug.yml'])
 const USAGE = [
   'Usage: node scripts/pack.mjs [options]',
   '',
-  'Packages YarkDown and copies the distributables into ./Released.',
+  'Packages YarkText and copies the distributables into ./Released.',
   '',
   'Options:',
   '  -p, --platform <win|mac|linux>  Target platform (default: current host)',
@@ -65,8 +65,8 @@ const USAGE = [
   '  -h, --help                      Show this message',
   '',
   'Environment:',
-  '  YARKDOWN_NODE               Path to a Node 22 executable to build with',
-  '  YARKDOWN_NODE_ROOT          Directory containing Node 22 installs',
+  '  YARKTEXT_NODE               Path to a Node 22 executable to build with',
+  '  YARKTEXT_NODE_ROOT          Directory containing Node 22 installs',
   '  ELECTRON_BUILDER_7ZIP_PATH  Override the 7za executable electron-builder uses'
 ].join('\n')
 
@@ -155,13 +155,13 @@ function nodeMajor (execPath) {
 /** Node 22 installs to look at, most explicit first. */
 function node22Candidates () {
   const candidates = []
-  if (process.env.YARKDOWN_NODE) candidates.push(process.env.YARKDOWN_NODE)
+  if (process.env.YARKTEXT_NODE) candidates.push(process.env.YARKTEXT_NODE)
   candidates.push(path.join(TOOLS_DIR, 'nodejs', 'node.exe'))
 
   const roots = [
-    process.env.YARKDOWN_NODE_ROOT,
+    process.env.YARKTEXT_NODE_ROOT,
     'D:\\Tools\\nodejs22',
-    path.join(os.homedir(), '.yarkdown-node22')
+    path.join(os.homedir(), '.yarktext-node22')
   ]
 
   for (const root of roots) {
@@ -299,7 +299,7 @@ function resetDirectory (dir) {
     fs.rmSync(dir, { recursive: true, force: true })
   } catch (err) {
     throw new Error(
-      `Cannot clear ${dir} (${err.code}). Close any running YarkDown window and retry, ` +
+      `Cannot clear ${dir} (${err.code}). Close any running YarkText window and retry, ` +
         'or pass --keep-dist / --keep-output to reuse the existing contents.',
       { cause: err }
     )
@@ -373,15 +373,15 @@ function main () {
   if (!node22) {
     fail(
       `Node ${REQUIRED_NODE_MAJOR}.x is required but no matching binary was found.\n` +
-        'Set YARKDOWN_NODE to a Node 22 executable, place one at .tools/nodejs/node.exe, ' +
-        'or set YARKDOWN_NODE_ROOT to the directory holding your Node 22 installs.'
+        'Set YARKTEXT_NODE to a Node 22 executable, place one at .tools/nodejs/node.exe, ' +
+        'or set YARKTEXT_NODE_ROOT to the directory holding your Node 22 installs.'
     )
   }
   if (path.resolve(node22).toLowerCase() !== path.resolve(process.execPath).toLowerCase()) {
     console.log(`[pack] Re-launching under Node 22: ${node22}`)
     const result = spawnSync(node22, [fileURLToPath(import.meta.url), ...process.argv.slice(2)], {
       stdio: 'inherit',
-      env: { ...process.env, YARKDOWN_NODE: node22 }
+      env: { ...process.env, YARKTEXT_NODE: node22 }
     })
     process.exit(result.status ?? 1)
   }

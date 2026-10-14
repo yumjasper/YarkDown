@@ -59,6 +59,9 @@ export class PreviewToolBar extends BaseFloat {
                 return;
 
             const { x, y } = event;
+            const topmost = document.elementFromPoint(x, y);
+            if (this.status && topmost && this.floatBox?.contains(topmost))
+                return;
             const eles = [...document.elementsFromPoint(x, y)];
             const container = [...eles].find(
                 ele =>
@@ -72,8 +75,11 @@ export class PreviewToolBar extends BaseFloat {
 
                 this._block = block;
                 this.render();
-                this._tuckInsideBlock();
-                this.show(container);
+                const reference = this._block.blockName === 'math-block'
+                    ? this._previewNode()?.querySelector<HTMLElement>('.katex-display') ?? container
+                    : container;
+                this._positionToolbar();
+                this.show(reference);
             }
             else {
                 this.hide();
@@ -90,17 +96,17 @@ export class PreviewToolBar extends BaseFloat {
         this._block = null;
     }
 
-    // `right-start` puts the float's left edge on the block's right edge; a
-    // negative mainAxis pulls it back inside the block's top-right corner.
-    // Measured after `render()` and before `show()`, so the first
-    // `computePosition` already sees the width this toolbar will have.
-    private _tuckInsideBlock() {
+    private _positionToolbar() {
         const width = this.container?.offsetWidth ?? 0;
-        if (this.floatBox)
+        if (this.floatBox) {
             this.floatBox.style.width = `${width}px`;
+            this.floatBox.style.height = `${this.container?.offsetHeight ?? 0}px`;
+        }
+        const isMath = this._block?.blockName === 'math-block';
+        this.options.placement = isMath ? 'top-end' : 'right-start';
         this.options.offsetOptions = {
-            mainAxis: -(width + INSET),
-            crossAxis: INSET,
+            mainAxis: isMath ? 8 : -(width + INSET),
+            crossAxis: isMath ? 0 : INSET,
             alignmentAxis: 0,
         };
     }
@@ -130,8 +136,10 @@ export class PreviewToolBar extends BaseFloat {
                     'i.icon-inner',
                     {
                         style: {
-                            'background': `url(${i.icon}) no-repeat`,
-                            'background-size': '100%',
+                            'mask-image': `url(${i.icon})`,
+                            'mask-size': '100%',
+                            'mask-repeat': 'no-repeat',
+                            'background-color': 'currentColor',
                         },
                     },
                     '',

@@ -91,3 +91,37 @@
 
     filter: drop-shadow(18px 0 currentcolor);
 }
+
+.mu-float-wrapper .mu-link-tools > ul,
+.mu-float-wrapper .mu-link-tools > div > ul {
+    display: inline-flex;
+    box-sizing: border-box;
+    width: max-content;
+    height: auto;
+    justify-content: center;
+    gap: 0;
+    padding: 4px 7px;
+}
+
+.mu-float-wrapper .mu-link-tools li.item {
+    flex: 0 0 28px;
+    margin: 0;
+}
+
+.mu-float-wrapper .mu-link-tools li.item + li.item {
+    margin-left: 8px;
+}
+
+.mu-float-wrapper .mu-link-tools li.item:last-of-type::before {
+    left: -4px;
+    content: none;
+}
+
+.mu-float-wrapper .mu-link-tools li.item + li.item::before {
+    content: '';
+}
+
+.mu-link-tools li.item .icon-wrapper {
+    width: 16px;
+    height: 16px;
+}

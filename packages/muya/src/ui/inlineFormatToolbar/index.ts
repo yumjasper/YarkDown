@@ -252,8 +252,10 @@ export class InlineFormatToolbar extends BaseFloat {
                 'i.icon-inner',
                 {
                     style: {
-                        'background': `url(${icon.icon}) no-repeat`,
-                        'background-size': '100%',
+                        'mask-image': `url(${icon.icon})`,
+                        'mask-size': '100%',
+                        'mask-repeat': 'no-repeat',
+                        'background-color': 'currentColor',
                     },
                 },
                 '',
@@ -363,8 +365,10 @@ export class InlineFormatToolbar extends BaseFloat {
                 'i.icon-inner',
                 {
                     style: {
-                        'background': `url(${icon.icon}) no-repeat`,
-                        'background-size': '100%',
+                        'mask-image': `url(${icon.icon})`,
+                        'mask-size': '100%',
+                        'mask-repeat': 'no-repeat',
+                        'background-color': 'currentColor',
                     },
                 },
                 '',

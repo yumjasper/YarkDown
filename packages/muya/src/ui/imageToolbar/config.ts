@@ -1,9 +1,11 @@
-import middleIcon from '../../assets/icons/align_center/2.png';
-import leftIcon from '../../assets/icons/align_left/2.png';
-import rightIcon from '../../assets/icons/align_right/2.png';
-import deleteIcon from '../../assets/icons/image_delete/2.png';
-import editIcon from '../../assets/icons/imageEdit/2.png';
-import inlineIcon from '../../assets/icons/inline_image/2.png';
+import { toolbarIconUrl } from '../toolbarIcons';
+
+const middleIcon = toolbarIconUrl('align-center');
+const leftIcon = toolbarIconUrl('align-left');
+const rightIcon = toolbarIconUrl('align-right');
+const deleteIcon = toolbarIconUrl('delete');
+const editIcon = toolbarIconUrl('edit');
+const inlineIcon = toolbarIconUrl('inline');
 
 const icons = [
     {

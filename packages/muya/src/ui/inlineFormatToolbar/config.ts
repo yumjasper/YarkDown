@@ -1,16 +1,18 @@
 import type { ColorFormatType } from '../../utils/colorSpan';
-import codeIcon from '../../assets/icons/code/2.png';
-import clearIcon from '../../assets/icons/format_clear/2.png';
-import emphasisIcon from '../../assets/icons/format_emphasis/2.png';
-import imageIcon from '../../assets/icons/format_image/2.png';
-import linkIcon from '../../assets/icons/format_link/2.png';
-import mathIcon from '../../assets/icons/format_math/2.png';
-import strikeIcon from '../../assets/icons/format_strike/2.png';
-import strongIcon from '../../assets/icons/format_strong/2.png';
-import underlineIcon from '../../assets/icons/format_underline/2.png';
-import highlightIcon from '../../assets/icons/highlight/2.png';
-import textColorIcon from '../../assets/icons/text_color/2.png';
 import { isOsx } from '../../config';
+import { toolbarIconUrl } from '../toolbarIcons';
+
+const codeIcon = toolbarIconUrl('code');
+const clearIcon = toolbarIconUrl('clear');
+const emphasisIcon = toolbarIconUrl('italic');
+const imageIcon = toolbarIconUrl('image');
+const linkIcon = toolbarIconUrl('link');
+const mathIcon = toolbarIconUrl('math');
+const strikeIcon = toolbarIconUrl('strike');
+const strongIcon = toolbarIconUrl('bold');
+const underlineIcon = toolbarIconUrl('underline');
+const highlightIcon = toolbarIconUrl('highlight');
+const textColorIcon = toolbarIconUrl('color');
 
 const COMMAND_KEY = isOsx ? '⌘' : 'Ctrl';
 

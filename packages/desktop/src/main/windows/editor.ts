@@ -7,7 +7,7 @@ import { isChildOfDirectory, isSamePathSync } from 'common/filesystem/paths'
 import BaseWindow, { WindowLifecycle, WindowType } from './base'
 import type Accessor from '../app/accessor'
 import { ensureWindowPosition, zoomIn, zoomOut } from './utils'
-import { TITLE_BAR_HEIGHT, editorWinOptions, isLinux, isOsx } from '../config'
+import { TITLE_BAR_HEIGHT, editorWinOptions, isLinux, isOsx, isWindows } from '../config'
 import { showEditorContextMenu } from '../contextMenu/editor'
 import { loadMarkdownFile } from '../filesystem/markdown'
 import { switchLanguage } from '../spellchecker'
@@ -106,8 +106,14 @@ class EditorWindow extends BaseWindow {
       editorWinOptions,
       options
     )
-    if (isLinux) {
-      winOptions.icon = path.join(process.cwd(), 'static', 'logo-96px.png')
+    // Windows falls back to the executable's embedded icon, which in dev mode
+    // is Electron's default atom — so set the window icon explicitly there too.
+    // Packaged builds already embed static/icon.ico into marktext.exe.
+    if (isLinux || isWindows) {
+      winOptions.icon = path.join(
+        (global as unknown as { __static: string }).__static,
+        'logo-96px.png'
+      )
     }
 
     const {
@@ -222,7 +228,7 @@ class EditorWindow extends BaseWindow {
       const { response } = await dialog.showMessageBox(win!, {
         type: 'warning',
         buttons: ['Close', 'Reload', 'Keep It Open'],
-        message: 'YarkDown has crashed',
+        message: 'YarkText has crashed',
         detail: msg
       })
 

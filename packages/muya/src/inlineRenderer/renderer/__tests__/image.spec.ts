@@ -6,7 +6,8 @@ import type { IRenderCursor } from '../../../selection/types';
 import type { ImageToken } from '../../types';
 import type Renderer from '../index';
 import { describe, expect, it, vi } from 'vitest';
-import { h } from '../../../utils/snabbdom';
+import { getNodeAndOffset, getTextContent } from '../../../selection/dom';
+import { h, toHTML } from '../../../utils/snabbdom';
 import image from '../image';
 
 // Regression tests for marktext commit cb7be189 (#1318):
@@ -101,6 +102,48 @@ function asRenderer(r: IFakeRenderer): Renderer {
 }
 
 describe('image renderer — small image class (marktext cb7be189)', () => {
+    it('reveals editable source at either token boundary and keeps caption text out of Markdown', () => {
+        const renderer = makeRenderer({ id: 'caption-image', isSuccess: true });
+        const token = makeImageToken({ title: '<b>Caption</b>' });
+        for (const offset of [token.range.start, token.range.end]) {
+            const output = image.call(asRenderer(renderer), {
+                h,
+                block: fakeBlock,
+                token,
+                cursor: { block: fakeBlock, anchor: { offset }, focus: { offset } },
+            });
+            const host = document.createElement('div');
+            host.innerHTML = output.map(node => toHTML(node)).join('');
+            const wrapper = host.firstElementChild!;
+            expect(wrapper.classList.contains('mu-image-editing')).toBe(true);
+            const source = wrapper.querySelector('.mu-image-source')!;
+            expect(source.textContent).toBe(token.raw);
+            const caption = wrapper.querySelector('.mu-image-caption')!;
+            expect(caption.textContent).toBe('<b>Caption</b>');
+            expect(caption.querySelector('b')).toBeNull();
+            expect(getTextContent(host, ['mu-math-render'])).toBe(token.raw);
+            const caret = getNodeAndOffset(host, 3);
+            expect(source.contains(caret.node)).toBe(true);
+            expect(caret.offset).toBe(3);
+            source.textContent = '![edited](image.png)';
+            expect(getTextContent(host, ['mu-math-render'])).toBe('![edited](image.png)');
+        }
+    });
+
+    it('keeps another block\'s caret from revealing source and does not invent captions from alt text', () => {
+        const renderer = makeRenderer({ id: 'idle-image', isSuccess: true });
+        const token = makeImageToken();
+        const output = image.call(asRenderer(renderer), {
+            h,
+            block: fakeBlock,
+            token,
+            cursor: { block: {} as Format, anchor: { offset: 0 }, focus: { offset: 0 } },
+        });
+        const html = output.map(node => toHTML(node)).join('');
+        expect(getWrapperSelector(output)).not.toContain('mu-image-editing');
+        expect(html).not.toContain('mu-image-caption');
+    });
+
     it('adds `mu-small-image` class when loaded width is below 100px', () => {
         const renderer = makeRenderer({
             id: 'mu-image-1',

@@ -79,7 +79,7 @@ export default function loadImageAsync(
                         if (oldImage)
                             oldImage.remove();
 
-                        imageContainer!.appendChild(img);
+                        imageContainer!.insertBefore(img, imageContainer!.querySelector('.mu-image-caption'));
                         imageText.classList.remove(CLASS_NAMES.MU_IMAGE_LOADING);
                         imageText.classList.add(CLASS_NAMES.MU_IMAGE_SUCCESS);
                         // Tag small images on the first async load — otherwise the class
@@ -92,6 +92,13 @@ export default function loadImageAsync(
                     }
                     else {
                         insertAfter(img, imageText);
+                        if (attrs.title) {
+                            const caption = document.createElement('span');
+                            caption.className = 'mu-image-caption mu-copy-remove';
+                            caption.contentEditable = 'false';
+                            caption.textContent = attrs.title;
+                            insertAfter(caption, img);
+                        }
                         if (className)
                             operateClassName(imageText, 'add', className);
                     }

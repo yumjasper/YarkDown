@@ -23,6 +23,8 @@
       "rename": "Переименовать",
       "export": "Экспорт",
       "exportHtml": "Экспорт в HTML",
+      "exportHtmlPlain": "HTML (without styles)",
+      "exportImage": "Image (PNG)",
       "exportPdf": "Экспорт в PDF",
       "convertWithPandoc": "Конвертировать через Pandoc",
       "import": "Импорт",
@@ -97,21 +99,21 @@
       "reportBug": "Сообщить об ошибке",
       "viewSource": "Исходный код",
       "followUs": "Подписаться на нас",
-      "support": "Поддержать YarkDown",
+      "support": "Поддержать YarkText",
       "license": "Лицензия",
       "about": "О программе",
       "checkUpdates": "Проверить обновления"
     },
     "marktext": {
-      "title": "YarkDown",
-      "about": "О YarkDown",
+      "title": "YarkText",
+      "about": "О YarkText",
       "checkUpdates": "Проверить обновления...",
       "preferences": "Настройки",
       "services": "Службы",
-      "hide": "Скрыть YarkDown",
+      "hide": "Скрыть YarkText",
       "hideOthers": "Скрыть остальные",
       "showAll": "Показать все",
-      "quit": "Выйти из YarkDown"
+      "quit": "Выйти из YarkText"
     },
     "view": {
       "view": "Вид",
@@ -363,7 +365,7 @@
   },
   "import": {
     "title": "Импорт или открытие",
-    "description": "Перетащите сюда, чтобы добавить файлы в YarkDown"
+    "description": "Перетащите сюда, чтобы добавить файлы в YarkText"
   },
   "preferences": {
     "title": "Настройки",
@@ -391,10 +393,10 @@
         "hideScrollbar": "Скрывать полосы прокрутки",
         "wordWrapInToc": "Включать перенос слов в оглавлении",
         "fileSortBy": "Сортировать файлы в открытой папке по времени создания, изменения и имени",
-        "startUpAction": "Действие после запуска YarkDown: открыть последнее содержимое, указанную папку или пустую страницу",
+        "startUpAction": "Действие после запуска YarkText: открыть последнее содержимое, указанную папку или пустую страницу",
         "restoreLayoutState": "Восстанавливать предыдущее состояние редактора при запуске",
         "defaultDirectoryToOpen": "Папка по умолчанию, открываемая при запуске, если startUp=folder",
-        "language": "Язык интерфейса YarkDown",
+        "language": "Язык интерфейса YarkText",
         "editorFontFamily": "Семейство шрифтов редактора",
         "fontSize": "Размер шрифта в пикселях",
         "lineHeight": "Высота строки",
@@ -419,7 +421,7 @@
         "preferLooseListItem": "Предпочитаемый тип списка",
         "bulletListMarker": "Маркер маркированного списка",
         "orderListDelimiter": "Разделитель нумерованного списка",
-        "preferHeadingStyle": "Предпочитаемый стиль заголовков в YarkDown",
+        "preferHeadingStyle": "Предпочитаемый стиль заголовков в YarkText",
         "tabSize": "Заменять табуляцию на x пробелов",
         "listIndentation": "Выберите отступ списка",
         "frontmatterType": "Тип front matter",
@@ -436,7 +438,7 @@
         "softNewlineAsSpace": "Считать мягкие переносы строк пробелами",
         "sequenceTheme": "Тема диаграмм последовательностей",
         "plantumlServer": "URL сервера PlantUML",
-        "theme": "Выберите тему, используемую в YarkDown",
+        "theme": "Выберите тему, используемую в YarkText",
         "followSystemTheme": "Следовать системной теме",
         "lightModeTheme": "Тема для светлого режима системы",
         "darkModeTheme": "Тема для тёмного режима системы",
@@ -658,7 +660,7 @@
         "pleaseInstall": "Пожалуйста, установите",
         "scriptPath": "Путь к скрипту"
       },
-      "defaultBehavior": "Поведение по умолчанию после вставки или перетаскивания изображения в YarkDown"
+      "defaultBehavior": "Поведение по умолчанию после вставки или перетаскивания изображения в YarkText"
     },
     "markdown": {
       "title": "Markdown",
@@ -782,7 +784,7 @@
   },
   "commands": {
     "mt": {
-      "hide": "Скрыть YarkDown",
+      "hide": "Скрыть YarkText",
       "hideOthers": "Скрыть остальные"
     },
     "file": {
@@ -935,7 +937,7 @@
     "fileExists": "Файл существует {filename}",
     "files": "Файлы",
     "importWarning": "Предупреждение импорта",
-    "installPandoc": "Pandoc не найден. Установите его или задайте переменную окружения MARKTEXT_PANDOC с путём к бинарнику pandoc и перезапустите YarkDown.",
+    "installPandoc": "Pandoc не найден. Установите его или задайте переменную окружения MARKTEXT_PANDOC с путём к бинарнику pandoc и перезапустите YarkText.",
     "exportWarning": "Предупреждение экспорта",
     "exportWarningMore": "…и ещё {count}",
     "keepOpen": "Оставить открытым",
@@ -952,7 +954,7 @@
     "configSchemaViolation": "Нарушение схемы конфигурации",
     "copyError": "Ошибка копирования",
     "initializationFailed": "Ошибка инициализации {hint}",
-    "otherInstanceDetected": "Другой экземпляр YarkDown уже запущен",
+    "otherInstanceDetected": "Другой экземпляр YarkText уже запущен",
     "report": "Сообщить",
     "startupError": "Ошибка запуска",
     "terminatedDueToError": "Завершено из-за ошибки",
@@ -1047,5 +1049,27 @@
     "clearFormat": "Очистить формат",
     "deleteBlock": "Удалить блок",
     "hide": "Скрыть панель инструментов"
+  },
+  "tableTools": {
+    "resize": "Adjust table",
+    "left": "Align left",
+    "center": "Align center",
+    "right": "Align right",
+    "more": "More table actions",
+    "rows": "Rows (including header)",
+    "columns": "Columns",
+    "row-above": "Insert row above",
+    "row-below": "Insert row below",
+    "column-left": "Insert column left",
+    "column-right": "Insert column right",
+    "row-up": "Move row up",
+    "row-down": "Move row down",
+    "column-previous": "Move column left",
+    "column-next": "Move column right",
+    "delete-row": "Delete row",
+    "delete-column": "Delete column",
+    "copy": "Copy table",
+    "format": "Format table source",
+    "delete-table": "Delete table"
   }
 }

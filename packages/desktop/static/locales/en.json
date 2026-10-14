@@ -40,6 +40,8 @@
       "rename": "Rename",
       "export": "Export",
       "exportHtml": "Export as HTML",
+      "exportHtmlPlain": "HTML (without styles)",
+      "exportImage": "Image (PNG)",
       "exportPdf": "Export as PDF",
       "convertWithPandoc": "Convert with Pandoc",
       "import": "Import",
@@ -114,21 +116,21 @@
       "reportBug": "Report Bug",
       "viewSource": "View Source",
       "followUs": "Follow Us",
-      "support": "Support YarkDown",
+      "support": "Support YarkText",
       "license": "License",
       "about": "About",
       "checkUpdates": "Check for Updates"
     },
     "marktext": {
-      "title": "YarkDown",
-      "about": "About YarkDown",
+      "title": "YarkText",
+      "about": "About YarkText",
       "checkUpdates": "Check for Updates...",
       "preferences": "Preferences",
       "services": "Services",
-      "hide": "Hide YarkDown",
+      "hide": "Hide YarkText",
       "hideOthers": "Hide Others",
       "showAll": "Show All",
-      "quit": "Quit YarkDown"
+      "quit": "Quit YarkText"
     },
     "view": {
       "view": "View",
@@ -380,7 +382,7 @@
   },
   "import": {
     "title": "Import or Open",
-    "description": "Drop here to get your stuff into YarkDown"
+    "description": "Drop here to get your stuff into YarkText"
   },
   "preferences": {
     "title": "Preferences",
@@ -408,10 +410,10 @@
         "hideScrollbar": "Whether to hide scrollbars",
         "wordWrapInToc": "Whether to enable word wrap in TOC",
         "fileSortBy": "Sort files in opened folder by created time, modified time and title",
-        "startUpAction": "The action after YarkDown startup, open the last edited content, open the specified folder or blank page",
+        "startUpAction": "The action after YarkText startup, open the last edited content, open the specified folder or blank page",
         "restoreLayoutState": "Restore previous editor state on startup",
         "defaultDirectoryToOpen": "The default directory that should be opened on startup when startUp=folder",
-        "language": "The language YarkDown uses",
+        "language": "The language YarkText uses",
         "editorFontFamily": "Editor font family",
         "fontSize": "Font size in pixels",
         "lineHeight": "Line Height",
@@ -436,7 +438,7 @@
         "preferLooseListItem": "The preferred list type",
         "bulletListMarker": "The marker used in bullet list",
         "orderListDelimiter": "The delimiter used in order list",
-        "preferHeadingStyle": "The preferred heading style in YarkDown",
+        "preferHeadingStyle": "The preferred heading style in YarkText",
         "tabSize": "Replace the tab with x spaces",
         "listIndentation": "Select the indent of list",
         "frontmatterType": "The frontmatter type",
@@ -453,7 +455,7 @@
         "softNewlineAsSpace": "Treat soft newlines as spaces",
         "sequenceTheme": "Sequence diagram theme",
         "plantumlServer": "PlantUML server URL",
-        "theme": "Select the theme used in YarkDown",
+        "theme": "Select the theme used in YarkText",
         "followSystemTheme": "Follow System Theme",
         "lightModeTheme": "Theme to use when system is in light mode",
         "darkModeTheme": "Theme to use when system is in dark mode",
@@ -675,7 +677,7 @@
         "pleaseInstall": "Please install",
         "scriptPath": "Script path"
       },
-      "defaultBehavior": "The default behavior after pasting or dragging the image to YarkDown"
+      "defaultBehavior": "The default behavior after pasting or dragging the image to YarkText"
     },
     "markdown": {
       "title": "Markdown",
@@ -799,7 +801,7 @@
   },
   "commands": {
     "mt": {
-      "hide": "Hide YarkDown",
+      "hide": "Hide YarkText",
       "hideOthers": "Hide Others"
     },
     "file": {
@@ -952,7 +954,7 @@
     "fileExists": "File exists {filename}",
     "files": "Files",
     "importWarning": "Import warning",
-    "installPandoc": "Pandoc was not found. Install it, or set the MARKTEXT_PANDOC environment variable to the pandoc binary and restart YarkDown.",
+    "installPandoc": "Pandoc was not found. Install it, or set the MARKTEXT_PANDOC environment variable to the pandoc binary and restart YarkText.",
     "exportWarning": "Export warning",
     "exportWarningMore": "…and {count} more",
     "keepOpen": "Keep open",
@@ -969,7 +971,7 @@
     "configSchemaViolation": "Configuration schema violation",
     "copyError": "Copy error",
     "initializationFailed": "Initialization failed {hint}",
-    "otherInstanceDetected": "Another instance of YarkDown is already running",
+    "otherInstanceDetected": "Another instance of YarkText is already running",
     "report": "Report",
     "startupError": "Startup error",
     "terminatedDueToError": "Terminated due to error",
@@ -1047,5 +1049,27 @@
       "switchError": "Spellcheck switch error for {languageCode}, {error}",
       "title": "Spellcheck"
     }
+  },
+  "tableTools": {
+    "resize": "Adjust table",
+    "left": "Align left",
+    "center": "Align center",
+    "right": "Align right",
+    "more": "More table actions",
+    "rows": "Rows (including header)",
+    "columns": "Columns",
+    "row-above": "Insert row above",
+    "row-below": "Insert row below",
+    "column-left": "Insert column left",
+    "column-right": "Insert column right",
+    "row-up": "Move row up",
+    "row-down": "Move row down",
+    "column-previous": "Move column left",
+    "column-next": "Move column right",
+    "delete-row": "Delete row",
+    "delete-column": "Delete column",
+    "copy": "Copy table",
+    "format": "Format table source",
+    "delete-table": "Delete table"
   }
 }

@@ -79,6 +79,8 @@ describe('duplicate same-src images: resize bar targets the clicked image', () =
 
         // The resize bar must reference the second image's own container.
         expect(handler).toHaveBeenCalledTimes(1);
-        expect(handler).toHaveBeenCalledWith(containers[1]);
+        expect(handler).toHaveBeenCalledWith(
+            muya.domNode.querySelectorAll('.mu-image-container')[1],
+        );
     });
 });
