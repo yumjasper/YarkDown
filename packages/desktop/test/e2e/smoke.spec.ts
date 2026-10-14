@@ -21,6 +21,24 @@ test('desktop smoke: render, edit, source roundtrip, save and new tab', async() 
   const pageErrors: string[] = []
   page.on('pageerror', (error) => pageErrors.push(error.stack || error.message))
   try {
+    await test.step('show the application name and compiled version', async() => {
+      const identity = await app.evaluate(({ app }) => ({
+        name: app.getName(),
+        version: app.getVersion(),
+        compiledVersion: process.env.MARKTEXT_VERSION
+      }))
+      const { default: metadata } = await import('../../package.json', { with: { type: 'json' } })
+      expect(identity).toEqual({
+        name: 'YarkDown',
+        version: metadata.version,
+        compiledVersion: metadata.version
+      })
+      await sendIpcToRenderer(app, 'mt::about-dialog')
+      await expect(page.locator('.about-dialog .title')).toHaveText('YarkDown')
+      await expect(page.locator('.about-dialog .text').first()).toHaveText(`v${metadata.version}`)
+      await page.keyboard.press('Escape')
+      await expect(page.locator('.about-dialog .el-dialog')).not.toBeVisible()
+    })
     await test.step('render markdown', async() => {
       await expect(page.locator('.editor-component h1')).toContainText('Smoke test')
       await expect(page.locator('.editor-component input[type=checkbox]')).toHaveCount(1)

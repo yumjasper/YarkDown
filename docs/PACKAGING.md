@@ -56,7 +56,7 @@ Windows x64 为本机已验证目标，其他平台或架构需要各自的工�
 node scripts/smoke-packaged.mjs
 ```
 
-该脚本启动 `dist/win-unpacked/marktext.exe`，用临时用户配置和文档验证启动、项目文件名搜索、源码模式双向切换和六级标题命令，结束后清理测试数据。
+该脚本启动 `dist/win-unpacked/YarkDown.exe`，用临时用户配置和文档验证启动、项目文件名搜索、源码模式双向切换和六级标题命令，结束后清理测试数据。
 它使用开发依赖 Playwright 连接 Chromium CDP。快捷键映射和冲突由 `windows-keybindings.spec.ts` 单独验证，CDP 合成键盘输入不等同于 Windows 原生快捷键输入。
 
 ## 默认快捷键

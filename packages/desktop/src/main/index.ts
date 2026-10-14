@@ -23,6 +23,7 @@ process.env.MARKTEXT_VERSION_STRING = MARKTEXT_VERSION_STRING
 // -----------------------------------------------
 // Exception handling and logging setup
 setupExceptionHandler()
+app.setName('YarkDown')
 const args = cli()
 const appEnvironment = setupEnvironment(args as Record<string, unknown>)
 
@@ -55,7 +56,7 @@ initializeLogger(appEnvironment)
 // Handles native level crashes
 crashReporter.start({
   companyName: '',
-  productName: 'MarkText',
+  productName: 'YarkDown',
   uploadToServer: false, // collect locally
   compress: true
 })

@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url'
 const root = fileURLToPath(new URL('..', import.meta.url))
 const require = createRequire(path.join(root, 'packages/desktop/package.json'))
 const { chromium } = require('playwright')
-const executable = process.argv[2] || path.join(root, 'dist/win-unpacked/marktext.exe')
+const executable = process.argv[2] || path.join(root, 'dist/win-unpacked/YarkDown.exe')
 const temporary = await fs.mkdtemp(path.join(os.tmpdir(), 'yarkdown-pack-smoke-'))
 const userData = path.join(temporary, 'profile')
 const folder = path.join(temporary, 'notes')

@@ -299,7 +299,7 @@ function resetDirectory (dir) {
     fs.rmSync(dir, { recursive: true, force: true })
   } catch (err) {
     throw new Error(
-      `Cannot clear ${dir} (${err.code}). Close any running MarkText window and retry, ` +
+      `Cannot clear ${dir} (${err.code}). Close any running YarkDown window and retry, ` +
         'or pass --keep-dist / --keep-output to reuse the existing contents.',
       { cause: err }
     )

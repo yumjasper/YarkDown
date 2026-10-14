@@ -46,18 +46,18 @@
   !insertmacro mtAssociateExtension ".mdx"
 
   WriteRegStr SHELL_CONTEXT "Software\Classes\${MT_PROGID}" \
-    "" "MarkText Markdown Document"
+    "" "YarkDown Markdown Document"
   WriteRegExpandStr SHELL_CONTEXT "Software\Classes\${MT_PROGID}\DefaultIcon" \
     "" "$INSTDIR\resources\icons\md.ico,0"
   WriteRegExpandStr SHELL_CONTEXT "Software\Classes\${MT_PROGID}\shell\open\command" \
-    "" '"$INSTDIR\marktext.exe" "%1"'
+    "" '"$INSTDIR\YarkDown.exe" "%1"'
 
   ; electron-builder writes the command for its own ProgId — `Markdown`, the
   ; `fileAssociations[].name` in electron-builder.yml — with the executable
   ; path unquoted, which runs `C:\Program` when the directory the user picked
   ; during setup contains a space.
   WriteRegStr SHELL_CONTEXT "Software\Classes\Markdown\shell\open\command" \
-    "" '"$INSTDIR\marktext.exe" "%1"'
+    "" '"$INSTDIR\YarkDown.exe" "%1"'
 
   ; Explorer serves file types from a cache that a fresh install otherwise
   ; keeps until the next sign-in.
@@ -82,6 +82,6 @@
 
   MessageBox MB_YESNO "Do you want to delete user settings?" /SD IDNO IDNO SkipRemoval
     SetShellVarContext current
-    RMDir /r "$APPDATA\marktext"
+    RMDir /r "$APPDATA\YarkDown"
   SkipRemoval:
 !macroend
