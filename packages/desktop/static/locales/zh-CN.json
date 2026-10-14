@@ -298,6 +298,7 @@
     }
   },
   "exportSettings": {
+    "wordTemplate": "Word 使用统一模板：A4、2.54 厘米页边距、11 磅正文、1.5 倍行距。图片按页面宽度缩放，公式以高清图片嵌入，代码保留等宽字体和缩进。",
     "title": "导出选项",
     "info": {
       "label": "信息",
@@ -357,6 +358,7 @@
         "legal": "美国法律纸 (8.5\" x 13\")",
         "letter": "美国信纸 (8.5\" x 11\")",
         "tabloid": "小报纸 (17\" x 11\")",
+        "adaptive": "自适应（不分页）",
         "custom": "自定义"
       },
       "headerFooterTypes": {

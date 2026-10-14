@@ -27,6 +27,10 @@ export const getPageSizeList = (): PrefSelectOption<string>[] => [
     value: 'Tabloid'
   },
   {
+    label: t('exportSettings.options.pageSizes.adaptive'),
+    value: 'adaptive'
+  },
+  {
     label: t('exportSettings.options.pageSizes.custom'),
     value: 'custom'
   }

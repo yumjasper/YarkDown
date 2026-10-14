@@ -110,7 +110,7 @@ import MediaViewer from '../mediaViewer/index.vue'
 import bus from '@/bus'
 import { DEFAULT_EDITOR_FONT_FAMILY, DEFAULT_CODE_FONT_FAMILY } from '@/config'
 import notice from '@/services/notification'
-import Printer from '@/services/printService'
+import Printer, { MM_TO_PX } from '@/services/printService'
 import { SpellcheckerLanguageCommand } from '@/commands'
 import { SpellChecker } from '@/spellchecker'
 import { isMac, animatedScrollTo } from '@/util'
@@ -1381,6 +1381,57 @@ const handleExport = async (options: unknown) => {
       // NOTE: We need to set page size via Electron.
       try {
         const { pageSize, pageSizeWidth, pageSizeHeight, isLandscape } = opts
+
+        // Adaptive page size: render the print layout offscreen at the page
+        // width, measure the content height, and export as a single custom
+        // page of exactly that height so the document is never paginated.
+        // Width is fixed to A4 (landscape: 297mm) so the layout is standard
+        // regardless of any previous custom-size setting.
+        let adaptiveHeight: number | undefined
+        if (pageSize === 'adaptive') {
+          const pageWidthMm = isLandscape ? 297 : 210
+          const marginTopMm = (opts.pageMarginTop as number | undefined) ?? 0
+          const marginBottomMm = (opts.pageMarginBottom as number | undefined) ?? 0
+          const marginLeftMm = (opts.pageMarginLeft as number | undefined) ?? 0
+          const marginRightMm = (opts.pageMarginRight as number | undefined) ?? 0
+          // Render first so the measurement host contains the final HTML.
+          const html = await exportStyledHTML(muya, markdown, {
+            title: '',
+            printOptimization: true,
+            extraCss,
+            toc: htmlToc,
+            header,
+            footer,
+            headerFooterStyled: headerFooterStyled as boolean | undefined,
+            dir: props.textDirection
+          })
+          // Chromium renders an empty trailing page when the content height
+          // exactly fills the page; a 1mm cushion prevents that.
+          adaptiveHeight =
+            printer!.measureAdaptiveHeightPx(
+              html,
+              pageWidthMm,
+              marginTopMm,
+              marginBottomMm,
+              marginLeftMm,
+              marginRightMm
+            ) /
+              MM_TO_PX +
+            1
+
+          printer!.renderMarkdown(html, true, props.textDirection)
+          editorStore.EXPORT({
+            type,
+            pageOptions: {
+              pageSize: 'custom',
+              pageSizeWidth: pageWidthMm,
+              pageSizeHeight: adaptiveHeight,
+              isLandscape: !!isLandscape
+            }
+          })
+          break
+        }
+
         const pageOptions = {
           pageSize,
           pageSizeWidth,

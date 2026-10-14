@@ -14,6 +14,7 @@
           name="info"
         >
           <span class="text">{{ t('exportSettings.info.description') }}</span>
+          <p v-if="exportType === 'docx'" class="text">{{ t('exportSettings.wordTemplate') }}</p>
         </el-tab-pane>
         <el-tab-pane
           :label="t('exportSettings.page.label')"
@@ -111,6 +112,7 @@
           </div>
         </el-tab-pane>
         <el-tab-pane
+          v-if="exportType !== 'docx'"
           :label="t('exportSettings.style.label')"
           name="style"
         >
@@ -155,6 +157,7 @@
           />
         </el-tab-pane>
         <el-tab-pane
+          v-if="exportType !== 'docx'"
           :label="t('exportSettings.theme.label')"
           name="theme"
         >
@@ -408,6 +411,7 @@ const updateTranslations = () => {
 const showDialog = (type: unknown) => {
   const exportTypeValue = String(type ?? '')
   exportType.value = exportTypeValue
+  if (exportTypeValue === 'docx') activeName.value = 'info'
   isPrintable.value = exportTypeValue === 'pdf' || exportTypeValue === 'print'
   if (!isPrintable.value && (activeName.value === 'header' || activeName.value === 'page')) {
     activeName.value = 'info'

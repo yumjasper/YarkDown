@@ -2,7 +2,8 @@ import { BrowserWindow, app } from 'electron'
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import HTMLtoDOCX from '@turbodocx/html-to-docx'
+import { createWordDocument, WORD_CONTENT_WIDTH } from './wordDocument'
+import { serializeWordDocument, type WordContent } from './wordDom'
 
 const EXPORT_WIDTH = 1024
 const MAX_IMAGE_HEIGHT = 30000
@@ -44,29 +45,63 @@ const rasterizeMath = async(win: BrowserWindow): Promise<void> => {
     nodes.forEach((node, i) => node.setAttribute('data-export-math', String(i)))
     return nodes.length
   })()`)
-  for (let i = 0; i < count; i++) {
-    const rect: Electron.Rectangle = await win.webContents.executeJavaScript(`(() => {
-      const node = document.querySelector('[data-export-math="${i}"]')
-      node.scrollIntoView({ block: 'center', inline: 'nearest' })
-      const rect = node.getBoundingClientRect()
-      return { x: Math.max(0, Math.floor(rect.x)), y: Math.max(0, Math.floor(rect.y)),
-        width: Math.min(${EXPORT_WIDTH}, Math.ceil(rect.width)), height: Math.ceil(rect.height) }
+  const mathWindow = new BrowserWindow({
+    show: false,
+    useContentSize: true,
+    width: 1200,
+    height: 900,
+    webPreferences: {
+      sandbox: true,
+      contextIsolation: true,
+      nodeIntegration: false,
+      backgroundThrottling: false,
+      offscreen: true
+    }
+  })
+  try {
+    for (let i = 0; i < count; i++) {
+      const html: string = await win.webContents.executeJavaScript(`(() => {
+      const formula = document.querySelector('[data-export-math="${i}"]').outerHTML
+      const display = document.querySelector('[data-export-math="${i}"]').classList.contains('katex-display')
+      return '<html><head>' + document.head.innerHTML + '<style>html,body{margin:0;padding:0;background:white}#formula{display:inline-block;padding:6px;font-size:29.334px}.katex{font-size:1em!important;white-space:nowrap!important}.katex-display{display:block!important;margin:0!important}.katex-display>.katex{display:block!important;text-align:center!important}</style></head><body><div id="formula" style="' + (display ? 'width:${(WORD_CONTENT_WIDTH - 6) * 2}px' : '') + '">' + formula + '</div></body></html>'
     })()`)
-    if (!rect.width || !rect.height) continue
-    const image = await win.webContents.capturePage(rect)
-    await win.webContents.executeJavaScript(`(() => {
+      // An inline span can have a paragraph-sized bounding box after wrapping;
+      // render its clone alone so screenshots can never include adjacent text.
+      await mathWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html))
+      await mathWindow.webContents.executeJavaScript('document.fonts.ready')
+      const rect: Electron.Rectangle = await mathWindow.webContents.executeJavaScript(`(() => {
+      const rect = document.querySelector('#formula').getBoundingClientRect()
+      return { x: 0, y: 0, width: Math.ceil(rect.width), height: Math.ceil(rect.height) }
+    })()`)
+      if (!rect.width || !rect.height) continue
+      mathWindow.setContentSize(Math.max(100, rect.width), Math.max(100, rect.height))
+      await mathWindow.webContents.executeJavaScript(
+        'new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))'
+      )
+      const image = await mathWindow.webContents.capturePage({
+        x: 0,
+        y: 0,
+        width: rect.width,
+        height: rect.height
+      })
+      await win.webContents.executeJavaScript(`(() => {
       const node = document.querySelector('[data-export-math="${i}"]')
       const img = document.createElement('img')
       img.src = ${JSON.stringify(image.toDataURL())}
-      img.width = ${rect.width}; img.height = ${rect.height}
+      img.width = ${Math.ceil(rect.width / 2)}; img.height = ${Math.ceil(rect.height / 2)}
+      img.setAttribute('data-word-math', '')
       img.alt = node.querySelector('annotation')?.textContent || '公式'
       if (node.classList.contains('katex-display')) {
         const paragraph = document.createElement('p')
         paragraph.style.textAlign = 'center'
+        paragraph.setAttribute('data-word-equation', '')
         paragraph.append(img)
         node.replaceWith(paragraph)
       } else node.replaceWith(img)
     })()`)
+    }
+  } finally {
+    mathWindow.destroy()
   }
 }
 
@@ -74,8 +109,8 @@ const embedLocalImages = async(win: BrowserWindow): Promise<void> => {
   const images: string[] = await win.webContents.executeJavaScript(
     'Array.from(document.images, img => img.src)'
   )
-  for (const src of new Set(images.filter((src) => src.startsWith('file:')))) {
-    const filename = fileURLToPath(src)
+  for (const src of new Set(images.filter((src) => /^(file:|https?:)/.test(src)))) {
+    const filename = src.startsWith('file:') ? fileURLToPath(src) : new URL(src).pathname
     const extension = path.extname(filename).slice(1).toLowerCase()
     const mime =
       extension === 'svg'
@@ -83,7 +118,10 @@ const embedLocalImages = async(win: BrowserWindow): Promise<void> => {
         : extension === 'jpg'
           ? 'image/jpeg'
           : `image/${extension}`
-    const data = `data:${mime};base64,${(await readFile(filename)).toString('base64')}`
+    const bytes = src.startsWith('file:')
+      ? await readFile(filename)
+      : Buffer.from(await (await fetch(src, { signal: AbortSignal.timeout(20000) })).arrayBuffer())
+    const data = `data:${mime};base64,${bytes.toString('base64')}`
     await win.webContents.executeJavaScript(
       `Array.from(document.images).filter(img => img.src === ${JSON.stringify(src)}).forEach(img => { img.src = ${JSON.stringify(data)} })`
     )
@@ -115,25 +153,27 @@ export const exportDocumentBinary = async(html: string, type: 'png' | 'docx'): P
     await win.loadFile(filename)
     await prepareDocument(win)
     if (type === 'png') return await captureDocument(win)
-    await rasterizeMath(win)
     await embedLocalImages(win)
-    await win.webContents.executeJavaScript(`document.querySelectorAll('img:not([src]), img[src=""]').forEach(img => img.replaceWith(document.createTextNode(img.alt || ''))) `)
-    const content: { html: string; title: string; direction: 'ltr' | 'rtl' } = await win.webContents
-      .executeJavaScript(`({
-      html: document.querySelector('article')?.outerHTML || document.body.innerHTML,
-      title: document.title,
-      direction: document.documentElement.dir === 'rtl' ? 'rtl' : 'ltr'
-    })`)
-    const output = await HTMLtoDOCX(content.html, null, {
-      title: content.title,
-      creator: 'YarkText',
-      font: 'Microsoft YaHei',
-      direction: content.direction,
-      table: { row: { cantSplit: true } },
-      imageProcessing: { svgHandling: 'native', suppressSharpWarning: true }
-    })
-    if (output instanceof Blob) return Buffer.from(await output.arrayBuffer())
-    return Buffer.isBuffer(output) ? output : Buffer.from(new Uint8Array(output))
+    await win.webContents.executeJavaScript(`(async () => {
+      for (const img of Array.from(document.images)) {
+        try { await img.decode() } catch { img.replaceWith(document.createTextNode(img.alt || '')); continue }
+        const width = Math.min(img.naturalWidth, ${WORD_CONTENT_WIDTH})
+        const height = img.naturalHeight * width / img.naturalWidth
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.ceil(width * 2); canvas.height = Math.ceil(height * 2)
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
+        img.src = canvas.toDataURL('image/png')
+        img.width = Math.round(width); img.height = Math.round(height)
+      }
+    })()`)
+    await rasterizeMath(win)
+    await win.webContents.executeJavaScript(
+      `document.querySelectorAll('img:not([src]), img[src=""]').forEach(img => img.replaceWith(document.createTextNode(img.alt || ''))) `
+    )
+    const content: WordContent = await win.webContents.executeJavaScript(
+      `(${serializeWordDocument.toString()})()`
+    )
+    return await createWordDocument(content)
   } finally {
     win?.destroy()
     await rm(directory, { recursive: true, force: true })

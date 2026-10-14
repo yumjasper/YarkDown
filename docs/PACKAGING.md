@@ -1,5 +1,13 @@
 # Windows 打包
 
+## 程序图标
+
+任务栏、窗口和安装包使用独立的“Y”图标，关于页面保留完整文字 LOGO。
+图标源文件位于 `packages/desktop/build/icons/app-icon.svg`，修改后运行
+`node scripts/generateAppIcons.mjs`，同步生成 PNG、Windows ICO 和 macOS ICNS。
+Windows ICO 包含 16、20、24、32、40、48、64、96、128 和 256 像素版本，
+用于不同显示缩放比例。重新启动开发预览可加载窗口图标，安装包图标需重新打包。
+
 ## 入口
 
 安装依赖后，从仓库根目录运行：

@@ -46,7 +46,7 @@ test('default exports create HTML, plain HTML, PDF, PNG and editable Word withou
       if (type === 'docx') {
         await writeFile('../../.tools/default-export-preview.docx', data)
         const loadPackage = createRequire(__filename)
-        const JSZip = loadPackage(loadPackage.resolve('jszip', { paths: [loadPackage.resolve('@turbodocx/html-to-docx')] }))
+        const JSZip = loadPackage(loadPackage.resolve('jszip', { paths: [loadPackage.resolve('docx')] }))
         const zip = await JSZip.loadAsync(data)
         const xml = await zip.file('word/document.xml').async('string')
         expect(xml).toContain('中文导出')
