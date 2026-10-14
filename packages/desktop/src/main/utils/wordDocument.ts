@@ -11,6 +11,10 @@ import {
   Paragraph,
   ShadingType,
   Table,
+  TableLayoutType,
+  VerticalAlign,
+  Tab,
+  TabStopType,
   TableCell,
   TableRow,
   TextRun,
@@ -82,27 +86,40 @@ const createRun = (run: WordInline, availableWidth: number): ParagraphChild => {
     : text
 }
 
-const createBlocks = (blocks: WordBlock[], width = WORD_CONTENT_WIDTH): (Paragraph | Table)[] =>
-  blocks.flatMap((block) => {
+const createBlocks = (
+  blocks: WordBlock[],
+  width = WORD_CONTENT_WIDTH,
+  inCell = false
+): (Paragraph | Table)[] =>
+  blocks.flatMap((block, blockIndex) => {
     if (block.kind === 'table') {
       const columns = Math.max(1, ...(block.rows || []).map((row) => row.cells.length))
       const border = { style: BorderStyle.SINGLE, size: 4, color: 'D9D9D9' }
+      const totalWidth = Math.floor(width * 15)
+      const columnWidths = Array.from(
+        { length: columns },
+        (_, i) => Math.floor(totalWidth / columns) + (i < totalWidth % columns ? 1 : 0)
+      )
       return [
         new Table({
-          width: { size: width * 15, type: WidthType.DXA },
-          columnWidths: Array(columns).fill((width * 15) / columns),
+          layout: TableLayoutType.FIXED,
+          width: { size: totalWidth, type: WidthType.DXA },
+          columnWidths,
           rows: (block.rows || []).map(
             (row, index) =>
               new TableRow({
                 tableHeader: row.header,
+                cantSplit: row.header,
                 children: row.cells.map(
-                  (cell) =>
+                  (cell, column) =>
                     new TableCell({
                       children: createBlocks(
                         cell.length ? cell : [{ kind: 'paragraph', runs: [] }],
-                        width / columns - 16
+                        columnWidths[column] / 15 - 16,
+                        true
                       ),
-                      width: { size: (width * 15) / columns, type: WidthType.DXA },
+                      width: { size: columnWidths[column], type: WidthType.DXA },
+                      verticalAlign: VerticalAlign.CENTER,
                       margins: { top: 80, bottom: 80, left: 100, right: 100 },
                       shading: {
                         fill: row.header ? 'E8EDF2' : index % 2 === 0 ? 'F6F7F8' : 'FFFFFF'
@@ -113,17 +130,29 @@ const createBlocks = (blocks: WordBlock[], width = WORD_CONTENT_WIDTH): (Paragra
               })
           )
         }),
-        new Paragraph({ spacing: { after: 80 } })
+        // A nonempty spacer survives Word's suppression of leading space after a table.
+        new Paragraph({
+          children: [new TextRun({ text: '\u00a0', size: 2, color: 'FFFFFF' })],
+          spacing: { before: 0, after: 0, line: 120, lineRule: LineRuleType.EXACT }
+        })
       ]
     }
     if (block.kind === 'code') {
-      return (block.text || '').split('\n').map(
-        (line) =>
+      const lines = (block.text || '').split('\n')
+      return lines.map(
+        (line, index) =>
           new Paragraph({
             style: 'CodeBlock',
+            spacing: { before: index === 0 ? 120 : 0, after: index === lines.length - 1 ? 120 : 0 },
+            tabStops: Array.from({ length: 32 }, (_, tab) => ({
+              type: TabStopType.LEFT,
+              position: 120 + (tab + 1) * 380
+            })),
             children: [
               new TextRun({
-                text: line || ' ',
+                children: (line || ' ')
+                  .split('\t')
+                  .flatMap((part, i) => (i ? [new Tab(), part] : [part])),
                 font: WORD_TEMPLATE.codeFont,
                 size: WORD_TEMPLATE.codeSize
               })
@@ -142,7 +171,7 @@ const createBlocks = (blocks: WordBlock[], width = WORD_CONTENT_WIDTH): (Paragra
     const figure = block.style === 'figure' || block.style === 'equation'
     return [
       new Paragraph({
-        style,
+        style: style || (inCell ? 'TableBody' : undefined),
         heading:
           block.kind === 'heading'
             ? headingLevels[Math.max(0, Math.min(5, (block.level || 1) - 1))]
@@ -153,8 +182,17 @@ const createBlocks = (blocks: WordBlock[], width = WORD_CONTENT_WIDTH): (Paragra
             : block.alignment === 'right'
               ? AlignmentType.RIGHT
               : undefined,
-        numbering: block.list ? { reference: block.list.id, level: block.list.level } : undefined,
-        keepNext: block.kind === 'heading' || block.style === 'figure' ? true : undefined,
+        numbering:
+          block.list && !block.list.continuation
+            ? { reference: block.list.id, level: block.list.level }
+            : undefined,
+        indent: block.list?.continuation ? { left: 360 * (block.list.level + 1) } : undefined,
+        widowControl: true,
+        keepNext:
+          block.kind === 'heading' ||
+          (block.style === 'figure' && blocks[blockIndex + 1]?.style === 'caption')
+            ? true
+            : undefined,
         keepLines: figure,
         spacing: figure
           ? { before: 120, after: 120, line: 240, lineRule: LineRuleType.AUTO }
@@ -209,6 +247,12 @@ export const createWordDocument = async(content: WordContent): Promise<Buffer> =
         }
       },
       paragraphStyles: [
+        {
+          id: 'TableBody',
+          name: '表格正文',
+          basedOn: 'Normal',
+          paragraph: { spacing: { before: 0, after: 0, line: 276, lineRule: LineRuleType.AUTO } }
+        },
         {
           id: 'CodeBlock',
           name: '代码块',

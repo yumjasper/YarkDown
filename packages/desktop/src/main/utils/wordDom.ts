@@ -23,7 +23,7 @@ export interface WordBlock {
   text?: string
   style?: 'figure' | 'caption' | 'equation' | 'quote'
   alignment?: 'left' | 'center' | 'right'
-  list?: { id: string; ordered: boolean; level: number; start: number }
+  list?: { id: string; ordered: boolean; level: number; start: number; continuation?: boolean }
   rows?: { header: boolean; cells: WordBlock[][] }[]
 }
 
@@ -111,6 +111,12 @@ export function serializeWordDocument(): WordContent {
         }
         for (const item of Array.from(node.children)) {
           const childBlocks = blocks(item, nextList, quote)
+          let numbered = false
+          for (const block of childBlocks) {
+            if (block.list?.id !== nextList.id) continue
+            block.list = { ...block.list, continuation: numbered }
+            numbered = true
+          }
           if (childBlocks.length) result.push(...childBlocks)
         }
       } else if (tag === 'table') {
@@ -120,7 +126,20 @@ export function serializeWordDocument(): WordContent {
             node.querySelectorAll(':scope > thead > tr, :scope > tbody > tr, :scope > tr')
           ).map((row) => ({
             header: row.parentElement?.tagName === 'THEAD' || row.querySelector('th') !== null,
-            cells: Array.from(row.children).map((cell) => blocks(cell))
+            cells: Array.from(row.children).map((cell) => {
+              const cellBlocks = blocks(cell)
+              const align =
+                cell.getAttribute('align') ||
+                cell.getAttribute('data-align') ||
+                (cell instanceof HTMLElement ? cell.style.textAlign : '')
+              for (const block of cellBlocks) {
+                if (align === 'left' || align === 'center' || align === 'right')
+                  block.alignment = align
+                if (cell.tagName === 'TH')
+                  block.runs = block.runs?.map((run) => ({ ...run, bold: true }))
+              }
+              return cellBlocks
+            })
           }))
         })
       } else if (tag === 'pre') {
@@ -134,7 +153,8 @@ export function serializeWordDocument(): WordContent {
       } else if (['p', 'figcaption'].includes(tag) || node.hasAttribute('data-word-equation')) {
         const runs = inline(node)
         const standalone =
-          runs.some((run) => run.image) && runs.every((run) => run.image || !run.text?.trim())
+          runs.some((run) => run.image && !run.math) &&
+          runs.every((run) => run.image || !run.text?.trim())
         const style = node.hasAttribute('data-word-equation')
           ? 'equation'
           : tag === 'figcaption'

@@ -20,4 +20,21 @@ describe('Word semantic structure', () => {
     expect(blocks[1].style).toBe('figure')
     expect(blocks[2].style).toBe('caption')
   })
+  it('keeps a standalone inline formula distinct from a display equation', () => {
+    document.body.innerHTML = '<article><p><img data-word-math src="data:image/png;base64,AA=="></p><p data-word-equation><img data-word-math src="data:image/png;base64,AA=="></p></article>'
+    const { blocks } = serializeWordDocument()
+    expect(blocks[0].style).toBeUndefined()
+    expect(blocks[0].alignment).toBeUndefined()
+    expect(blocks[1].style).toBe('equation')
+    expect(blocks[1].alignment).toBe('center')
+  })
+  it('numbers only the first paragraph of each list item and preserves cell alignment', () => {
+    document.body.innerHTML = '<article><ol start="3"><li><p>第一项</p><p>继续说明</p></li><li><p>第二项</p></li></ol><table><thead><tr><th style="text-align:center">表头</th></tr></thead><tbody><tr><td data-align="right">内容</td></tr></tbody></table></article>'
+    const { blocks } = serializeWordDocument()
+    expect(blocks[0].list).toMatchObject({ start: 3, continuation: false })
+    expect(blocks[1].list).toMatchObject({ continuation: true })
+    expect(blocks[2].list).toMatchObject({ continuation: false })
+    expect(blocks[3].rows?.[0].cells[0][0]).toMatchObject({ alignment: 'center', runs: [{ text: '表头', bold: true }] })
+    expect(blocks[3].rows?.[1].cells[0][0].alignment).toBe('right')
+  })
 })
