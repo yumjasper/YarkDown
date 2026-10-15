@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import bus from '../bus'
 import { useEditorStore } from './editor'
 import { useLayoutStore } from './layout'
+import { isPdfFile } from '@shared/pdf'
 
 export const useListenForMainStore = defineStore('listenForMain', () => {
   function EDITOR_EDIT_ACTION(type: string): void {
@@ -31,6 +32,11 @@ export const useListenForMainStore = defineStore('listenForMain', () => {
       bus.emit('aboutDialog')
     })
     window.electron.ipcRenderer.on('mt::show-export-dialog', (_e, type) => {
+      const file = useEditorStore().currentFile
+      if (file && isPdfFile(file.filename)) {
+        if (type === 'print') bus.emit('pdf-print', file.id)
+        return
+      }
       bus.emit('showExportDialog', type)
     })
   }

@@ -201,7 +201,7 @@ class QuickOpenCommand {
 
   _getInclusions = (query: string): string[] => {
     // NOTE: This will fail on `foo.m` because we search for `foo.m.md`.
-    if (window.fileUtils.hasMarkdownExtension(query)) {
+    if (window.fileUtils.hasMarkdownExtension(query) || /\.pdf$/i.test(query)) {
       return [`*${query}`]
     }
 
@@ -209,6 +209,7 @@ class QuickOpenCommand {
     for (let i = 0; i < window.fileUtils.MARKDOWN_INCLUSIONS.length; ++i) {
       inclusions[i] = `*${query}` + window.fileUtils.MARKDOWN_INCLUSIONS[i]
     }
+    inclusions.push(`*${query}*.pdf`, `*${query}*.PDF`)
     return inclusions
   }
 

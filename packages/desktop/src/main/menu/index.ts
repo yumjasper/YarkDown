@@ -33,6 +33,7 @@ interface WindowMenuEntry {
   menu: Menu | null
   type: MenuTypeValue
   plainText?: boolean
+  pdf?: boolean
   markdownChecks?: Map<string, boolean>
 }
 
@@ -304,7 +305,7 @@ class AppMenu {
       const { menu: oldMenu, type } = value
       if (type !== MenuType.EDITOR || !oldMenu) return
 
-      const { menu: newMenu } = this._buildEditorMenu(recentUsedDocuments, !!value.plainText)
+      const { menu: newMenu } = this._buildEditorMenu(recentUsedDocuments, !!value.plainText, !!value.pdf)
       if (!newMenu) return
 
       // all other menu items are set automatically
@@ -338,7 +339,7 @@ class AppMenu {
       let newMenu: Menu | null
       if (type === MenuType.EDITOR) {
         if (!oldMenu) return
-        const { menu: rebuilt } = this._buildEditorMenu(recentUsedDocuments, !!value.plainText)
+        const { menu: rebuilt } = this._buildEditorMenu(recentUsedDocuments, !!value.plainText, !!value.pdf)
         if (!rebuilt) return
 
         updateMenuItem(oldMenu, rebuilt, 'sourceCodeModeMenuItem')
@@ -440,14 +441,14 @@ class AppMenu {
     })
   }
 
-  _buildEditorMenu(recentUsedDocuments: string[] | null = null, plainText = false): WindowMenuEntry {
+  _buildEditorMenu(recentUsedDocuments: string[] | null = null, plainText = false, pdf = false): WindowMenuEntry {
     if (!recentUsedDocuments) {
       recentUsedDocuments = this.getRecentlyUsedDocuments()
     }
 
-    const menuTemplate = configureMenu(this._keybindings, this._preferences, recentUsedDocuments, plainText)
+    const menuTemplate = configureMenu(this._keybindings, this._preferences, recentUsedDocuments, plainText, pdf)
     const menu = Menu.buildFromTemplate(menuTemplate)
-    return { menu, type: MenuType.EDITOR, plainText }
+    return { menu, type: MenuType.EDITOR, plainText, pdf }
   }
 
   _buildSettingMenu(): WindowMenuEntry {
@@ -664,13 +665,13 @@ class AppMenu {
     // In source-code mode the Paragraph and Format commands act on the hidden
     // WYSIWYG engine, so grey them out; on return to WYSIWYG they are re-enabled
     // and the next selection change refines them (#3531).
-    ipcMain.on('mt::set-editor-format-menus-enabled', (_e, windowId: number, enabled: boolean, plainText = false) => {
+    ipcMain.on('mt::set-editor-format-menus-enabled', (_e, windowId: number, enabled: boolean, plainText = false, pdf = false) => {
       if (!this.has(windowId)) return
       const window = BrowserWindow.fromId(windowId)
       if (!window || window.webContents !== _e.sender) return
       const entry = this.windowMenus.get(windowId)!
-      if (isPlainTextEditor(window.webContents) !== plainText) {
-        if (plainText) {
+      if (isPlainTextEditor(window.webContents) !== plainText || !!entry.pdf !== pdf) {
+        if (plainText && !isPlainTextEditor(window.webContents)) {
           entry.markdownChecks = new Map(
             ['sourceCodeModeMenuItem', 'typewriterModeMenuItem', 'focusModeMenuItem']
               .map(id => [id, entry.menu?.getMenuItemById(id)?.checked ?? false])
@@ -678,13 +679,14 @@ class AppMenu {
         }
         setPlainTextEditor(window.webContents, plainText)
         entry.plainText = plainText
+        entry.pdf = pdf
         this.updateAppMenu()
         this._broadcastMenuBar()
       }
       const menu = this.getWindowMenuById(windowId)
       for (const id of ['exportMenuEntry', 'pandocMenuEntry', 'printMenuEntry']) {
         const entry = menu.getMenuItemById(id)
-        if (entry) entry.enabled = !plainText
+        if (entry) entry.enabled = !plainText || (pdf && id === 'printMenuEntry')
       }
       for (const id of ['paragraphMenuEntry', 'formatMenuItem']) {
         const entry = menu.getMenuItemById(id)

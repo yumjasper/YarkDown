@@ -17,7 +17,7 @@ const script = readFileSync(
   'utf8'
 )
 
-const EXTENSIONS = ['.md', '.markdown', '.mmd', '.mdown', '.mdtxt', '.mdtext', '.mdx']
+const EXTENSIONS = ['.md', '.markdown', '.mmd', '.mdown', '.mdtxt', '.mdtext', '.mdx', '.pdf', '.txt']
 
 const macroBody = (name: string): string => {
   const start = script.indexOf(`!macro ${name}`)
@@ -29,8 +29,28 @@ const macroBody = (name: string): string => {
 
 const customInstall = macroBody('customInstall')
 const customUnInstall = macroBody('customUnInstall')
+const pdfComponent = macroBody('ytConfigurePdfComponent')
 
-describe('Windows Markdown file association (build/windows/installer.nsh)', () => {
+describe('Windows document associations (build/windows/installer.nsh)', () => {
+  it('defaults to installing PDF and removes its payloads and associations when deselected', () => {
+    expect(macroBody('customInit')).toContain('StrCpy $YtInstallPdf 1')
+    expect(script).toContain('同时安装 PDF 阅读器')
+    expect(pdfComponent).toContain('${If} $YtInstallPdf == 1')
+    expect(pdfComponent).toContain('resources\\pdf-disabled')
+    expect(pdfComponent).toContain('app.asar.unpacked\\out\\renderer\\pdfjs')
+    expect(pdfComponent).toContain('app.asar.unpacked\\out\\main\\pdfAnnotations*')
+    expect(pdfComponent).toContain('mtUnassociateExtension ".pdf"')
+    expect(pdfComponent).toContain('"PdfReaderInstalled"')
+  })
+  it('advertises supported types and capabilities without changing Windows defaults', () => {
+    expect(script).toContain('Applications\\YarkText.exe\\SupportedTypes')
+    expect(script).toContain('Software\\RegisteredApplications')
+    expect(script).toContain('Software\\YarkText\\Capabilities\\FileAssociations')
+    expect(script).not.toMatch(/(?:WriteReg|DeleteReg)[^\n]*UserChoice/)
+    expect(macroBody('mtAssociateExtension')).not.toMatch(/WriteRegStr[^\n]*Classes\\\$\{EXT\}"\s+""/)
+    const config = readFileSync(path.resolve(__dirname, '../../../electron-builder.yml'), 'utf8')
+    expect(config.slice(config.indexOf('\nwin:'), config.indexOf('\nnsis:'))).toContain('fileAssociations: []')
+  })
   it('keeps the ProgId name an existing "Open with" choice points at', () => {
     expect(script).toMatch(/!define\s+MT_PROGID\s+"MarkText\.Document"/)
   })
@@ -41,7 +61,7 @@ describe('Windows Markdown file association (build/windows/installer.nsh)', () =
 
   it('claims every Markdown extension for the ProgId', () => {
     for (const ext of EXTENSIONS) {
-      expect(customInstall, `${ext} is not associated`).toContain(`"${ext}"`)
+      expect(customInstall + pdfComponent, `${ext} is not associated`).toContain(`"${ext}"`)
     }
     expect(customInstall).toContain('MT_PROGID')
   })

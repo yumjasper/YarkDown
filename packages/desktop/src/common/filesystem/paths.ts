@@ -2,6 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import { isFile, isFile2, isSymbolicLink } from './index'
 import { minimatch } from 'minimatch'
+import { isPdfFile } from '../../shared/pdf'
 
 export const MARKDOWN_EXTENSIONS: readonly string[] = Object.freeze([
   'markdown',
@@ -125,6 +126,17 @@ export const isMarkdownFile = (filepath: string): boolean => {
     return isFile(targetPath) && hasMarkdownExtension(targetPath)
   }
   return hasMarkdownExtension(filepath)
+}
+
+export const hasReadableExtension = (filename: string): boolean =>
+  hasMarkdownExtension(filename) || isPdfFile(filename)
+
+export const isReadableFile = (filepath: string): boolean => {
+  if (!isFile2(filepath)) return false
+  const target = isSymbolicLink(filepath)
+    ? path.resolve(path.dirname(filepath), fs.readlinkSync(filepath))
+    : filepath
+  return isFile(target) && hasReadableExtension(target)
 }
 
 /**

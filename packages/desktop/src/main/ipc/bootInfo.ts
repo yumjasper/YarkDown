@@ -4,6 +4,7 @@ import { app, ipcMain } from 'electron'
 import { rgPath } from '@vscode/ripgrep'
 import { MARKDOWN_INCLUSIONS } from 'common/filesystem/paths'
 import type { BootInfo } from '@shared/types/ipc'
+import { isPdfReaderInstalled } from '../utils/pdfComponent'
 
 const ENV_ALLOWLIST = [
   'NODE_ENV',
@@ -66,6 +67,7 @@ const buildBootInfo = (): BootInfo => ({
     cwd: process.cwd()
   },
   isUpdatable: computeIsUpdatable(),
+  features: { pdf: isPdfReaderInstalled() },
   MARKDOWN_INCLUSIONS: [...MARKDOWN_INCLUSIONS]
 })
 

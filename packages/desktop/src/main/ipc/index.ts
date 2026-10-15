@@ -11,6 +11,7 @@ import { CommandManager } from '../commands'
 import { registerI18nHandlers } from './i18n'
 import { registerDialogHandlers } from './dialog'
 import { registerDiagramHandlers } from './diagram'
+import { registerPdfHandlers } from './pdf'
 
 export const registerSandboxIpcHandlers = (): void => {
   registerBootInfo()
@@ -25,4 +26,5 @@ export const registerSandboxIpcHandlers = (): void => {
   registerI18nHandlers()
   registerDialogHandlers()
   registerDiagramHandlers()
+  registerPdfHandlers()
 }

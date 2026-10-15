@@ -75,6 +75,7 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef, reactive, watch, onMounted, onBeforeUnmount, nextTick, markRaw } from 'vue'
 import { isPlainTextFile } from '@shared/plainText'
+import { isPdfFile } from '@shared/pdf'
 import TableTools from '../tableTools/index.vue'
 import log from 'electron-log'
 import {
@@ -240,7 +241,11 @@ const {
 
 // Editor store refs
 const { currentFile, tabs } = storeToRefs(editorStore)
-const plainText = computed(() => isPlainTextFile(currentFile.value?.filename || ''))
+const pdf = computed(() => isPdfFile(currentFile.value?.filename || ''))
+const plainText = computed(() => {
+  const filename = currentFile.value?.filename || ''
+  return isPlainTextFile(filename) || isPdfFile(filename)
+})
 const sourceCode = computed(() => preferredSourceCode.value || plainText.value)
 
 
@@ -475,9 +480,9 @@ watch(focus, (value) => {
 // WYSIWYG engine, so grey them out. On return to WYSIWYG, re-apply the menu
 // state for the CURRENT cursor context (a code block/table still disables some
 // items) rather than blanket-enabling everything (#3531).
-watch([sourceCode, plainText], ([isSource, isPlainText]) => {
+watch([sourceCode, plainText, pdf], ([isSource, isPlainText, isPdf]) => {
   const windowId = window.marktext?.env?.windowId ?? -1
-  window.electron.ipcRenderer.send('mt::set-editor-format-menus-enabled', windowId, !isSource, isPlainText)
+  window.electron.ipcRenderer.send('mt::set-editor-format-menus-enabled', windowId, !isSource, isPlainText, isPdf)
   if (isSource) {
     return
   }

@@ -1,4 +1,6 @@
 import { isPlainTextFile, suggestedDocumentName } from '@shared/plainText'
+import { isPdfFile } from '@shared/pdf'
+import { isPdfReaderInstalled } from '../../utils/pdfComponent'
 import { rename as fsRename } from 'fs-extra'
 import path from 'path'
 import {
@@ -15,7 +17,7 @@ import { isDirectory, isFile, exists } from 'common/filesystem'
 import {
   MARKDOWN_EXTENSIONS,
   isDangerousExecutableFile,
-  isMarkdownFile
+  isReadableFile
 } from 'common/filesystem/paths'
 import { checkUpdates, userSetting } from './marktext'
 import { showTabBar } from './view'
@@ -609,7 +611,7 @@ ipcMain.on('mt::window::drop', async(e, fileList: string[]) => {
     return
   }
   for (const file of fileList) {
-    if (isMarkdownFile(file)) {
+    if (isReadableFile(file)) {
       openFileOrFolder(win, file)
       continue
     }
@@ -635,6 +637,10 @@ interface RenamePayload {
 
 ipcMain.on('mt::rename', async(e, { id, pathname, newPathname }: RenamePayload) => {
   if (pathname === newPathname) return
+  if (isPdfFile(pathname) && !isPdfFile(newPathname)) {
+    e.sender.send('mt::show-notification', { title: 'PDF', type: 'error', message: 'PDF files must keep the .pdf extension.' })
+    return
+  }
   const win = BrowserWindow.fromWebContents(e.sender)
   if (!win) {
     return
@@ -688,6 +694,10 @@ ipcMain.on(
     })
 
     if (filePath && !canceled) {
+      if (isPdfFile(pathname) && !isPdfFile(filePath)) {
+        e.sender.send('mt::show-notification', { title: 'PDF', type: 'error', message: 'PDF files must keep the .pdf extension.' })
+        return
+      }
       fsRename(pathname, filePath, (err: NodeJS.ErrnoException | null) => {
         if (err) {
           log.error(`mt::rename: Cannot rename "${pathname}" to "${filePath}".\n${err.stack}`)
@@ -759,7 +769,7 @@ ipcMain.on('mt::format-link-click', async(e, { data, dirname }: FormatLinkPayloa
 
   const { pathname, anchor } = resolveLocalLinkTarget(urlCandidate, dirname ?? '')
   if (pathname) {
-    if (isMarkdownFile(pathname)) {
+    if (isReadableFile(pathname)) {
       const innerWin = BrowserWindow.fromWebContents(e.sender)
       if (innerWin) {
         openFileOrFolder(innerWin, pathname, { anchor })
@@ -873,8 +883,8 @@ export const openFile = async(win: BrowserWindow | null): Promise<void> => {
     properties: ['openFile', 'multiSelections'],
     filters: [
       {
-        name: 'Markdown document',
-        extensions: [...MARKDOWN_EXTENSIONS]
+        name: isPdfReaderInstalled() ? 'Markdown / Text / PDF' : 'Markdown / Text',
+        extensions: [...MARKDOWN_EXTENSIONS, ...(isPdfReaderInstalled() ? ['pdf'] : [])]
       }
     ]
   })

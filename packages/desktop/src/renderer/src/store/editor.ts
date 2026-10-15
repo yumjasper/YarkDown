@@ -1,4 +1,5 @@
 import { isPlainTextFile } from '@shared/plainText'
+import { isPdfFile, type PdfAnnotation } from '@shared/pdf'
 import equal from 'deep-equal'
 import bus from '../bus'
 import { getUniqueId, deepClone } from '../util'
@@ -151,6 +152,7 @@ export interface EditorState {
 }
 
 const autoSaveTimers = new Map<string, ReturnType<typeof setTimeout>>()
+const pdfSaveRequests = new Map<string, Promise<boolean>>()
 
 // Sidebar opens record whether the editor should take focus once that pathname
 // finishes loading. Keyed by pathname so concurrent opens keep their own intent.
@@ -187,6 +189,60 @@ export const useEditorStore = defineStore('editor', {
   },
 
   actions: {
+    SET_PDF_ANNOTATIONS(id: string, annotations: PdfAnnotation[], hash?: string): void {
+      const tab = this.tabs.find(tab => tab.id === id)
+      if (!tab || !isPdfFile(tab.filename)) return
+      tab.pdfAnnotations = annotations
+      if (hash) tab.pdfSourceHash = hash
+      tab.isSaved = annotations.length === 0
+      debouncedSendBufferedState()
+    },
+
+    async SAVE_PDF(file: IFileState, copy = false): Promise<boolean> {
+      bus.emit('flush-pdf-annotation', file.id)
+      if (!copy && !file.pdfAnnotations?.length) return true
+      const pending = pdfSaveRequests.get(file.id)
+      if (pending) return pending
+      const request = (async() => {
+        file.pdfSaving = true
+        try {
+          if (!file.pdfSourceHash) return false
+          const result = await window.electron.ipcRenderer.invoke('mt::pdf::save', {
+            pathname: file.pathname, sourceHash: file.pdfSourceHash,
+            annotations: deepClone(file.pdfAnnotations || []), copy
+          })
+          if (!result) return false
+          this.SET_PDF_ANNOTATIONS(file.id, [], result.pathname !== file.pathname ? undefined : result.hash)
+          bus.emit('pdf-saved', { id: file.id })
+          if (result.pathname !== file.pathname) window.electron.ipcRenderer.send('mt::open-file', result.pathname, {})
+          return true
+        } catch (error) {
+          notice.notify({ title: 'PDF', type: 'error', message: error instanceof Error ? error.message : String(error) })
+          return false
+        } finally { file.pdfSaving = false }
+      })()
+      pdfSaveRequests.set(file.id, request)
+      try { return await request } finally { pdfSaveRequests.delete(file.id) }
+    },
+
+    async RESOLVE_PDF_DRAFT(file: IFileState): Promise<boolean> {
+      bus.emit('flush-pdf-annotation', file.id)
+      const pending = pdfSaveRequests.get(file.id)
+      if (pending && !await pending) return false
+      if (!isPdfFile(file.filename) || !file.pdfAnnotations?.length) return true
+      const choice = await window.electron.ipcRenderer.invoke('mt::pdf::confirm-close', file.filename)
+      if (choice === 'save') return this.SAVE_PDF(file)
+      if (choice === 'cancel') return false
+      this.SET_PDF_ANNOTATIONS(file.id, [])
+      return true
+    },
+
+    SET_PDF_VIEW(id: string, view: NonNullable<IFileState['pdfView']>): void {
+      const tab = this.tabs.find(tab => tab.id === id)
+      if (!tab || !isPdfFile(tab.filename)) return
+      tab.pdfView = view
+      debouncedSendBufferedState()
+    },
     SET_SELECTION_WORD_COUNT(wordCount: FileWordCount | null): void {
       this.selectionWordCount = wordCount
     },
@@ -396,6 +452,7 @@ export const useEditorStore = defineStore('editor', {
 
       // Update file content and restore some entries.
       Object.assign(tab, newFileState)
+      if (isPdfFile(filename) && tab.pdfAnnotations?.length) tab.isSaved = false
       tab.id = oldId
       tab.notifications = oldNotifications
       tab.scrollTop = oldScrollTop
@@ -540,6 +597,7 @@ export const useEditorStore = defineStore('editor', {
 
     FILE_SAVE(): void {
       if (!this.currentFile) return
+      if (isPdfFile(this.currentFile.filename)) { void this.SAVE_PDF(this.currentFile); return }
       this.flushActiveEditor()
       const projectStore = useProjectStore()
       const { id, filename, pathname, markdown } = this.currentFile
@@ -570,6 +628,7 @@ export const useEditorStore = defineStore('editor', {
 
     FILE_SAVE_AS(): void {
       if (!this.currentFile) return
+      if (isPdfFile(this.currentFile.filename)) { void this.SAVE_PDF(this.currentFile, true); return }
       this.flushActiveEditor()
       const projectStore = useProjectStore()
       const { id, filename, pathname, markdown } = this.currentFile
@@ -674,7 +733,10 @@ export const useEditorStore = defineStore('editor', {
     LISTEN_FOR_CLOSE(): void {
       const projectStore = useProjectStore()
       const preferencesStore = usePreferencesStore()
-      window.electron.ipcRenderer.on('mt::ask-for-close', () => {
+      window.electron.ipcRenderer.on('mt::ask-for-close', async() => {
+        for (const file of this.tabs.slice()) {
+          if (!await this.RESOLVE_PDF_DRAFT(file)) return
+        }
         sendBufferedState()
           .catch((err) => {
             console.error('Failed to update buffered state before closing', err)
@@ -713,11 +775,15 @@ export const useEditorStore = defineStore('editor', {
       })
     },
 
-    ASK_FOR_SAVE_ALL(closeTabs: boolean): void {
+    async ASK_FOR_SAVE_ALL(closeTabs: boolean): Promise<void> {
+      for (const file of this.tabs.slice()) {
+        if (!isPdfFile(file.filename) || !file.pdfAnnotations?.length) continue
+        if (closeTabs ? !await this.RESOLVE_PDF_DRAFT(file) : !await this.SAVE_PDF(file)) return
+      }
       const { tabs } = this
       const projectStore = useProjectStore()
       const unsavedFiles = tabs
-        .filter((file) => !(file.isSaved && /[^\n]/.test(file.markdown)))
+        .filter((file) => !isPdfFile(file.filename) && !(file.isSaved && /[^\n]/.test(file.markdown)))
         .map((file) => {
           const { id, filename, pathname, markdown } = file
           const options = getOptionsFromState(file)
@@ -987,9 +1053,13 @@ export const useEditorStore = defineStore('editor', {
       })
     },
 
-    CLOSE_TAB(file: IFileState | null = null): void {
+    async CLOSE_TAB(file: IFileState | null = null): Promise<void> {
       const target = file ?? this.currentFile
       if (target === null) return
+      if (isPdfFile(target.filename)) {
+        if (await this.RESOLVE_PDF_DRAFT(target)) this.FORCE_CLOSE_TAB(target)
+        return
+      }
 
       if (target.isSaved) {
         this.FORCE_CLOSE_TAB(target)
@@ -1420,7 +1490,7 @@ export const useEditorStore = defineStore('editor', {
       let didUpdateSaveStatus = false
       this.tabs.forEach((f) => {
         if (f.pathname === pathname) {
-          f.isSaved = false
+          f.isSaved = isPdfFile(f.filename) && !f.pdfAnnotations?.length
           didUpdateSaveStatus = true
         }
       })
@@ -1497,7 +1567,7 @@ export const useEditorStore = defineStore('editor', {
       }
 
       const tab = this.tabs[this.tabIdToIndex[id]!]
-      if (!tab) return
+      if (!tab || isPdfFile(tab.filename)) return
 
       const { filename, pathname, markdown: oldMarkdown, trimTrailingNewline } = tab
 
@@ -1555,6 +1625,7 @@ export const useEditorStore = defineStore('editor', {
     },
 
     HANDLE_AUTO_SAVE({ id, filename, pathname, markdown, options }: AutoSavePayload): void {
+      if (isPdfFile(filename)) return
       if (!id || !pathname) {
         throw new Error('HANDLE_AUTO_SAVE: Invalid tab.')
       }
@@ -1634,6 +1705,7 @@ export const useEditorStore = defineStore('editor', {
 
     EXPORT({ type, content, pageOptions }: ExportPayload): void {
       if (this.currentFile === null) return
+      if (isPdfFile(this.currentFile.filename)) return
 
       const { filename, pathname } = this.currentFile
       window.electron.ipcRenderer.send('mt::response-export', {
@@ -1650,6 +1722,7 @@ export const useEditorStore = defineStore('editor', {
     // mode CodeMirror writes straight to it, so `engine.getMarkdown()` would be stale (#5379).
     EXPORT_PANDOC(target: string): void {
       if (this.currentFile === null) return
+      if (isPdfFile(this.currentFile.filename)) return
 
       this.flushActiveEditor()
       const { pathname, markdown } = this.currentFile
@@ -1755,7 +1828,7 @@ export const useEditorStore = defineStore('editor', {
           const { id, isSaved, filename } = tab
           switch (type) {
             case 'unlink': {
-              tab.isSaved = false
+              tab.isSaved = isPdfFile(filename) && !tab.pdfAnnotations?.length
               this.pushTabNotification({
                 tabId: id,
                 msg: t('store.editor.fileRemovedOnDisk', { name: filename }),
@@ -1772,7 +1845,7 @@ export const useEditorStore = defineStore('editor', {
               // that left the content byte-identical) — there is nothing to
               // reload and no reason to warn the user (#1861).
               const newMarkdown = (change as unknown as FileChangePayload).data?.markdown
-              if (typeof newMarkdown === 'string' && newMarkdown === tab.markdown) {
+              if (!isPdfFile(filename) && typeof newMarkdown === 'string' && newMarkdown === tab.markdown) {
                 break
               }
 
@@ -2103,6 +2176,9 @@ function toSerializableValue<T>(value: T | null | undefined, fallback: T | null 
 }
 
 interface BufferedTabState {
+  pdfAnnotations?: IFileState['pdfAnnotations']
+  pdfSourceHash?: string
+  pdfView?: IFileState['pdfView']
   id: string
   pathname: string
   filename: string
@@ -2135,7 +2211,10 @@ const createBufferedTabState = (tab: Partial<IFileState> & { id: string }): Buff
     cursor: toSerializableValue(tab.cursor, defaultFileState.cursor),
     wordCount: toSerializableValue(tab.wordCount, defaultFileState.wordCount),
     muyaIndexCursor: toSerializableValue(tab.muyaIndexCursor, defaultFileState.muyaIndexCursor),
-    scrollTop: tab.scrollTop ?? defaultFileState.scrollTop
+    scrollTop: tab.scrollTop ?? defaultFileState.scrollTop,
+    pdfView: tab.pdfView ? { ...tab.pdfView } : undefined,
+    pdfAnnotations: tab.pdfAnnotations ? deepClone(tab.pdfAnnotations) : undefined,
+    pdfSourceHash: tab.pdfSourceHash
   }
 }
 

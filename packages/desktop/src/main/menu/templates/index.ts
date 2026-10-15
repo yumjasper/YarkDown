@@ -40,7 +40,8 @@ export default function(
   keybindings: Keybindings,
   preferences: Preference,
   recentlyUsedFiles: string[] = [],
-  plainText = false
+  plainText = false,
+  pdf = false
 ): MenuItemConstructorOptions[] {
   const viewMenu = view(keybindings, !!preferences.getItem('minimapEnabled'), () => {
     preferences.setItem('minimapEnabled', !preferences.getItem('minimapEnabled'))
@@ -48,9 +49,10 @@ export default function(
   if (plainText) {
     const fileMenu = file(keybindings, preferences, recentlyUsedFiles)
     fileMenu.submenu = (fileMenu.submenu as MenuItemConstructorOptions[]).filter(item =>
-      !['exportMenuEntry', 'pandocMenuEntry', 'printMenuEntry'].includes(item.id || ''))
+      !['exportMenuEntry', 'pandocMenuEntry', ...(pdf ? [] : ['printMenuEntry'])].includes(item.id || '') &&
+      (!pdf || item.label !== t('menu.file.autoSave')))
     const editMenu = edit(keybindings)
-    const allowed = ['undo', 'redo', 'cut', 'copy', 'paste', 'selectAll', 'findInFolder']
+    const allowed = (pdf ? ['undo', 'redo', 'copy', 'selectAll', 'find', 'findInFolder'] : ['undo', 'redo', 'cut', 'copy', 'paste', 'selectAll', 'findInFolder'])
       .map(key => t(`menu.edit.${key}`))
     editMenu.submenu = (editMenu.submenu as MenuItemConstructorOptions[])
       .filter(item => allowed.includes(item.label || ''))
@@ -60,7 +62,7 @@ export default function(
     return [
       ...(process.platform === 'darwin' ? [marktext(keybindings)] : []),
       fileMenu, editMenu,
-      ...textActions(!!preferences.getItem('txtWordWrap'), !!preferences.getItem('txtLineNumbers')),
+      ...(pdf ? [] : textActions(!!preferences.getItem('txtWordWrap'), !!preferences.getItem('txtLineNumbers'))),
       window(keybindings), theme(preferences), viewMenu, help()
     ]
   }

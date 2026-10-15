@@ -4,7 +4,9 @@ import log from 'electron-log'
 import iconv from 'iconv-lite'
 import { LINE_ENDING_REG, LF_LINE_ENDING_REG, CRLF_LINE_ENDING_REG } from '../config'
 import { isDirectory2 } from 'common/filesystem'
-import { isMarkdownFile } from 'common/filesystem/paths'
+import { isReadableFile } from 'common/filesystem/paths'
+import { isPdfFile } from '@shared/pdf'
+import { requirePdfReader } from '../utils/pdfComponent'
 import { normalizeAndResolvePath, writeFile } from '../filesystem'
 import { guessEncoding } from './encoding'
 import type { Encoding } from 'common/encoding'
@@ -44,15 +46,14 @@ const convertLineEndings = (text: string, lineEnding: LineEnding): string => {
 }
 
 /**
- * Special function to normalize directory and markdown file paths.
- * Returns the normalized path and a directory hint, or null if it's not a
- * directory or markdown file.
+ * Resolves links before routing supported documents to their reader/editor.
+ * Returns null for unsupported files or unresolved links.
  */
 export const normalizeMarkdownPath = (
   pathname: string
 ): { isDir: boolean; path: string } | null => {
   const isDir = isDirectory2(pathname)
-  if (isDir || isMarkdownFile(pathname)) {
+  if (isDir || isReadableFile(pathname)) {
     const resolved = normalizeAndResolvePath(pathname)
     if (resolved) {
       return { isDir, path: resolved }
@@ -71,6 +72,7 @@ export const writeMarkdownFile = (
   content: string,
   options: MarkdownDocumentOptions
 ): Promise<void> => {
+  if (isPdfFile(pathname)) throw new Error('PDF documents are read-only.')
   const { adjustLineEndingOnSave, lineEnding } = options
   const { encoding, isBom } = options.encoding
   const extension = path.extname(pathname) || '.md'
@@ -85,7 +87,7 @@ export const writeMarkdownFile = (
 }
 
 /**
- * Reads the contents of a markdown file.
+ * Loads editable text or metadata for a read-only PDF tab.
  */
 export const loadMarkdownFile = async(
   pathname: string,
@@ -94,6 +96,16 @@ export const loadMarkdownFile = async(
   trimTrailingNewline: number = 2,
   autoNormalizeLineEndings: boolean = false
 ): Promise<MarkdownDocumentRaw> => {
+  // PDF bytes are loaded by the reader, never decoded or persisted as editable text.
+  if (isPdfFile(pathname)) {
+    requirePdfReader()
+    await fsPromises.access(pathname)
+    return {
+      markdown: '', filename: path.basename(pathname), pathname,
+      encoding: { encoding: 'utf8', isBom: false }, lineEnding: preferredEol,
+      adjustLineEndingOnSave: false, trimTrailingNewline: 0, isMixedLineEndings: false
+    }
+  }
   // TODO: Use streams to not buffer the file multiple times and only guess
   //       encoding on the first 256/512 bytes.
 

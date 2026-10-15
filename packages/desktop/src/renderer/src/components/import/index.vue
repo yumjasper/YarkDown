@@ -26,6 +26,7 @@
           <p>{{ t('import.description') }}</p>
         </div>
         <div class="file-list">
+          <div>.pdf</div>
           <div>.md</div>
           <div>.html</div>
           <div>.docx</div>

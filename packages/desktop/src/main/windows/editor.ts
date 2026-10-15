@@ -10,6 +10,7 @@ import { ensureWindowPosition, zoomIn, zoomOut } from './utils'
 import { TITLE_BAR_HEIGHT, editorWinOptions, isLinux, isOsx, isWindows } from '../config'
 import { showEditorContextMenu } from '../contextMenu/editor'
 import { loadMarkdownFile } from '../filesystem/markdown'
+import { isPdfFile } from '@shared/pdf'
 import { switchLanguage } from '../spellchecker'
 import fs from 'fs'
 import os from 'os'
@@ -621,7 +622,7 @@ class EditorWindow extends BaseWindow {
             })
             .catch((err: Error) => {
               const { message, stack } = err
-              tab.isSaved = false // Set to false as base file could not be found, needs saving
+              tab.isSaved = isPdfFile(tab.filename || '') && !(Array.isArray(tab.pdfAnnotations) && tab.pdfAnnotations.length)
               log.error(`[ERROR] Cannot open file: ${message}\n\n${stack}`)
               browserWindow!.webContents.send('mt::show-notification', {
                 title: `Could not find file ${tab.filename} on disk, please save your work.`,

@@ -30,12 +30,13 @@ thirdPartyChecker.getLicenses(desktopRoot, (err, packages) => {
     }
     addedKeys[packageName] = 1
 
-    const { licenses, licenseText } = packages[key]
+    const { licenses, licenseText, licenseFile } = packages[key]
+    const bundledLicenseText = licenseText || (licenseFile ? fs.readFileSync(licenseFile, 'utf8') : licenses)
     summary += `${index++}. ${packageName} (${licenses})\n`
     licenseList += `# ${packageName} (${licenses})
 -------------------------------------------------\
 
-${licenseText}
+${bundledLicenseText}
 \n\n
 `
   })
@@ -58,6 +59,6 @@ ${summary}
 ${licenseList}
 `
 
-  fs.writeFileSync(path.resolve(desktopRoot, 'build', 'THIRD-PARTY-LICENSES.txt'), output)
+  fs.writeFileSync(path.resolve(desktopRoot, 'build', 'THIRD-PARTY-LICENSES.txt'), output.replace(/[ \t]+$/gm, '').trimEnd() + '\n')
   console.log('THIRD-PARTY-LICENSES.txt generated successfully.')
 })

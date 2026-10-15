@@ -13,6 +13,8 @@
         class="rail-icon"
         :class="{ active: tab.id === rightColumn }"
         :title="tab.name()"
+        :aria-label="tab.name()"
+        :aria-pressed="tab.id === rightColumn"
         @click="handleLeftIconClick(tab.id)"
       >
         <component :is="tab.icon" />
@@ -37,6 +39,10 @@
         :tabs="tabs"
       />
       <side-bar-search v-else-if="rightColumn === 'search'" />
+      <pdf-navigation
+        v-else-if="pdf && ['toc', 'pdf-thumbnails'].includes(rightColumn)"
+        :mode="rightColumn === 'toc' ? 'outline' : 'thumbnails'"
+      />
       <toc v-else-if="rightColumn === 'toc' && !plainText" />
     </div>
     <div
@@ -53,11 +59,15 @@ import { useLayoutStore } from '@/store/layout'
 import { useProjectStore } from '@/store/project'
 import { useEditorStore } from '@/store/editor'
 import { isPlainTextFile } from '@shared/plainText'
+import { isPdfFile } from '@shared/pdf'
 
 import { sideBarIcons, sideBarBottomIcons } from './help'
 import Tree from './tree.vue'
 import SideBarSearch from './search.vue'
 import Toc from './toc.vue'
+import PdfNavigation from './pdf.vue'
+import { Grid } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import type { TabDescriptor } from './types'
 import { SIDEBAR_RAIL_WIDTH, MIN_SIDEBAR_CONTENT_WIDTH } from '@/util/shellLayout'
@@ -65,6 +75,7 @@ import { SIDEBAR_RAIL_WIDTH, MIN_SIDEBAR_CONTENT_WIDTH } from '@/util/shellLayou
 const layoutStore = useLayoutStore()
 const projectStore = useProjectStore()
 const editorStore = useEditorStore()
+const { locale } = useI18n()
 
 const sideBar = ref<HTMLDivElement | null>(null)
 const dragBar = ref<HTMLDivElement | null>(null)
@@ -76,8 +87,19 @@ const { rightColumn, showSideBar, sideBarWidth } = storeToRefs(layoutStore)
 
 const { projectTree } = storeToRefs(projectStore)
 const { tabs } = storeToRefs(editorStore)
-const plainText = computed(() => isPlainTextFile(editorStore.currentFile?.filename || ''))
-const visibleSideBarIcons = computed(() => sideBarIcons.filter(tab => !plainText.value || tab.id !== 'toc'))
+const plainText = computed(() => {
+  const filename = editorStore.currentFile?.filename || ''
+  return isPlainTextFile(filename)
+})
+const pdf = computed(() => isPdfFile(editorStore.currentFile?.filename || ''))
+const visibleSideBarIcons = computed(() => [
+  ...sideBarIcons.filter(tab => !plainText.value || tab.id !== 'toc'),
+  ...(pdf.value ? [{ id: 'pdf-thumbnails', name: () => locale.value.startsWith('zh') ? 'PDF 缩略图' : 'PDF thumbnails', icon: Grid }] : [])
+])
+watch(pdf, value => {
+  if (value && rightColumn.value === 'files' && showSideBar.value) layoutStore.SET_LAYOUT({ rightColumn: 'toc' })
+  if (!value && rightColumn.value === 'pdf-thumbnails') layoutStore.SET_LAYOUT({ rightColumn: plainText.value ? 'files' : 'toc' })
+}, { immediate: true })
 let markdownColumn: string | undefined
 watch(plainText, value => {
   if (value && rightColumn.value === 'toc') {

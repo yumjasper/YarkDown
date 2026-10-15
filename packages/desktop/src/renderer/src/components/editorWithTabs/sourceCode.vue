@@ -9,6 +9,7 @@
 <script setup lang="ts">
 import { ref, shallowRef, markRaw, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { isPlainTextFile } from '@shared/plainText'
+import { isPdfFile } from '@shared/pdf'
 import { useEditorStore } from '@/store/editor'
 import { usePreferencesStore } from '@/store/preferences'
 import { findMarkdownHeadingLine, scrollSourceEditorToLine } from '@/util/sourceModeToc'
@@ -145,7 +146,7 @@ interface FileChangePayloadLike {
 const handleFileChange = (payload: unknown) => {
   const { id, markdown: newMarkdown, muyaIndexCursor } = payload as FileChangePayloadLike
   if (!editor.value) return
-  if (isPlainTextFile(currentTab.value?.filename || '')) {
+  if (isPlainTextFile(currentTab.value?.filename || '') || isPdfFile(currentTab.value?.filename || '')) {
     prepareTabSwitch()
     return
   }
@@ -466,7 +467,7 @@ onBeforeUnmount(() => {
   bus.off('scroll-to-header', handleScrollToHeader)
   bus.off('flush-active-editor', flushSource)
 
-  if (editor.value && tabId.value === currentTab.value?.id && !isPlainTextFile(currentTab.value?.filename || '')) {
+  if (editor.value && tabId.value === currentTab.value?.id && !isPlainTextFile(currentTab.value?.filename || '') && !isPdfFile(currentTab.value?.filename || '')) {
     const { cursor, markdown: newMarkdown } = getMarkdownAndCursor(editor.value)
     bus.emit('file-changed', {
       id: tabId.value,

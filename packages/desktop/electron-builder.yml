@@ -93,45 +93,19 @@ electronFuses:
 
 asarUnpack:
   - resources/**
-fileAssociations:
-  - ext: md
-    name: Markdown
-    description: Markdown document
-    mimeType: text/markdown
-    role: Editor
-    icon: icons/md.ico
-  - ext: markdown
-    name: Markdown
-    description: Markdown document
-    mimeType: text/markdown
-    role: Editor
-    icon: icons/md.ico
-  - ext: mmd
-    name: Markdown
-    description: Markdown document
-    mimeType: text/markdown
-    role: Editor
-    icon: icons/md.ico
-  - ext: mdown
-    name: Markdown
-    description: Markdown document
-    mimeType: text/markdown
-    role: Editor
-    icon: icons/md.ico
-  - ext: mdtxt
-    name: Markdown
-    description: Markdown document
-    mimeType: text/markdown
-    role: Editor
-    icon: icons/md.ico
-  - ext: mdtext
-    name: Markdown
-    description: Markdown document
-    mimeType: text/markdown
-    role: Editor
-    icon: icons/md.ico
+  - out/renderer/pdfjs/**
+  - out/renderer/assets/pdfReader-*
+  - out/renderer/assets/pdf_viewer-*
+  - out/renderer/assets/pdf.worker*
+  - out/main/pdfAnnotations*
+  - node_modules/pdf-lib/**
+  - node_modules/@pdf-lib/**
+  - node_modules/pdfjs-dist/**
+  - node_modules/@napi-rs/canvas*/**
 win:
   executableName: YarkText
+  # NSIS association registration is owned by build/windows/installer.nsh.
+  fileAssociations: []
   artifactName: 'yarktext-win-${arch}-${version}.${ext}'
   target:
     - target: 'nsis'
@@ -148,6 +122,53 @@ nsis:
   perMachine: false
   include: windows/installer.nsh
 mac:
+  fileAssociations:
+    - ext: txt
+      name: Text
+      description: Text document
+      mimeType: text/plain
+      role: Editor
+    - ext: pdf
+      name: PDF
+      description: PDF document
+      mimeType: application/pdf
+      role: Viewer
+    - ext: md
+      name: Markdown
+      description: Markdown document
+      mimeType: text/markdown
+      role: Editor
+      icon: icons/md.ico
+    - ext: markdown
+      name: Markdown
+      description: Markdown document
+      mimeType: text/markdown
+      role: Editor
+      icon: icons/md.ico
+    - ext: mmd
+      name: Markdown
+      description: Markdown document
+      mimeType: text/markdown
+      role: Editor
+      icon: icons/md.ico
+    - ext: mdown
+      name: Markdown
+      description: Markdown document
+      mimeType: text/markdown
+      role: Editor
+      icon: icons/md.ico
+    - ext: mdtxt
+      name: Markdown
+      description: Markdown document
+      mimeType: text/markdown
+      role: Editor
+      icon: icons/md.ico
+    - ext: mdtext
+      name: Markdown
+      description: Markdown document
+      mimeType: text/markdown
+      role: Editor
+      icon: icons/md.ico
   artifactName: 'yarktext-mac-${arch}-${version}.${ext}'
   entitlementsInherit: build/mac/entitlements.mac.plist
   extendInfo:
@@ -177,6 +198,8 @@ linux:
   category: 'Office;TextEditor;Utility'
   mimeTypes:
     - 'text/markdown'
+    - 'text/plain'
+    - 'application/pdf'
   icon: 'static/icon.png'
   desktop:
     entry:
@@ -189,6 +212,14 @@ linux:
     - rpm
     - tar.gz
   fileAssociations:
+    - ext: 'txt'
+      name: 'Text'
+      description: 'Text document'
+      mimeType: text/plain
+    - ext: 'pdf'
+      name: 'PDF'
+      description: 'PDF document'
+      mimeType: application/pdf
     - ext: 'md'
       name: 'Markdown'
       description: 'Markdown document'

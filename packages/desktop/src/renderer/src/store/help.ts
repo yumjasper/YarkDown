@@ -70,6 +70,9 @@ export const getOptionsFromState = (
 }
 
 const documentStateKeys = [
+  'pdfAnnotations',
+  'pdfSourceHash',
+  'pdfView',
   'isSaved',
   'pathname',
   'filename',

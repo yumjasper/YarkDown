@@ -72,4 +72,18 @@ test.describe('Word counter position', () => {
     await counter.click()
     await expect(counter).toHaveText('W 5')
   })
+
+  test('does not overlap the arcade launcher in the bottom-right corner', async() => {
+    const launcher = page.locator('.arcade-launcher')
+    await expect(launcher).toBeVisible()
+
+    const counter = await page.locator('.word-count').boundingBox()
+    const button = await launcher.boundingBox()
+    expect(counter).toBeTruthy()
+    expect(button).toBeTruthy()
+
+    // The launcher floats above the status bar; the counter must end before
+    // it starts, otherwise the fixed button covers the trailing digits.
+    expect(counter!.x + counter!.width).toBeLessThanOrEqual(button!.x)
+  })
 })

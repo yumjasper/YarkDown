@@ -259,6 +259,7 @@ const electronAPI = {
   },
   paths: bootInfo?.paths || {},
   isUpdatable: !!bootInfo?.isUpdatable,
+  pdfEnabled: bootInfo?.features?.pdf !== false,
   windowControl: windowControlAPI,
   dialog: dialogAPI
 }

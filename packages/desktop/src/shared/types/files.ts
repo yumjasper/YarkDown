@@ -4,6 +4,8 @@
 // commits. Until then, these are intentionally open structures — better an
 // imperfect surface than a placeholder that's wrong.
 
+import type { PdfAnnotation } from '../pdf'
+
 export type LineEnding = 'lf' | 'crlf'
 
 export interface SerializedStat {
@@ -66,6 +68,10 @@ export interface FileSearchMatches {
  * `src/renderer/src/store/help.ts`.
  */
 export interface IFileState {
+  pdfAnnotations?: PdfAnnotation[]
+  pdfSourceHash?: string
+  pdfSaving?: boolean
+  pdfView?: { page: number; scale: string; rotation: number }
   id: string
   filename: string
   // Falsy (`''`) for untitled buffers; pre-migration this was sometimes

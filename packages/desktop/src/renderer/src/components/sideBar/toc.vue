@@ -4,7 +4,7 @@
     :class="[{ 'side-bar-toc-overflow': !wordWrapInToc, 'side-bar-toc-wordwrap': wordWrapInToc }]"
   >
     <div class="title">
-      {{ t('sideBar.toc.title') }}
+      {{ title || t('sideBar.toc.title') }}
     </div>
     <el-tree
       v-if="keyedToc.length"
@@ -51,6 +51,8 @@ import { ArrowRight } from '@element-plus/icons-vue'
 import type { TreeInstance } from 'element-plus'
 
 const { t } = useI18n()
+const props = defineProps<{ nodes?: KeyedTocNode[]; currentKey?: string; title?: string }>()
+const emit = defineEmits<{ navigate: [target: unknown] }>()
 
 const editorStore = useEditorStore()
 const preferencesStore = usePreferencesStore()
@@ -83,7 +85,7 @@ const { wordWrapInToc } = storeToRefs(preferencesStore)
 
 // Stable per-node key so el-tree preserves the user's expand/collapse state
 // across content edits (#3028) and tab switches (#3791). See deriveKeyedToc.
-const keyedToc = computed<KeyedTocNode[]>(() => deriveKeyedToc(toc.value))
+const keyedToc = computed<KeyedTocNode[]>(() => props.nodes ?? deriveKeyedToc(toc.value))
 
 // Track which headings the user collapsed, by stable key (#3028). Headings are
 // expanded by default; a collapse is remembered here.
@@ -121,6 +123,7 @@ const expandedKeys = computed<string[]>(() => {
 // The store names the caret's heading by engine slug; el-tree keys its nodes by
 // githubSlug. Both sit on the same node, so one resolves to the other.
 const activeNodeKey = computed<string>(() => {
+  if (props.nodes) return props.currentKey || ''
   const slug = editorStore.activeHeadingSlug
   if (typeof slug !== 'string') return ''
   const findKey = (nodes: KeyedTocNode[]): string => {
@@ -140,6 +143,7 @@ watch(activeNodeKey, (key) => {
 })
 
 const handleClick = (data: { slug?: unknown }): void => {
+  if (props.nodes) { emit('navigate', data.slug); return }
   // editor.vue resolves the slug to a heading by document order — bail out if
   // the node has no slug (e.g. unsluggable headings) rather than emitting an
   // `undefined` / non-string payload it cannot match.

@@ -3,19 +3,19 @@
     <tabs v-show="showTabBar" />
     <div
       class="container"
-      :class="{ 'has-minimap': preferences.minimapEnabled, 'minimap-left': preferences.minimapSide === 'left' }"
+      :class="{ 'has-minimap': preferences.minimapEnabled && !pdf, 'minimap-left': preferences.minimapSide === 'left' }"
       :style="{ '--minimap-width': `${Math.min(160, Math.max(60, preferences.minimapMaxColumn * preferences.minimapScale))}px` }"
-      @contextmenu.capture="handleScrollContextMenu"
+      @contextmenu.capture="!pdf && handleScrollContextMenu($event)"
     >
       <editor
-        v-show="!plainText"
+        v-show="!plainText && !pdf"
         :markdown="markdown"
         :cursor="cursor"
         :text-direction="textDirection"
         :platform="platform"
       />
       <source-code
-        v-if="sourceCode && !plainText"
+        v-if="sourceCode && !plainText && !pdf"
         :markdown="markdown"
         :muya-index-cursor="muyaIndexCursor"
         :text-direction="textDirection"
@@ -26,17 +26,28 @@
         :active="plainText"
       />
       <editor-minimap
-        v-if="preferences.minimapEnabled"
+        v-if="preferences.minimapEnabled && !pdf"
         :plain-text="plainText"
         :source-code="sourceCode"
       />
+      <pdf-reader
+        v-if="pdf && currentFile && pdfEnabled"
+        :key="currentFile.id"
+        :file="currentFile"
+      />
+      <p
+        v-if="pdf && !pdfEnabled"
+        role="status"
+      >
+        {{ t('menu.file.open') }}：PDF 阅读器未安装，请重新运行安装程序并勾选“同时安装 PDF 阅读器”。
+      </p>
     </div>
     <bottom-toolbar
-      v-if="!plainText"
+      v-if="!plainText && !pdf"
       :source-code="sourceCode"
     />
     <div
-      v-if="!plainText"
+      v-if="!plainText && !pdf"
       class="editor-status-bar"
     >
       <div
@@ -85,13 +96,17 @@
         :selection-word-count="selectionWordCount"
       />
     </div>
-    <editor-context-menu :source-code="sourceCode || plainText" />
+    <editor-context-menu
+      v-if="!pdf"
+      :source-code="sourceCode || plainText"
+    />
     <tab-notifications />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, ref, watch } from 'vue'
+import { isPdfFile } from '@shared/pdf'
 import { useI18n } from 'vue-i18n'
 import { isPlainTextFile } from '@shared/plainText'
 import { usePreferencesStore } from '@/store/preferences'
@@ -127,6 +142,9 @@ const setSourceMode = (value: boolean): void => {
 }
 
 const { currentFile, selectionWordCount } = storeToRefs(useEditorStore())
+const PdfReader = defineAsyncComponent(() => import('./pdfReader.vue'))
+const pdfEnabled = window.electron.pdfEnabled
+const pdf = computed(() => isPdfFile(currentFile.value?.filename || ''))
 const plainText = computed(() => isPlainTextFile(currentFile.value?.filename || ''))
 const hasPlainText = ref(false)
 const preferences = usePreferencesStore()
@@ -164,7 +182,9 @@ watch(() => [currentFile.value?.id, plainText.value] as const, ([id, plain], [ol
   flex: none;
   height: 28px;
   box-sizing: border-box;
-  padding: 0 10px;
+  /* Keep the bottom-right corner clear for the fixed-position arcade launcher
+     (32px wide at right:14px), so the word counter never renders underneath it. */
+  padding: 0 54px 0 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;

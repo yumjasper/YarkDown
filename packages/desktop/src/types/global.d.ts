@@ -87,6 +87,7 @@ declare global {
   }
 
   interface ElectronAPI {
+    pdfEnabled: boolean
     ipcRenderer: ElectronIpcRenderer
     shell: ElectronShellAPI
     clipboard: ElectronClipboardAPI

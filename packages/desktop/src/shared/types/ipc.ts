@@ -32,6 +32,7 @@ import type {
   UnsavedFile
 } from './files'
 import type { BufferedState as BufferedStateType } from './bufferedState'
+import type { PdfSaveRequest, PdfSaveResult } from '../pdf'
 import type { MenuTemplate, MenuPopupPosition, MenuBarItem, EditorContextMenuRequest } from './menu'
 import type { PandocCommandInfo } from './pandoc'
 
@@ -50,6 +51,13 @@ export type PlantumlFetchResult =
 // =================================================================
 
 export interface IpcInvokeChannels {
+  'mt::pdf::open': { args: [pathname: string]; ret: { token: string; size: number } }
+  'mt::pdf::read-range': { args: [token: string, begin: number, end: number]; ret: Uint8Array }
+  'mt::pdf::hash': { args: [token: string]; ret: string }
+  'mt::pdf::close': { args: [token: string]; ret: void }
+  'mt::pdf::print': { args: [pathname: string]; ret: void }
+  'mt::pdf::save': { args: [request: PdfSaveRequest]; ret: PdfSaveResult }
+  'mt::pdf::confirm-close': { args: [filename: string]; ret: 'save' | 'discard' | 'cancel' }
   'mt::ask-for-image-path': { args: []; ret: string[] }
   'mt::boot-info-async': { args: []; ret: BootInfo }
   'mt::clipboard::guess-file-path': { args: []; ret: string | null }
@@ -157,7 +165,7 @@ export interface IpcSendChannels {
   'mt::open-setting-window': []
   'mt::rename': [payload: { id: string; pathname: string; newPathname: string; currentFile?: unknown }]
   'mt::request-keybindings': []
-  'mt::set-editor-format-menus-enabled': [windowId: number, enabled: boolean, plainText?: boolean]
+  'mt::set-editor-format-menus-enabled': [windowId: number, enabled: boolean, plainText?: boolean, pdf?: boolean]
   'mt::response-export': [
     payload: {
       type: ExportType
@@ -294,7 +302,7 @@ export interface IpcMainEventChannels {
   'mt::set-pathname': [payload: { id: string; pathname: string; filename: string }]
   'mt::set-view-layout': [layout: unknown]
   'mt::show-command-palette': []
-  'mt::show-export-dialog': [type: ExportType]
+  'mt::show-export-dialog': [type: ExportType | 'print']
   'mt::show-notification': [payload: unknown]
   'mt::spelling-replace-misspelling': [payload: unknown]
   'mt::spelling-show-switch-language': []
@@ -333,6 +341,7 @@ export interface KeyboardInfo {
 }
 
 export interface BootInfo {
+  features?: { pdf: boolean }
   platform: NodeJS.Platform
   arch: string
   versions: Record<string, string>

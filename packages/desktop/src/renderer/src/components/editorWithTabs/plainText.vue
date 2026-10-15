@@ -452,7 +452,10 @@ onBeforeUnmount(() => {
   border-top: 1px solid var(--editorColor04);
   height: 28px;
   box-sizing: border-box;
-  padding-block: 0;
+padding-block: 0;
+  /* Same corner reservation as the markdown status bar: the arcade launcher
+     floats above the trailing encoding / line-ending labels otherwise. */
+  padding-right: 54px;
   line-height: 20px;
   gap: 18px;
 }
@@ -467,10 +470,14 @@ onBeforeUnmount(() => {
   background: var(--highlightColor, #f5cf6380);
 }
 @media (max-width: 650px) {
-  .plain-text-toolbar,
-  .plain-text-status {
+  .plain-text-toolbar {
     gap: 6px;
     padding-inline: 6px;
+  }
+.plain-text-status {
+    gap: 6px;
+    padding-left: 6px;
+    padding-right: 54px;
   }
 }
 </style>

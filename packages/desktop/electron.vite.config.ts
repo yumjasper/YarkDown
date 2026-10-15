@@ -6,10 +6,14 @@ import svgLoader from 'vite-svg-loader'
 import postcssPresetEnv from 'postcss-preset-env'
 import packageJson from './package.json' with { type: 'json' }
 import { fileURLToPath } from 'url'
+import { createRequire } from 'node:module'
+import { normalizePath } from 'vite'
+import { viteStaticCopy } from 'vite-plugin-static-copy'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 const releaseBuild = process.env.YARKTEXT_RELEASE === '1'
+const pdfjsRoot = dirname(createRequire(import.meta.url).resolve('pdfjs-dist/package.json'))
 
 export default defineConfig({
   main: {
@@ -101,7 +105,16 @@ export default defineConfig({
         }
       }
     },
-    plugins: [vue(), svgLoader()] as PluginOption[],
+    plugins: [vue(), svgLoader(), viteStaticCopy({
+      targets: [
+        ...['cmaps', 'standard_fonts', 'wasm', 'web/images'].map(name => ({
+          src: normalizePath(resolve(pdfjsRoot, name, '*')),
+          dest: `pdfjs/${name.split('/').at(-1)}`,
+          rename: { stripBase: true as const }
+        })),
+        { src: normalizePath(resolve(pdfjsRoot, 'LICENSE')), dest: 'pdfjs', rename: { stripBase: true as const } }
+      ]
+    })] as PluginOption[],
     css: {
       postcss: {
         plugins: [
