@@ -32,7 +32,8 @@
       "closeTab": "Sekmeyi Kapat",
       "closeWindow": "Pencereyi Kapat",
       "quit": "Çıkış",
-      "preferences": "Tercihler"
+      "preferences": "Tercihler",
+      "newTextTab": "New Text File"
     },
     "edit": {
       "edit": "Düzen",
@@ -1073,5 +1074,18 @@
     "copy": "Copy table",
     "format": "Format table source",
     "delete-table": "Delete table"
+  },
+  "plainText": {
+    "type": "Plain Text",
+    "find": "Find",
+    "replace": "Replace",
+    "goTo": "Go to Line",
+    "wrap": "Word Wrap",
+    "line": "Ln",
+    "column": "Col",
+    "total": "{count} lines",
+    "go": "Go",
+    "lineNumber": "Line number",
+    "close": "Close"
   }
 }

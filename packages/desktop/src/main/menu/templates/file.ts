@@ -22,6 +22,13 @@ export default function(
       }
     },
     {
+      id: 'new-text-file',
+      label: t('menu.file.newTextTab'),
+      click(_menuItem, browserWindow) {
+        actions.newBlankTextTab(browserWindow as BrowserWindow | undefined)
+      }
+    },
+    {
       label: t('menu.file.newWindow'),
       accelerator: keybindings.getAccelerator('file.new-window') ?? undefined,
       click() {
@@ -153,6 +160,7 @@ export default function(
       }
     },
     {
+      id: 'exportMenuEntry',
       label: t('menu.file.export'),
       submenu: [
         {
@@ -195,6 +203,7 @@ export default function(
       ]
     },
     {
+      id: 'pandocMenuEntry',
       label: t('menu.file.convertWithPandoc'),
       visible: !!showPandocConvert,
       submenu: PANDOC_EXPORT_FORMATS.map((format) => ({
@@ -205,6 +214,7 @@ export default function(
       }))
     },
     {
+      id: 'printMenuEntry',
       label: t('menu.file.print'),
       accelerator: keybindings.getAccelerator('file.print') ?? undefined,
       click(_menuItem, browserWindow) {

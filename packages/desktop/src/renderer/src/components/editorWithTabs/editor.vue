@@ -73,7 +73,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, shallowRef, reactive, watch, onMounted, onBeforeUnmount, nextTick, markRaw } from 'vue'
+import { computed, ref, shallowRef, reactive, watch, onMounted, onBeforeUnmount, nextTick, markRaw } from 'vue'
+import { isPlainTextFile } from '@shared/plainText'
 import TableTools from '../tableTools/index.vue'
 import log from 'electron-log'
 import {
@@ -234,11 +235,13 @@ const {
   // Edit modes
   typewriter,
   focus,
-  sourceCode
+  sourceCode: preferredSourceCode
 } = storeToRefs(preferencesStore)
 
 // Editor store refs
 const { currentFile, tabs } = storeToRefs(editorStore)
+const plainText = computed(() => isPlainTextFile(currentFile.value?.filename || ''))
+const sourceCode = computed(() => preferredSourceCode.value || plainText.value)
 
 
 // Project store refs
@@ -471,10 +474,10 @@ watch(focus, (value) => {
 // WYSIWYG engine, so grey them out. On return to WYSIWYG, re-apply the menu
 // state for the CURRENT cursor context (a code block/table still disables some
 // items) rather than blanket-enabling everything (#3531).
-watch(sourceCode, (isSource) => {
+watch([sourceCode, plainText], ([isSource, isPlainText]) => {
   const windowId = window.marktext?.env?.windowId ?? -1
+  window.electron.ipcRenderer.send('mt::set-editor-format-menus-enabled', windowId, !isSource, isPlainText)
   if (isSource) {
-    window.electron.ipcRenderer.send('mt::set-editor-format-menus-enabled', windowId, false)
     return
   }
   nextTick(() => {
@@ -484,7 +487,7 @@ watch(sourceCode, (isSource) => {
       window.electron.ipcRenderer.send('mt::set-editor-format-menus-enabled', windowId, true)
     }
   })
-})
+}, { immediate: true })
 
 // nextTick: the rebuilt headings have to be in the DOM before we pair them up.
 watch(
@@ -780,7 +783,7 @@ watch(currentFile, (value, oldValue) => {
 watch(
   sourceCode,
   (value, oldValue) => {
-    if (value && value !== oldValue) {
+    if (value && value !== oldValue && !plainText.value) {
       // The viewer holds a rendering of a document that is about to stop being
       // shown, and holds the editor behind it inert while it is up.
       mediaViewer.value?.close()
@@ -1164,20 +1167,20 @@ const toSearchMatches = (result: unknown) => {
 }
 
 const handleSearch = (payload: unknown) => {
-  if (!editor.value) return
+  if (plainText.value || !editor.value) return
   const { value, opt } = payload as { value: string; opt?: ISearchOption }
   editorStore.SEARCH(toSearchMatches(editor.value.search(value, opt)))
   scrollToHighlight()
 }
 
 const handReplace = (payload: unknown) => {
-  if (!editor.value) return
+  if (plainText.value || !editor.value) return
   const { value, opt } = payload as { value: string; opt?: IReplaceOption }
   editorStore.SEARCH(toSearchMatches(editor.value.replace(value, opt)))
 }
 
 const handleFindAction = (action: unknown) => {
-  if (!editor.value) return
+  if (plainText.value || !editor.value) return
   editorStore.SEARCH(toSearchMatches(editor.value.find(action as 'previous' | 'next')))
   scrollToHighlight()
 }
@@ -1336,6 +1339,7 @@ interface ExportOptions {
 }
 
 const handleExport = async (options: unknown) => {
+  if (plainText.value) return
   const opts = options as ExportOptions
   const { type, headerFooterStyled, htmlTitle } = opts
 
@@ -1500,6 +1504,7 @@ const handlePrintServiceClearup = () => {
 // action (e.g. "Paragraph" inside a list/quote) fires no selection-change, so the
 // clicked checkbox menu item's auto-toggled OS checkmark would otherwise linger.
 const pushSelectionMenuState = (changes: MuyaChange) => {
+  if (plainText.value) return
   editorStore.SELECTION_CHANGE({
     ...adaptSelectionChange(changes),
     // Read the live block tree (O(1)) rather than getState(), which deep-clones
@@ -1578,6 +1583,7 @@ interface FileLoadedPayload {
 
 // listen for `open-single-file` event, it will call this method only when open a new file.
 const setMarkdownToEditor = (payload: unknown) => {
+  if (plainText.value) return
   const { id, markdown: newMarkdown, cursor: newCursor } = (payload ?? {}) as FileLoadedPayload
   if (editor.value) {
     // `setContent` resets the document and clears the undo history; only set a
@@ -1623,6 +1629,10 @@ interface FileChangePayload {
 
 // listen for markdown change form source mode or change tabs etc
 const handleFileChange = (payload: unknown) => {
+  if (plainText.value) {
+    editorStore.UPDATE_TOC([])
+    return
+  }
   const {
     id,
     markdown: newMarkdown,
@@ -1745,12 +1755,13 @@ const blurEditor = () => {
 }
 
 const flushActiveEditor = () => {
-  editor.value?.flush()
+  if (!plainText.value) editor.value?.flush()
 }
 
 // The engine's `focus()` only sets the selection range; the contenteditable
 // also needs DOM focus or no caret blinks.
 const focusEditor = () => {
+  if (plainText.value) return
   const ed = editor.value
   if (!ed) return
   ed.domNode.focus()
@@ -1767,6 +1778,7 @@ const focusEditor = () => {
 // the caret at the document start.
 const focusFreshEditor = () => {
   requestAnimationFrame(() => {
+    if (plainText.value) return
     const ed = editor.value
     if (!ed) return
     ed.domNode.focus()
@@ -1854,7 +1866,7 @@ onMounted(() => {
 
   const options: Partial<IMuyaOptions> = {
     focusMode: focus.value,
-    markdown: props.markdown,
+    markdown: plainText.value ? '' : props.markdown,
     locale: getMuyaLocale(language.value),
     preferLooseListItem: preferLooseListItem.value,
     autoPairBracket: autoPairBracket.value,
@@ -1997,7 +2009,7 @@ onMounted(() => {
   editor.value.on('json-change', () => {
     // There is a chance that this event is fired AFTER the tab is switched. If we purely rely on this.currentFile later on
     // it can cause invalid updates. Hence, we need the id to identify changes as part of each tab
-    if (!currentFile.value || !editor.value) return
+    if (plainText.value || !currentFile.value || !editor.value) return
     const { id } = currentFile.value
     if (!id) return
     const markdown = editor.value.getMarkdown()

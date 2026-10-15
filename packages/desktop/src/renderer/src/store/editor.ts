@@ -1,3 +1,4 @@
+import { isPlainTextFile } from '@shared/plainText'
 import equal from 'deep-equal'
 import bus from '../bus'
 import { getUniqueId, deepClone } from '../util'
@@ -974,9 +975,9 @@ export const useEditorStore = defineStore('editor', {
 
       window.electron.ipcRenderer.on(
         'mt::new-untitled-tab',
-        (_, selected = true, markdown = '') => {
+        (_, selected = true, markdown = '', plainText = false) => {
           // Create a blank tab
-          this.NEW_UNTITLED_TAB({ markdown, selected })
+          this.NEW_UNTITLED_TAB({ markdown, selected, plainText })
         }
       )
       bus.on('mt::new-untitled-tab', (payload) => {
@@ -1308,8 +1309,9 @@ export const useEditorStore = defineStore('editor', {
      */
     NEW_UNTITLED_TAB({
       markdown: markdownString,
-      selected
-    }: { markdown?: string; selected?: boolean }): void {
+      selected,
+      plainText = false
+    }: { markdown?: string; selected?: boolean; plainText?: boolean }): void {
       if (selected == null) {
         selected = true
       }
@@ -1324,6 +1326,8 @@ export const useEditorStore = defineStore('editor', {
         endOfLine,
         markdownString ?? null
       )
+
+      if (plainText) fileState.filename += '.txt'
 
       if (selected) {
         const { id, markdown } = fileState
@@ -1497,10 +1501,10 @@ export const useEditorStore = defineStore('editor', {
 
       const { filename, pathname, markdown: oldMarkdown, trimTrailingNewline } = tab
 
-      markdown = adjustTrailingNewlines(markdown, trimTrailingNewline)
+      if (!isPlainTextFile(filename)) markdown = adjustTrailingNewlines(markdown, trimTrailingNewline)
       tab.markdown = markdown
 
-      if (oldMarkdown.length === 0 && markdown.length === 1 && markdown[0] === '\n') {
+      if (!isPlainTextFile(filename) && oldMarkdown.length === 0 && markdown.length === 1 && markdown[0] === '\n') {
         debouncedSendBufferedState()
         return
       }

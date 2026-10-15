@@ -1,3 +1,4 @@
+import { isPlainTextFile, suggestedDocumentName } from '@shared/plainText'
 import { rename as fsRename } from 'fs-extra'
 import path from 'path'
 import {
@@ -306,7 +307,7 @@ const handleResponseForSave = async(
   if (!win) {
     return Promise.resolve()
   }
-  let recommendFilename = getRecommendTitleFromMarkdownString(markdown)
+  let recommendFilename = isPlainTextFile(filename) ? '' : getRecommendTitleFromMarkdownString(markdown)
   if (!recommendFilename) {
     recommendFilename = filename || 'Untitled'
   }
@@ -320,7 +321,7 @@ const handleResponseForSave = async(
 
   if (!filePath) {
     const { filePath: dialogPath, canceled } = await dialog.showSaveDialog(win, {
-      defaultPath: path.join(defaultPath || getPath('documents'), `${recommendFilename}.md`)
+      defaultPath: path.join(defaultPath || getPath('documents'), suggestedDocumentName(filename, recommendFilename))
     })
 
     if (dialogPath && !canceled) {
@@ -334,7 +335,7 @@ const handleResponseForSave = async(
   }
 
   filePath = path.resolve(filePath)
-  const extension = path.extname(filePath) || '.md'
+  const extension = path.extname(filePath) || (isPlainTextFile(filename) ? '.txt' : '.md')
   filePath = !filePath.endsWith(extension) ? (filePath += extension) : filePath
   // The original JS passed `win` here; writeMarkdownFile only takes 3 args
   // (the 4th was silently ignored). Drop it explicitly under strict mode.
@@ -489,7 +490,7 @@ ipcMain.on(
     if (!win) {
       return
     }
-    let recommendFilename = getRecommendTitleFromMarkdownString(markdown)
+    let recommendFilename = isPlainTextFile(filename) ? '' : getRecommendTitleFromMarkdownString(markdown)
     if (!recommendFilename) {
       recommendFilename = filename || 'Untitled'
     }
@@ -501,7 +502,7 @@ ipcMain.on(
 
     const { filePath: dialogFilePath, canceled } = await dialog.showSaveDialog(win, {
       defaultPath:
-        pathname || path.join(defaultPath || getPath('documents'), `${recommendFilename}.md`)
+        pathname || path.join(defaultPath || getPath('documents'), suggestedDocumentName(filename, recommendFilename))
     })
     let filePath = dialogFilePath
 
@@ -914,6 +915,13 @@ export const openFileOrFolder = (
 export const newBlankTab = (win: Win): void => {
   if (win && win.webContents) {
     win.webContents.send('mt::new-untitled-tab')
+    showTabBar(win)
+  }
+}
+
+export const newBlankTextTab = (win: Win): void => {
+  if (win && win.webContents) {
+    win.webContents.send('mt::new-untitled-tab', true, '', true)
     showTabBar(win)
   }
 }

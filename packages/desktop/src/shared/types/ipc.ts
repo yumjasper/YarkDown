@@ -157,7 +157,7 @@ export interface IpcSendChannels {
   'mt::open-setting-window': []
   'mt::rename': [payload: { id: string; pathname: string; newPathname: string; currentFile?: unknown }]
   'mt::request-keybindings': []
-  'mt::set-editor-format-menus-enabled': [windowId: number, enabled: boolean]
+  'mt::set-editor-format-menus-enabled': [windowId: number, enabled: boolean, plainText?: boolean]
   'mt::response-export': [
     payload: {
       type: ExportType
@@ -274,7 +274,7 @@ export interface IpcMainEventChannels {
   'mt::menu::click': [menuId: string]
   'mt::menu::closed': []
   'mt::menu-bar-changed': []
-  'mt::new-untitled-tab': [selected?: boolean, markdown?: string]
+  'mt::new-untitled-tab': [selected?: boolean, markdown?: string, plainText?: boolean]
   'mt::open-directory': [directoryPath: string]
   'mt::open-new-tab': [
     markdownDocument: MarkdownDocument | null,

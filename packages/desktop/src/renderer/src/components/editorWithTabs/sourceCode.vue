@@ -7,6 +7,7 @@
 
 <script setup lang="ts">
 import { ref, shallowRef, markRaw, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { isPlainTextFile } from '@shared/plainText'
 import { useEditorStore } from '@/store/editor'
 import { usePreferencesStore } from '@/store/preferences'
 import { findMarkdownHeadingLine, scrollSourceEditorToLine } from '@/util/sourceModeToc'
@@ -142,6 +143,10 @@ interface FileChangePayloadLike {
 const handleFileChange = (payload: unknown) => {
   const { id, markdown: newMarkdown, muyaIndexCursor } = payload as FileChangePayloadLike
   if (!editor.value) return
+  if (isPlainTextFile(currentTab.value?.filename || '')) {
+    prepareTabSwitch()
+    return
+  }
 
   // On same-tab reload (external file change), preserve scroll across
   // setValue. Snapshot every plausible scroll element (the outer
@@ -450,7 +455,7 @@ onBeforeUnmount(() => {
   lastSelectionKey = ''
   bus.off('scroll-to-header', handleScrollToHeader)
 
-  if (editor.value) {
+  if (editor.value && tabId.value === currentTab.value?.id && !isPlainTextFile(currentTab.value?.filename || '')) {
     const { cursor, markdown: newMarkdown } = getMarkdownAndCursor(editor.value)
     bus.emit('file-changed', {
       id: tabId.value,

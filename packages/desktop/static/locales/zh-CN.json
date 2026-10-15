@@ -49,7 +49,8 @@
       "closeTab": "关闭标签页",
       "closeWindow": "关闭窗口",
       "quit": "退出",
-      "preferences": "偏好设置"
+      "preferences": "偏好设置",
+      "newTextTab": "新建文本文件"
     },
     "edit": {
       "edit": "编辑",
@@ -1073,5 +1074,18 @@
     "copy": "复制表格",
     "format": "格式化表格源码",
     "delete-table": "删除表格"
+  },
+  "plainText": {
+    "type": "纯文本",
+    "find": "查找",
+    "replace": "替换",
+    "goTo": "跳转行",
+    "wrap": "自动换行",
+    "line": "行",
+    "column": "列",
+    "total": "共 {count} 行",
+    "go": "跳转",
+    "lineNumber": "行号",
+    "close": "关闭"
   }
 }

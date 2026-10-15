@@ -186,7 +186,7 @@ let offRequest: (() => void) | undefined
 
 const sourceEditor = () =>
   (
-    document.querySelector('.source-code .CodeMirror') as
+    document.querySelector('.plain-text-editor.is-active .CodeMirror, .source-code:not(.plain-text-editor) .CodeMirror') as
       | (Element & {
           CodeMirror?: {
             getSelection(): string

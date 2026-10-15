@@ -50,8 +50,8 @@ const stripTrailingNewlines = (content: string): string =>
 const FNV64_OFFSET = 0xcbf29ce484222325n
 const FNV64_PRIME = 0x100000001b3n
 const MASK64 = 0xffffffffffffffffn
-const hashContent = (content: string): bigint => {
-  const normalized = stripTrailingNewlines(content)
+const hashContent = (content: string, preserveTrailingNewlines = false): bigint => {
+  const normalized = preserveTrailingNewlines ? content : stripTrailingNewlines(content)
   let hash = FNV64_OFFSET
   for (let i = 0; i < normalized.length; i++) {
     hash ^= BigInt(normalized.charCodeAt(i))
@@ -75,17 +75,18 @@ export class SyntheticHistory {
   private counter = 0
   private readonly idByContent = new Map<bigint, number>()
 
-  constructor(baselineContent: string = '') {
+  // Plain text opts out of Markdown's normalization so adding a final blank line is dirty.
+  constructor(baselineContent: string = '', private readonly preserveTrailingNewlines = false) {
     // The freshly-loaded document is its own clean baseline; the store seeds
     // `lastSavedHistoryId` to 0, so the baseline content must map to id 0.
-    this.idByContent.set(hashContent(baselineContent), 0)
+    this.idByContent.set(hashContent(baselineContent, preserveTrailingNewlines), 0)
   }
 
   // Return the monotonic id for the given content snapshot, assigning a fresh,
   // never-reused id the first time a snapshot is seen and reusing the original
   // id on every subsequent revisit (undo/redo back to it).
   idFor(content: string): number {
-    const key = hashContent(content)
+    const key = hashContent(content, this.preserveTrailingNewlines)
     let id = this.idByContent.get(key)
     if (id === undefined) {
       id = ++this.counter

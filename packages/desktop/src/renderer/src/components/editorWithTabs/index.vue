@@ -3,31 +3,47 @@
     <tabs v-show="showTabBar" />
     <div class="container">
       <editor
+        v-show="!plainText"
         :markdown="markdown"
         :cursor="cursor"
         :text-direction="textDirection"
         :platform="platform"
       />
       <source-code
-        v-if="sourceCode"
+        v-if="sourceCode && !plainText"
         :markdown="markdown"
         :muya-index-cursor="muyaIndexCursor"
         :text-direction="textDirection"
       />
+      <plain-text-editor
+        v-if="hasPlainText"
+        v-show="plainText"
+        :active="plainText"
+      />
     </div>
-    <bottom-toolbar :source-code="sourceCode" />
-    <div class="editor-status-bar">
+    <bottom-toolbar
+      v-if="!plainText"
+      :source-code="sourceCode"
+    />
+    <div
+      v-if="!plainText"
+      class="editor-status-bar"
+    >
       <word-counter
         :word-count="currentFile?.wordCount"
         :selection-word-count="selectionWordCount"
       />
     </div>
-    <editor-context-menu :source-code="sourceCode" />
+    <editor-context-menu :source-code="sourceCode || plainText" />
     <tab-notifications />
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed, ref, watch } from 'vue'
+import { isPlainTextFile } from '@shared/plainText'
+import bus from '@/bus'
+import PlainTextEditor from './plainText.vue'
 import { useEditorStore } from '@/store/editor'
 import { storeToRefs } from 'pinia'
 import Tabs from './tabs.vue'
@@ -52,6 +68,14 @@ defineProps<{
 }>()
 
 const { currentFile, selectionWordCount } = storeToRefs(useEditorStore())
+const plainText = computed(() => isPlainTextFile(currentFile.value?.filename || ''))
+const hasPlainText = ref(false)
+watch(plainText, value => { if (value) hasPlainText.value = true }, { immediate: true })
+watch(() => [currentFile.value?.id, plainText.value] as const, ([id, plain], [oldId, oldPlain]) => {
+  if (id !== oldId || plain === oldPlain || !currentFile.value) return
+  const { markdown, cursor, history, muyaIndexCursor } = currentFile.value
+  bus.emit('file-changed', { id, markdown, cursor, history, muyaIndexCursor, renderCursor: true })
+})
 </script>
 
 <style scoped>

@@ -98,7 +98,7 @@ export const getBlankFileState = (
   const untitleId = Math.max(
     ...tabs.map((f) => {
       if (f.pathname === '') {
-        return +f.filename.split('-')[1]
+        return Number.parseInt(f.filename.split('-')[1], 10) || 0
       } else {
         return 0
       }
