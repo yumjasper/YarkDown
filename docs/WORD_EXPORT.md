@@ -29,6 +29,13 @@
 `pnpm -C packages/desktop exec playwright test test/e2e/docx-layout.spec.ts`。
 该用例覆盖大图、图注、长段落中的多组行内公式、带编号公式、代码、列表及表格。
 
+对真实本地文档进行复现时，可在 PowerShell 设置
+`$env:YARKTEXT_DOCX_FIXTURE = '文档的绝对路径'`，然后运行
+`pnpm -C packages/desktop exec playwright test test/e2e/docx-real-file.spec.ts`。
+该用例读取原文并导出到 `.tools/real-file-export.docx`，不修改原文；未设置路径时自动跳过。
+公式窗口复用字体与样式资源，截图等待离屏合成器的实际绘制事件，避免窗口尺寸变化时出现
+`UnknownVizError`。失败提示会保留导出阶段及公式位置，便于定位长文档中的异常。
+
 ## 公开实现与问题记录
 
 - [Pandoc DOCX 写入器](https://github.com/jgm/pandoc/blob/main/src/Text/Pandoc/Writers/Docx/OpenXML.hs)：参考语义块、独立段落样式、紧凑表格样式与列表续段的处理方式。

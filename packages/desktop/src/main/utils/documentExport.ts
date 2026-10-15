@@ -4,6 +4,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createWordDocument, WORD_CONTENT_WIDTH } from './wordDocument'
 import { serializeWordDocument, type WordContent } from './wordDom'
+import { captureOffscreenFrame } from './offscreenCapture'
 
 const EXPORT_WIDTH = 1024
 const MAX_IMAGE_HEIGHT = 30000
@@ -48,8 +49,8 @@ const rasterizeMath = async(win: BrowserWindow): Promise<void> => {
   const mathWindow = new BrowserWindow({
     show: false,
     useContentSize: true,
-    width: 1200,
-    height: 900,
+    width: 1280,
+    height: 512,
     webPreferences: {
       sandbox: true,
       contextIsolation: true,
@@ -59,30 +60,39 @@ const rasterizeMath = async(win: BrowserWindow): Promise<void> => {
     }
   })
   try {
+    const head: string = await win.webContents.executeJavaScript('document.head.innerHTML')
+    const html =
+      '<html><head>' +
+      head +
+      '<style>html,body{margin:0;padding:0;background:white}#formula{display:inline-block;padding:6px;font-size:29.334px}.katex{font-size:1em!important;white-space:nowrap!important}.katex-display{display:block!important;margin:0!important}.katex-display>.katex{display:block!important;text-align:center!important}</style></head><body><div id="formula"></div></body></html>'
+    await mathWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html))
+    await mathWindow.webContents.executeJavaScript('document.fonts.ready')
     for (let i = 0; i < count; i++) {
-      const html: string = await win.webContents.executeJavaScript(`(() => {
-      const formula = document.querySelector('[data-export-math="${i}"]').outerHTML
-      const display = document.querySelector('[data-export-math="${i}"]').classList.contains('katex-display')
-      return '<html><head>' + document.head.innerHTML + '<style>html,body{margin:0;padding:0;background:white}#formula{display:inline-block;padding:6px;font-size:29.334px}.katex{font-size:1em!important;white-space:nowrap!important}.katex-display{display:block!important;margin:0!important}.katex-display>.katex{display:block!important;text-align:center!important}</style></head><body><div id="formula" style="' + (display ? 'width:${(WORD_CONTENT_WIDTH - 6) * 2}px' : '') + '">' + formula + '</div></body></html>'
-    })()`)
-      // An inline span can have a paragraph-sized bounding box after wrapping;
-      // render its clone alone so screenshots can never include adjacent text.
-      await mathWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html))
-      await mathWindow.webContents.executeJavaScript('document.fonts.ready')
-      const rect: Electron.Rectangle = await mathWindow.webContents.executeJavaScript(`(() => {
-      const rect = document.querySelector('#formula').getBoundingClientRect()
+      const formula: { html: string; display: boolean } = await win.webContents
+        .executeJavaScript(`(() => {
+        const node = document.querySelector('[data-export-math="${i}"]')
+        return { html: node.outerHTML, display: node.classList.contains('katex-display') }
+      })()`)
+      await mathWindow.webContents.executeJavaScript(`(() => {
+        const container = document.querySelector('#formula')
+        container.style.width = ${JSON.stringify(formula.display ? String((WORD_CONTENT_WIDTH - 6) * 2) + 'px' : '')}
+        container.innerHTML = ${JSON.stringify(formula.html)}
+      })()`)
+      const rect: Electron.Rectangle = await mathWindow.webContents.executeJavaScript(`(async () => {
+      const container = document.querySelector('#formula')
+      container.getBoundingClientRect()
+      await document.fonts.ready
+      const rect = container.getBoundingClientRect()
       return { x: 0, y: 0, width: Math.ceil(rect.width), height: Math.ceil(rect.height) }
     })()`)
       if (!rect.width || !rect.height) continue
-      mathWindow.setContentSize(Math.max(100, rect.width), Math.max(100, rect.height))
       await mathWindow.webContents.executeJavaScript(
         'new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))'
       )
-      const image = await mathWindow.webContents.capturePage({
-        x: 0,
-        y: 0,
-        width: rect.width,
-        height: rect.height
+      const image = await captureOffscreenFrame(mathWindow, rect).catch((error) => {
+        throw new Error(
+          `公式 ${i + 1}/${count}（${rect.width}×${rect.height}）转换失败：${error instanceof Error ? error.message : String(error)}`
+        )
       })
       await win.webContents.executeJavaScript(`(() => {
       const node = document.querySelector('[data-export-math="${i}"]')
@@ -132,6 +142,7 @@ const embedLocalImages = async(win: BrowserWindow): Promise<void> => {
 export const exportDocumentBinary = async(html: string, type: 'png' | 'docx'): Promise<Buffer> => {
   const directory = await mkdtemp(path.join(app.getPath('temp'), 'yarktext-export-'))
   let win: BrowserWindow | undefined
+  let stage = '创建导出窗口'
   try {
     const filename = path.join(directory, 'document.html')
     const csp = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: file: https: http:; style-src 'unsafe-inline'; font-src data:; script-src 'none'">`
@@ -150,10 +161,14 @@ export const exportDocumentBinary = async(html: string, type: 'png' | 'docx'): P
       }
     })
     win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
+    stage = '载入文档'
     await win.loadFile(filename)
+    stage = '准备文档资源'
     await prepareDocument(win)
     if (type === 'png') return await captureDocument(win)
+    stage = '读取图片'
     await embedLocalImages(win)
+    stage = '转换图片'
     await win.webContents.executeJavaScript(`(async () => {
       for (const img of Array.from(document.images)) {
         try { await img.decode() } catch { img.replaceWith(document.createTextNode(img.alt || '')); continue }
@@ -166,6 +181,7 @@ export const exportDocumentBinary = async(html: string, type: 'png' | 'docx'): P
         img.width = Math.round(width); img.height = Math.round(height)
       }
     })()`)
+    stage = '转换公式'
     await rasterizeMath(win)
     await win.webContents.executeJavaScript(
       `document.querySelectorAll('img:not([src]), img[src=""]').forEach(img => img.replaceWith(document.createTextNode(img.alt || ''))) `
@@ -173,7 +189,12 @@ export const exportDocumentBinary = async(html: string, type: 'png' | 'docx'): P
     const content: WordContent = await win.webContents.executeJavaScript(
       `(${serializeWordDocument.toString()})()`
     )
+    stage = '生成 Word 文档'
     return await createWordDocument(content)
+  } catch (error) {
+    throw new Error(`${stage}失败：${error instanceof Error ? error.message : String(error)}`, {
+      cause: error
+    })
   } finally {
     win?.destroy()
     await rm(directory, { recursive: true, force: true })
