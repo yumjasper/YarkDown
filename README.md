@@ -1,199 +1,89 @@
-<p align="center"><img src="docs/assets/logo-small.png" alt="MarkText" width="100" height="100"></p>
+<p align="center"><img src="docs/assets/logo-small.png" alt="YarkDown" width="100" height="100"></p>
 
-<h1 align="center">MarkText</h1>
+<h1 align="center">YarkDown</h1>
 
 <div align="center">
-  <a href="https://twitter.com/intent/tweet?via=marktextme&url=https://github.com/marktext/marktext/&text=What%20do%20you%20want%20to%20say%20to%20app?&hashtags=happyMarkText">
-    <img src="https://img.shields.io/twitter/url/https/github.com/marktext/marktext.svg?style=for-the-badge" alt="twitter">
-  </a>
-</div>
-<div align="center">
-  <strong>:high_brightness: Next generation markdown editor :crescent_moon:</strong><br>
-  A simple and elegant open-source markdown editor that focused on speed and usability.<br>
-  <sub>Available for Linux, macOS and Windows.</sub>
+  <strong>基于 MarkText 二次开发的 Markdown 编辑器，进一步定制功能、优化体验</strong><br>
+  <sub>支持 Windows、macOS 与 Linux</sub>
 </div>
 
 <br>
 
 <div align="center">
-  <!-- License -->
-  <a href="LICENSE">
-    <img src="https://img.shields.io/github/license/marktext/marktext.svg" alt="LICENSE">
-  </a>
-  <!-- Downloads total -->
-  <a href="https://github.com/marktext/marktext/releases">
-    <img src="https://img.shields.io/github/downloads/marktext/marktext/total.svg" alt="total download">
-  </a>
-  <!-- Downloads latest release -->
-  <a href="https://github.com/marktext/marktext/releases/latest">
-    <img src="https://img.shields.io/github/downloads/marktext/marktext/latest/total.svg" alt="latest download">
-  </a>
-  <!-- sponsors -->
-  <a href="https://opencollective.com/marktext">
-    <img src="https://opencollective.com/marktext/tiers/silver-sponsors/badge.svg?label=SilverSponsors&color=brightgreen" alt="sponsors">
-  </a>
+  <a href="LICENSE">MIT License</a>
+  ·
+  <a href="https://github.com/yumjasper/YarkDown/releases">下载发布版</a>
+  ·
+  <a href="https://github.com/yumjasper/YarkDown/issues">问题反馈</a>
 </div>
 
-<div align="center">
-  <h3>
-    <a href="https://github.com/marktext/marktext">
-      Website
-    </a>
-    <span> | </span>
-    <a href="https://github.com/marktext/marktext#features">
-      Features
-    </a>
-    <span> | </span>
-    <a href="https://github.com/marktext/marktext#download-and-installation">
-      Downloads
-    </a>
-    <span> | </span>
-    <a href="https://github.com/marktext/marktext#development">
-      Development
-    </a>
-    <span> | </span>
-    <a href="https://github.com/marktext/marktext#contribution">
-      Contribution
-    </a>
-  </h3>
-</div>
+<br>
 
-<div align="center">
-  <sub>Translations:</sub>
-  <a href="docs/i18n/README-zh_cn.md#readme">
-    <span>:cn:</span>
-  </a>
-  <a href="docs/i18n/README-zh_tw.md#readme">
-    <span>:taiwan:</span>
-  </a>
-  <a href="docs/i18n/README-jp.md#readme">
-    <span>:jp:</span>
-  </a>
-  <a href="docs/i18n/README-fr.md#readme">
-    <span>:fr:</span>
-  </a>
-  <a href="docs/i18n/README-tr.md#readme">
-    <span>:tr:</span>
-  </a>
-  <a href="docs/i18n/README-es.md#readme">
-    <span>:es:</span>
-  </a>
-  <a href="docs/i18n/README-pt.md#readme">
-    <span>:portugal:</span>
-  </a>
-  <a href="docs/i18n/README-kr.md#readme">
-    <span>:kr:</span>
-  </a>
-  <a href="docs/i18n/README-bn.md#readme">
-    <span>:bangladesh:</span>
-  </a>
-</div>
+## 简介
 
-<div align="center">
-  <sub>This Markdown editor that could. Built with ❤︎ by
-    <a href="https://github.com/Jocs">Jocs</a> and
-    <a href="https://github.com/marktext/marktext/graphs/contributors">
-      contributors
-    </a>
-    .
-  </sub>
-</div>
+YarkDown 基于 [MarkText](https://github.com/marktext/marktext)（MIT 协议）的 v0.21.2 版本进行二次开发，在保留所见即所得实时预览编辑体验的基础上，进一步定制功能与优化表现：
 
-<br />
+- 全新的 Word 导出引擎，支持自适应页面尺寸，公式、图片与表格布局处理更加完善
+- 内置简洁 TXT 纯文本编辑器，打开 `.txt` 文件即进入无干扰写作模式，支持查找、替换、行号与自动换行
+- 全新应用图标与品牌设计，标题栏、任务栏、安装包统一为 YarkText 品牌形象
+- Windows 标题栏半透明模糊效果，界面观感更现代
+- 支持文件夹内快速搜索，方便在多文档之间切换
+- 默认支持导出 PDF、HTML、无样式 HTML、PNG 长图与 Word 文档
 
-<h2 align="center">Sponsors</h2>
+## 截图
 
-MarkText is an open-source Markdown editor powered by the support of its community. If MarkText improves your workflow, please consider [sponsoring the project](https://github.com/sponsors/marktext). Thank you to all the sponsors ❤️
+### Markdown 编辑
 
-**Special Sponsor**
+![Markdown 编辑](docs/assets/yarkdown-markdown.png)
 
-<table>
-<tr>
-<td width="182"><a href="https://serpapi.com/?utm_source=marktext"><img src="docs/assets/sponsors/serpapi.png" width="150"></a></td>
-<td align="left"><a href="https://serpapi.com/?utm_source=marktext">Scrape Google and other search engines from our fast, easy, and complete API.</a></td>
-</tr>
-</table>
+实时预览文本样式、数学公式（KaTeX）、任务列表、表格与代码高亮。
 
-## Screenshot
+### TXT 纯文本编辑
 
-![](docs/assets/marktext.png?raw=true)
+![TXT 纯文本编辑](docs/assets/yarkdown-txt.png)
 
-## Features
+简洁的纯文本模式，提供查找、替换、行号、自动换行与文件编码信息。
 
-- Realtime preview (WYSIWYG) and a clean and simple interface to get a distraction-free writing experience.
-- Support [CommonMark Spec](https://spec.commonmark.org), [GitHub Flavored Markdown Spec](https://github.github.com/gfm/) and selective support [Pandoc markdown](https://pandoc.org/MANUAL.html#pandocs-markdown).
-- Markdown extensions such as math expressions (KaTeX), front matter and emojis.
-- Support paragraphs and inline style shortcuts to improve your writing efficiency.
-- Output **HTML** and **PDF** files.
-- Various [themes](https://marktext.me/docs/themes): **Cadmium Light**, **Material Dark** etc.
-- Various editing modes: **Source Code mode**, **Typewriter mode**, **Focus mode**.
-- Paste images directly from clipboard.
+## 历史版本功能
 
-## Download and Installation
+| 版本  | 主要内容                                                                          |
+| ----- | --------------------------------------------------------------------------------- |
+| 1.0.7 | 帮助界面全部链接切换为 YarkDown 仓库                                              |
+| 1.0.6 | 同步标题栏与全部展示 LOGO 为新图标设计                                            |
+| 1.0.5 | 新增简洁 TXT 编辑器并复用文件夹搜索                                               |
+| 1.0.4 | 图标源切换为 PNG 设计稿，完善公式导出稳定性；修复长文档导出 Word 时的公式截图错误 |
+| 1.0.3 | 重写 Word 导出引擎（docx 库），完善图片与表格布局处理                             |
+| 1.0.2 | 统一 YarkText 品牌，完善图片源码、公式排版、表格工具与多格式导出                  |
+| 1.0.1 | 统一软件名称为 YarkDown，同步三段版本号                                           |
+| 1.0.0 | 完善编辑器界面交互、快速测试与开发预览流程                                        |
 
-![platform](https://img.shields.io/static/v1.svg?label=Platform&message=Linux%20x64%20|%20macOS%20x64%2Farm64%20|%20Windows%20x64%2Farm64&style=for-the-badge)
+## 下载安装
 
-|               ![](https://raw.githubusercontent.com/wiki/ryanoasis/nerd-fonts/screenshots/v1.0.x/mac-pass-sm.png)               |               ![](https://raw.githubusercontent.com/wiki/ryanoasis/nerd-fonts/screenshots/v1.0.x/windows-pass-sm.png)               |              ![](https://raw.githubusercontent.com/wiki/ryanoasis/nerd-fonts/screenshots/v1.0.x/linux-pass-sm.png)              |
-| :-----------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------------------------: |
-| [![Download for macOS](https://img.shields.io/badge/macOS-Download-blue)](https://github.com/marktext/marktext/releases/latest) | [![Download for Windows](https://img.shields.io/badge/Windows-Download-blue)](https://github.com/marktext/marktext/releases/latest) | [![Download for Linux](https://img.shields.io/badge/Linux-Download-blue)](https://github.com/marktext/marktext/releases/latest) |
+安装包可从 [Releases](https://github.com/yumjasper/YarkDown/releases) 页面下载：
 
-Want to see new features of the latest version? Please refer to [CHANGELOG](https://marktext.me/docs/changelog).
+- Windows：`yarktext-win-(x64|arm64)-<版本号>-setup.exe`（安装版）或 `.zip`（免安装版）
+- macOS：`yarktext-mac-(arm64|x64)-<版本号>.dmg`
+- Linux：`yarktext-linux-<版本号>.AppImage` 等
 
-#### macOS
+## 开发
 
-Requires macOS 11 (Big Sur) or later. Universal builds aren't published — pick the matching `arm64` or `x64` installer.
-
-You can either download the latest `marktext-mac-(arm64|x64)-%version%.dmg` from the [release page](https://github.com/marktext/marktext/releases/latest) or install MarkText using [**homebrew cask**](https://github.com/caskroom/homebrew-cask). To use Homebrew-Cask you just need to have [Homebrew](https://brew.sh/) installed.
+本仓库为 pnpm monorepo 结构，Node.js >= 20.19.0：
 
 ```bash
-brew install --cask mark-text
+pnpm install   # 安装依赖
+pnpm run dev   # 开发模式
+pnpm run build:win  # 构建 Windows 安装包
 ```
 
-#### Windows
+更详细的开发说明见 [AGENTS.md](AGENTS.md)。
 
-Requires Windows 10 or 11. Both x64 and arm64 installers are published — pick the architecture that matches your machine.
+## 致谢
 
-Simply download and install MarkText via the setup wizard (`marktext-win-(x64|arm64)-%version%-setup.exe`) and choose whether to install per-user or machine wide. Alternatively, install MarkText using a package manager such as [Chocolatey](https://chocolatey.org/) or [Winget](https://docs.microsoft.com/en-us/windows/package-manager/winget/).
+- [MarkText](https://github.com/marktext/marktext) — YarkDown 以其为基线二次开发
+- 所有为本项目贡献过代码的朋友
 
-To use Chocolatey, you need to have [Chocolatey](https://chocolatey.org/install) installed:
+## 许可证
 
-```bash
-choco install marktext
-```
+[MIT](LICENSE) © yumjasper
 
-To use Winget, you need to have [Winget](https://docs.microsoft.com/en-us/windows/package-manager/winget/#install-winget) installed:
-
-```bash
-winget install marktext
-```
-
-#### Linux
-
-Please follow the [Linux installation instructions](https://marktext.me/docs/installation).
-
-#### Other
-
-All binaries for Linux, macOS and Windows can be downloaded from the [release page](https://github.com/marktext/marktext/releases/latest). If a version is unavailable for your system, then please open an [issue](https://github.com/marktext/marktext/issues).
-
-## Development
-
-If you wish to build MarkText yourself, please check out our [build instructions](https://marktext.me/docs/dev/build).
-
-- [User documentation](https://marktext.me/docs/introduction)
-- [Developer documentation](https://marktext.me/docs/dev/overview)
-
-If you have any questions regarding MarkText, you are welcome to write an issue. When doing so please use the default format found when opening an issue. Of course, if you submit a PR directly, it will be greatly appreciated.
-
-## Contribution
-
-MarkText is in development, please make sure to read the [Contributing Guide](.github/CONTRIBUTING.md) before making a pull request. Want to add some features to MarkText? Refer to our [roadmap](https://github.com/marktext/marktext/projects) and open issues.
-
-## Contributors
-
-Thank you to all the people who have already contributed to MarkText[[contributors](https://github.com/marktext/marktext/graphs/contributors)].
-
-<a href="https://github.com/marktext/marktext/graphs/contributors"><img src="https://opencollective.com/marktext/contributors.svg?width=890" /></a>
-
-## License
-
-[**MIT**](LICENSE).
+YarkDown 基于 MarkText 二次开发，同样采用 MIT 开源协议。
