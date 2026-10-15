@@ -57,13 +57,31 @@ icnsHeader.write('icns', 0, 'ascii')
 icnsHeader.writeUInt32BE(8 + icnsParts.reduce((sum, part) => sum + part.length, 0), 4)
 const icns = Buffer.concat([icnsHeader, ...icnsParts])
 
+// 关于页与自定义标题栏共用这张 LOGO（显示 16px~80px），从 256px 母版
+// 缩放可以兼顾两种显示尺寸。
+const rendererImages = path.join(desktop, 'src/renderer/src/assets/images')
+
 await Promise.all([
   writeFile(path.join(icons, 'icon.png'), images.get(1024)),
   writeFile(path.join(staticDirectory, 'icon.png'), images.get(256)),
   writeFile(path.join(staticDirectory, 'logo-96px.png'), images.get(96)),
+  writeFile(path.join(rendererImages, 'logo.png'), images.get(256)),
+  writeFile(path.join(staticDirectory, 'logo-small.png'), images.get(256)),
   ...[icons, staticDirectory].flatMap(directory => [
     writeFile(path.join(directory, 'icon.ico'), ico),
     writeFile(path.join(directory, 'icon.icns'), icns)
   ])
 ])
-console.log('已从 PNG 设计源生成 YarkText 程序图标（64px 及以下使用小尺寸优化版）。')
+
+// 仓库文档与官网展示用图：README 头图（100px 显示）与官网 LOGO（28px 徽标 +
+// favicon）全部来自同一母版，避免设计更新后残留旧图。
+const docsAssets = path.join(root, 'docs/assets')
+const websiteAssets = path.join(root, 'packages/website/public/assets')
+const favicon = await sharp(smallSource).resize(16, 16).png().toBuffer()
+
+await Promise.all([
+  writeFile(path.join(docsAssets, 'logo-small.png'), images.get(256)),
+  writeFile(path.join(websiteAssets, 'logo.png'), images.get(256)),
+  writeFile(path.join(root, 'packages/website/public/favicon.png'), favicon)
+])
+console.log('已从 PNG 设计源生成 YarkText 程序图标与全部 LOGO（64px 及以下使用小尺寸优化版）。')
