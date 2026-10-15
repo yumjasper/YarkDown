@@ -384,7 +384,8 @@
         "searcher": "Buscador",
         "watcher": "Observador",
         "spelling": "Ortografía",
-        "custom css": "CSS personalizado"
+        "custom css": "CSS personalizado",
+        "txt": "TXT"
       },
       "items": {
         "autoSave": "Guardar automáticamente el contenido que se está editando",
@@ -455,7 +456,21 @@
         "imageRelativeDirectoryName": "El nombre de la carpeta de imagen relativa",
         "fileSortOrder": "El orden de clasificación de los archivos en las carpetas abiertas: ascendente o descendente",
         "openedFilesInSidebar": "Si mostrar los archivos abiertos en la barra lateral",
-        "showPandocConvert": "Mostrar el menú de conversión de Pandoc. Requiere tener Pandoc instalado."
+        "showPandocConvert": "Mostrar el menú de conversión de Pandoc. Requiere tener Pandoc instalado.",
+        "txtToolbarExpanded": "Expand TXT toolbar (also toggled by the TXT button)",
+        "txtWordWrap": "Word wrap",
+        "txtLineNumbers": "Show line numbers",
+        "txtFontFamily": "Text font",
+        "txtFontSize": "Font size",
+        "txtTabSize": "Tab width",
+        "minimapEnabled": "Document Minimap / minimapEnabled",
+        "minimapSize": "Document Minimap / minimapSize",
+        "minimapScale": "Document Minimap / minimapScale",
+        "minimapRenderCharacters": "Document Minimap / minimapRenderCharacters",
+        "minimapMaxColumn": "Document Minimap / minimapMaxColumn",
+        "minimapShowSlider": "Document Minimap / minimapShowSlider",
+        "minimapSide": "Document Minimap / minimapSide",
+        "minimapAutohide": "Document Minimap / minimapAutohide"
       }
     },
     "categories": {
@@ -465,7 +480,8 @@
       "spelling": "Ortografía",
       "theme": "Tema",
       "image": "Imagen",
-      "keybindings": "Atajos de Teclado"
+      "keybindings": "Atajos de Teclado",
+      "txt": "TXT"
     },
     "general": {
       "title": "General",
@@ -779,6 +795,15 @@
       "enableSpellChecking": "Habilitar corrección ortográfica",
       "hideMarksForErrors": "Ocultar marcas para errores ortográficos",
       "title": "Corrector Ortográfico"
+    },
+    "txt": {
+      "title": "TXT Plain Text Editing",
+      "txtToolbarExpanded": "Expand TXT toolbar (also toggled by the TXT button)",
+      "txtWordWrap": "Word wrap",
+      "txtLineNumbers": "Show line numbers",
+      "txtFontFamily": "Text font",
+      "txtFontSize": "Font size",
+      "txtTabSize": "Tab width"
     }
   },
   "about": {
@@ -1086,6 +1111,27 @@
     "total": "{count} lines",
     "go": "Go",
     "lineNumber": "Line number",
-    "close": "Close"
+    "close": "Close",
+    "toggleToolbar": "Expand or collapse TXT toolbar"
+  },
+  "minimap": {
+    "title": "Document Minimap",
+    "show": "Show Minimap",
+    "hide": "Hide Minimap",
+    "characters": "Render characters",
+    "size": "Vertical size",
+    "proportional": "Proportional",
+    "fit": "Fit",
+    "fill": "Fill",
+    "scale": "Minimap scale",
+    "slider": "Viewport slider",
+    "mouseover": "On hover",
+    "always": "Always",
+    "autohide": "Auto hide",
+    "none": "Never",
+    "scroll": "While scrolling",
+    "side": "Side",
+    "left": "Left",
+    "right": "Right"
   }
 }

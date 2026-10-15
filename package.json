@@ -20,6 +20,8 @@
     "build": "pnpm --filter marktext build",
     "build:unpack": "pnpm --filter marktext build:unpack",
     "pack": "node scripts/pack.mjs",
+    "release:check": "node scripts/release.mjs --check",
+    "release:publish": "node scripts/release.mjs --publish",
     "build:win": "pnpm --filter marktext build:win",
     "build:win:x64": "pnpm --filter marktext build:win:x64",
     "build:win:arm64": "pnpm --filter marktext build:win:arm64",

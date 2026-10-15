@@ -401,7 +401,8 @@
         "searcher": "搜索器",
         "watcher": "监听器",
         "spelling": "拼写",
-        "custom css": "自定义 CSS"
+        "custom css": "自定义 CSS",
+        "txt": "TXT"
       },
       "items": {
         "autoSave": "自动保存正在编辑的内容",
@@ -472,7 +473,21 @@
         "imageRelativeDirectoryName": "相对图片文件夹名称",
         "fileSortOrder": "打开文件夹中文件的排序顺序：升序或降序",
         "openedFilesInSidebar": "是否在侧边栏中显示已打开文件",
-        "showPandocConvert": "显示 Pandoc 转换菜单。需要先安装 Pandoc。"
+        "showPandocConvert": "显示 Pandoc 转换菜单。需要先安装 Pandoc。",
+        "txtToolbarExpanded": "展开 TXT 工具栏（也可点击 TXT 按钮切换）",
+        "txtWordWrap": "自动换行",
+        "txtLineNumbers": "显示行号",
+        "txtFontFamily": "文本字体",
+        "txtFontSize": "字体大小",
+        "txtTabSize": "制表符宽度",
+        "minimapEnabled": "文档缩略图 / minimapEnabled",
+        "minimapSize": "文档缩略图 / minimapSize",
+        "minimapScale": "文档缩略图 / minimapScale",
+        "minimapRenderCharacters": "文档缩略图 / minimapRenderCharacters",
+        "minimapMaxColumn": "文档缩略图 / minimapMaxColumn",
+        "minimapShowSlider": "文档缩略图 / minimapShowSlider",
+        "minimapSide": "文档缩略图 / minimapSide",
+        "minimapAutohide": "文档缩略图 / minimapAutohide"
       }
     },
     "categories": {
@@ -482,7 +497,8 @@
       "spelling": "拼写",
       "theme": "主题",
       "image": "图片",
-      "keybindings": "快捷键"
+      "keybindings": "快捷键",
+      "txt": "TXT"
     },
     "general": {
       "title": "通用",
@@ -796,6 +812,15 @@
       "enableSpellChecking": "启用拼写检查",
       "hideMarksForErrors": "隐藏拼写错误标记",
       "title": "拼写检查器"
+    },
+    "txt": {
+      "title": "TXT 纯文本编辑",
+      "txtToolbarExpanded": "展开 TXT 工具栏（也可点击 TXT 按钮切换）",
+      "txtWordWrap": "自动换行",
+      "txtLineNumbers": "显示行号",
+      "txtFontFamily": "文本字体",
+      "txtFontSize": "字体大小",
+      "txtTabSize": "制表符宽度"
     }
   },
   "about": {
@@ -1086,6 +1111,27 @@
     "total": "共 {count} 行",
     "go": "跳转",
     "lineNumber": "行号",
-    "close": "关闭"
+    "close": "关闭",
+    "toggleToolbar": "展开或折叠 TXT 工具栏"
+  },
+  "minimap": {
+    "title": "文档缩略图",
+    "show": "显示缩略图",
+    "hide": "关闭缩略图",
+    "characters": "渲染字符",
+    "size": "垂直大小",
+    "proportional": "按比例",
+    "fit": "适应窗口",
+    "fill": "填满窗口",
+    "scale": "缩略图缩放",
+    "slider": "视口滑块",
+    "mouseover": "鼠标悬浮时",
+    "always": "始终显示",
+    "autohide": "自动隐藏",
+    "none": "不隐藏",
+    "scroll": "滚动时显示",
+    "side": "显示位置",
+    "left": "左侧",
+    "right": "右侧"
   }
 }
