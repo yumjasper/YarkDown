@@ -3,8 +3,10 @@
 ## 程序图标
 
 任务栏、窗口和安装包使用独立的“Y”图标，关于页面保留完整文字 LOGO。
-图标源文件位于 `packages/desktop/build/icons/app-icon.svg`，修改后运行
-`node scripts/generateAppIcons.mjs`，同步生成 PNG、Windows ICO 和 macOS ICNS。
+图标设计源是仓库根目录的两张 PNG：`icon_YarkDown.png`（1024px 母版，用于
+96px 及以上尺寸）和 `icon_YarkDown64.png`（小尺寸优化版，用于 64px 及以下）。
+修改后运行 `node scripts/generateAppIcons.mjs`，同步生成 PNG、Windows ICO
+和 macOS ICNS。
 Windows ICO 包含 16、20、24、32、40、48、64、96、128 和 256 像素版本，
 用于不同显示缩放比例。重新启动开发预览可加载窗口图标，安装包图标需重新打包。
 
