@@ -33,15 +33,13 @@ export default function(): MenuItemConstructorOptions {
     {
       label: t('menu.help.markdownReference'),
       click() {
-        shell.openExternal(
-          'https://marktext.me/docs/markdown-syntax'
-        )
+        shell.openExternal('https://github.com/yumjasper/YarkDown/blob/main/README.md')
       }
     },
     {
       label: t('menu.help.changelog'),
       click() {
-        shell.openExternal('https://github.com/marktext/marktext/releases')
+        shell.openExternal('https://github.com/yumjasper/YarkDown/releases')
       }
     },
     {
@@ -50,13 +48,13 @@ export default function(): MenuItemConstructorOptions {
     {
       label: t('menu.help.followUs'),
       click() {
-        shell.openExternal('https://twitter.com/marktextapp')
+        shell.openExternal('https://github.com/yumjasper')
       }
     },
     {
       label: t('menu.help.support'),
       click() {
-        shell.openExternal('https://github.com/sponsors/marktext')
+        shell.openExternal('https://github.com/sponsors/yumjasper')
       }
     },
     {
@@ -65,19 +63,21 @@ export default function(): MenuItemConstructorOptions {
     {
       label: t('menu.help.askQuestion'),
       click() {
-        shell.openExternal('https://github.com/marktext/marktext/discussions')
+        shell.openExternal('https://github.com/yumjasper/YarkDown/issues')
       }
     },
     {
       label: t('menu.help.reportBug'),
       click() {
-        shell.openExternal('https://github.com/marktext/marktext/issues')
+        shell.openExternal(
+          'https://github.com/yumjasper/YarkDown/issues/new?template=bug_report.yml'
+        )
       }
     },
     {
       label: t('menu.help.viewSource'),
       click() {
-        shell.openExternal('https://github.com/marktext/marktext')
+        shell.openExternal('https://github.com/yumjasper/YarkDown')
       }
     },
     {
@@ -86,7 +86,7 @@ export default function(): MenuItemConstructorOptions {
     {
       label: t('menu.help.license'),
       click() {
-        shell.openExternal('https://github.com/marktext/marktext/blob/develop/LICENSE')
+        shell.openExternal('https://github.com/yumjasper/YarkDown/blob/main/LICENSE')
       }
     }
   ]
