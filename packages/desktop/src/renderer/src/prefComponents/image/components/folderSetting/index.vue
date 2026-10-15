@@ -28,7 +28,7 @@
       <template #head>
         <bool
           :description="t('preferences.image.folderSetting.preferRelative')"
-          more="https://marktext.me/docs/images"
+          more="https://github.com/yumjasper/YarkDown/blob/main/README.md"
           :bool="imagePreferRelativeDirectory"
           :on-change="(value) => onSelectChange('imagePreferRelativeDirectory', value)"
         />

@@ -384,7 +384,8 @@
         "searcher": "Поиск",
         "watcher": "Наблюдение",
         "spelling": "Орфография",
-        "custom css": "Пользовательский CSS"
+        "custom css": "Пользовательский CSS",
+        "txt": "TXT"
       },
       "items": {
         "autoSave": "Автоматически сохранять редактируемое содержимое",
@@ -455,7 +456,21 @@
         "autoNormalizeLineEndings": "Автоматически нормализовать концы строк при открытии файлов. Если отключено, файлы открываются как есть.",
         "fileSortOrder": "Порядок сортировки файлов в открытых папках: по возрастанию или убыванию.",
         "openedFilesInSidebar": "Показывать открытые файлы на боковой панели.",
-        "showPandocConvert": "Показывать меню конвертации Pandoc. Требуется установленный Pandoc."
+        "showPandocConvert": "Показывать меню конвертации Pandoc. Требуется установленный Pandoc.",
+        "txtToolbarExpanded": "Expand TXT toolbar (also toggled by the TXT button)",
+        "txtWordWrap": "Word wrap",
+        "txtLineNumbers": "Show line numbers",
+        "txtFontFamily": "Text font",
+        "txtFontSize": "Font size",
+        "txtTabSize": "Tab width",
+        "minimapEnabled": "Document Minimap / minimapEnabled",
+        "minimapSize": "Document Minimap / minimapSize",
+        "minimapScale": "Document Minimap / minimapScale",
+        "minimapRenderCharacters": "Document Minimap / minimapRenderCharacters",
+        "minimapMaxColumn": "Document Minimap / minimapMaxColumn",
+        "minimapShowSlider": "Document Minimap / minimapShowSlider",
+        "minimapSide": "Document Minimap / minimapSide",
+        "minimapAutohide": "Document Minimap / minimapAutohide"
       }
     },
     "categories": {
@@ -465,7 +480,8 @@
       "spelling": "Орфография",
       "theme": "Тема",
       "image": "Изображения",
-      "keybindings": "Горячие клавиши"
+      "keybindings": "Горячие клавиши",
+      "txt": "TXT"
     },
     "general": {
       "title": "Общие",
@@ -779,11 +795,20 @@
       "enableSpellChecking": "Включить проверку орфографии",
       "hideMarksForErrors": "Скрывать пометки орфографических ошибок",
       "title": "Проверка орфографии"
+    },
+    "txt": {
+      "title": "TXT Plain Text Editing",
+      "txtToolbarExpanded": "Expand TXT toolbar (also toggled by the TXT button)",
+      "txtWordWrap": "Word wrap",
+      "txtLineNumbers": "Show line numbers",
+      "txtFontFamily": "Text font",
+      "txtFontSize": "Font size",
+      "txtTabSize": "Tab width"
     }
   },
   "about": {
-    "copyright": "Copyright © Luo Ran 2017-{year}",
-    "copyrightContributors": "Сделано с <3 участниками GitHub"
+    "copyright": "Copyright © yumjasper 2026-{year}",
+    "copyrightContributors": "Сделано с <3 участниками YarkDown"
   },
   "commands": {
     "mt": {
@@ -1086,6 +1111,27 @@
     "total": "{count} lines",
     "go": "Go",
     "lineNumber": "Line number",
-    "close": "Close"
+    "close": "Close",
+    "toggleToolbar": "Expand or collapse TXT toolbar"
+  },
+  "minimap": {
+    "title": "Document Minimap",
+    "show": "Show Minimap",
+    "hide": "Hide Minimap",
+    "characters": "Render characters",
+    "size": "Vertical size",
+    "proportional": "Proportional",
+    "fit": "Fit",
+    "fill": "Fill",
+    "scale": "Minimap scale",
+    "slider": "Viewport slider",
+    "mouseover": "On hover",
+    "always": "Always",
+    "autohide": "Auto hide",
+    "none": "Never",
+    "scroll": "While scrolling",
+    "side": "Side",
+    "left": "Left",
+    "right": "Right"
   }
 }

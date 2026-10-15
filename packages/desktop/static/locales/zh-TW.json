@@ -384,7 +384,8 @@
         "searcher": "搜尋器",
         "watcher": "監聽器",
         "spelling": "拼字",
-        "custom css": "自訂 CSS"
+        "custom css": "自訂 CSS",
+        "txt": "TXT"
       },
       "items": {
         "autoSave": "自動儲存正在編輯的內容",
@@ -455,7 +456,21 @@
         "imageRelativeDirectoryName": "相對圖片資料夾名稱",
         "fileSortOrder": "開啟資料夾中檔案的排序順序：遞增或遞減",
         "openedFilesInSidebar": "是否在側邊欄中顯示已開啟的檔案",
-        "showPandocConvert": "顯示 Pandoc 轉換選單。需要先安裝 Pandoc。"
+        "showPandocConvert": "顯示 Pandoc 轉換選單。需要先安裝 Pandoc。",
+        "txtToolbarExpanded": "展开 TXT 工具栏（也可点击 TXT 按钮切换）",
+        "txtWordWrap": "自动换行",
+        "txtLineNumbers": "显示行号",
+        "txtFontFamily": "文本字体",
+        "txtFontSize": "字体大小",
+        "txtTabSize": "制表符宽度",
+        "minimapEnabled": "文档缩略图 / minimapEnabled",
+        "minimapSize": "文档缩略图 / minimapSize",
+        "minimapScale": "文档缩略图 / minimapScale",
+        "minimapRenderCharacters": "文档缩略图 / minimapRenderCharacters",
+        "minimapMaxColumn": "文档缩略图 / minimapMaxColumn",
+        "minimapShowSlider": "文档缩略图 / minimapShowSlider",
+        "minimapSide": "文档缩略图 / minimapSide",
+        "minimapAutohide": "文档缩略图 / minimapAutohide"
       }
     },
     "categories": {
@@ -465,7 +480,8 @@
       "spelling": "拼字",
       "theme": "主題",
       "image": "圖片",
-      "keybindings": "按鍵綁定"
+      "keybindings": "按鍵綁定",
+      "txt": "TXT"
     },
     "general": {
       "title": "一般",
@@ -779,11 +795,20 @@
       "enableSpellChecking": "啟用拼字檢查",
       "hideMarksForErrors": "隱藏拼字錯誤標記",
       "title": "拼字檢查"
+    },
+    "txt": {
+      "title": "TXT 纯文本编辑",
+      "txtToolbarExpanded": "展开 TXT 工具栏（也可点击 TXT 按钮切换）",
+      "txtWordWrap": "自动换行",
+      "txtLineNumbers": "显示行号",
+      "txtFontFamily": "文本字体",
+      "txtFontSize": "字体大小",
+      "txtTabSize": "制表符宽度"
     }
   },
   "about": {
-    "copyright": "Copyright © Luo Ran 2017-{year}",
-    "copyrightContributors": "版權貢獻者"
+    "copyright": "Copyright © yumjasper 2026-{year}",
+    "copyrightContributors": "YarkDown 專案貢獻者"
   },
   "commands": {
     "mt": {
@@ -1086,6 +1111,27 @@
     "total": "共 {count} 行",
     "go": "跳轉",
     "lineNumber": "行號",
-    "close": "關閉"
+    "close": "關閉",
+    "toggleToolbar": "展开或折叠 TXT 工具栏"
+  },
+  "minimap": {
+    "title": "文档缩略图",
+    "show": "显示缩略图",
+    "hide": "关闭缩略图",
+    "characters": "渲染字符",
+    "size": "垂直大小",
+    "proportional": "按比例",
+    "fit": "适应窗口",
+    "fill": "填满窗口",
+    "scale": "缩略图缩放",
+    "slider": "视口滑块",
+    "mouseover": "鼠标悬浮时",
+    "always": "始终显示",
+    "autohide": "自动隐藏",
+    "none": "不隐藏",
+    "scroll": "滚动时显示",
+    "side": "显示位置",
+    "left": "左侧",
+    "right": "右侧"
   }
 }

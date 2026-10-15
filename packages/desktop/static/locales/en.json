@@ -401,7 +401,8 @@
         "searcher": "Searcher",
         "watcher": "Watcher",
         "spelling": "Spelling",
-        "custom css": "Custom CSS"
+        "custom css": "Custom CSS",
+        "txt": "TXT"
       },
       "items": {
         "autoSave": "Automatically save the content being edited",
@@ -472,7 +473,21 @@
         "autoNormalizeLineEndings": "Automatically normalize line endings when opening files. When disabled, files are opened as-is.",
         "fileSortOrder": "Sort order for files in opened folders: ascending or descending.",
         "openedFilesInSidebar": "Whether to show opened files in the sidebar.",
-        "showPandocConvert": "Show the Pandoc conversion menu. Requires Pandoc to be installed."
+        "showPandocConvert": "Show the Pandoc conversion menu. Requires Pandoc to be installed.",
+        "txtToolbarExpanded": "Expand TXT toolbar (also toggled by the TXT button)",
+        "txtWordWrap": "Word wrap",
+        "txtLineNumbers": "Show line numbers",
+        "txtFontFamily": "Text font",
+        "txtFontSize": "Font size",
+        "txtTabSize": "Tab width",
+        "minimapEnabled": "Document Minimap / minimapEnabled",
+        "minimapSize": "Document Minimap / minimapSize",
+        "minimapScale": "Document Minimap / minimapScale",
+        "minimapRenderCharacters": "Document Minimap / minimapRenderCharacters",
+        "minimapMaxColumn": "Document Minimap / minimapMaxColumn",
+        "minimapShowSlider": "Document Minimap / minimapShowSlider",
+        "minimapSide": "Document Minimap / minimapSide",
+        "minimapAutohide": "Document Minimap / minimapAutohide"
       }
     },
     "categories": {
@@ -482,7 +497,8 @@
       "spelling": "Spelling",
       "theme": "Theme",
       "image": "Image",
-      "keybindings": "Keybindings"
+      "keybindings": "Keybindings",
+      "txt": "TXT"
     },
     "general": {
       "title": "General",
@@ -796,11 +812,20 @@
       "enableSpellChecking": "Enable spell checking",
       "hideMarksForErrors": "Hide marks for spelling errors",
       "title": "Spell Checker"
+    },
+    "txt": {
+      "title": "TXT Plain Text Editing",
+      "txtToolbarExpanded": "Expand TXT toolbar (also toggled by the TXT button)",
+      "txtWordWrap": "Word wrap",
+      "txtLineNumbers": "Show line numbers",
+      "txtFontFamily": "Text font",
+      "txtFontSize": "Font size",
+      "txtTabSize": "Tab width"
     }
   },
   "about": {
-    "copyright": "Copyright © Luo Ran 2017-{year}",
-    "copyrightContributors": "Made with <3 by Github Contributors"
+    "copyright": "Copyright © yumjasper 2026-{year}",
+    "copyrightContributors": "Made with <3 by YarkDown Contributors"
   },
   "commands": {
     "mt": {
@@ -1086,6 +1111,27 @@
     "total": "{count} lines",
     "go": "Go",
     "lineNumber": "Line number",
-    "close": "Close"
+    "close": "Close",
+    "toggleToolbar": "Expand or collapse TXT toolbar"
+  },
+  "minimap": {
+    "title": "Document Minimap",
+    "show": "Show Minimap",
+    "hide": "Hide Minimap",
+    "characters": "Render characters",
+    "size": "Vertical size",
+    "proportional": "Proportional",
+    "fit": "Fit",
+    "fill": "Fill",
+    "scale": "Minimap scale",
+    "slider": "Viewport slider",
+    "mouseover": "On hover",
+    "always": "Always",
+    "autohide": "Auto hide",
+    "none": "Never",
+    "scroll": "While scrolling",
+    "side": "Side",
+    "left": "Left",
+    "right": "Right"
   }
 }

@@ -1,7 +1,7 @@
 {
   "name": "marktext",
   "productName": "YarkText",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "YarkText",
   "main": "./out/main/index.js",
   "author": {
@@ -26,10 +26,10 @@
       "url": "https://github.com/Tkaixiang"
     }
   ],
-  "homepage": "https://github.com/marktext/marktext",
+  "homepage": "https://github.com/yumjasper/YarkDown",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/marktext/marktext.git"
+    "url": "git+https://github.com/yumjasper/YarkDown.git"
   },
   "scripts": {
     "minify-locales": "tsx ../../scripts/minify-locales.ts",

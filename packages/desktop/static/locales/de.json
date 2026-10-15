@@ -384,7 +384,8 @@
         "searcher": "Suche",
         "watcher": "Watcher",
         "spelling": "Rechtschreibung",
-        "custom css": "Benutzerdefiniertes CSS"
+        "custom css": "Benutzerdefiniertes CSS",
+        "txt": "TXT"
       },
       "items": {
         "autoSave": "Den bearbeiteten Inhalt automatisch speichern",
@@ -455,7 +456,21 @@
         "imageRelativeDirectoryName": "Der relative Bildordner-Name",
         "fileSortOrder": "Sortierreihenfolge für Dateien in geöffneten Ordnern: aufsteigend oder absteigend.",
         "openedFilesInSidebar": "Ob geöffnete Dateien in der Seitenleiste angezeigt werden sollen.",
-        "showPandocConvert": "Pandoc-Konvertierungsmenü anzeigen. Erfordert eine Pandoc-Installation."
+        "showPandocConvert": "Pandoc-Konvertierungsmenü anzeigen. Erfordert eine Pandoc-Installation.",
+        "txtToolbarExpanded": "Expand TXT toolbar (also toggled by the TXT button)",
+        "txtWordWrap": "Word wrap",
+        "txtLineNumbers": "Show line numbers",
+        "txtFontFamily": "Text font",
+        "txtFontSize": "Font size",
+        "txtTabSize": "Tab width",
+        "minimapEnabled": "Document Minimap / minimapEnabled",
+        "minimapSize": "Document Minimap / minimapSize",
+        "minimapScale": "Document Minimap / minimapScale",
+        "minimapRenderCharacters": "Document Minimap / minimapRenderCharacters",
+        "minimapMaxColumn": "Document Minimap / minimapMaxColumn",
+        "minimapShowSlider": "Document Minimap / minimapShowSlider",
+        "minimapSide": "Document Minimap / minimapSide",
+        "minimapAutohide": "Document Minimap / minimapAutohide"
       }
     },
     "categories": {
@@ -465,7 +480,8 @@
       "spelling": "Rechtschreibung",
       "theme": "Design",
       "image": "Bild",
-      "keybindings": "Tastenkürzel"
+      "keybindings": "Tastenkürzel",
+      "txt": "TXT"
     },
     "general": {
       "title": "Allgemein",
@@ -779,11 +795,20 @@
       "enableSpellChecking": "Rechtschreibprüfung aktivieren",
       "hideMarksForErrors": "Markierungen für Rechtschreibfehler ausblenden",
       "title": "Rechtschreibprüfung"
+    },
+    "txt": {
+      "title": "TXT Plain Text Editing",
+      "txtToolbarExpanded": "Expand TXT toolbar (also toggled by the TXT button)",
+      "txtWordWrap": "Word wrap",
+      "txtLineNumbers": "Show line numbers",
+      "txtFontFamily": "Text font",
+      "txtFontSize": "Font size",
+      "txtTabSize": "Tab width"
     }
   },
   "about": {
-    "copyright": "Copyright © Luo Ran 2017-{year}",
-    "copyrightContributors": "Urheberrecht Mitwirkende"
+    "copyright": "Copyright © yumjasper 2026-{year}",
+    "copyrightContributors": "YarkDown Mitwirkende"
   },
   "commands": {
     "mt": {
@@ -1086,6 +1111,27 @@
     "total": "{count} lines",
     "go": "Go",
     "lineNumber": "Line number",
-    "close": "Close"
+    "close": "Close",
+    "toggleToolbar": "Expand or collapse TXT toolbar"
+  },
+  "minimap": {
+    "title": "Document Minimap",
+    "show": "Show Minimap",
+    "hide": "Hide Minimap",
+    "characters": "Render characters",
+    "size": "Vertical size",
+    "proportional": "Proportional",
+    "fit": "Fit",
+    "fill": "Fill",
+    "scale": "Minimap scale",
+    "slider": "Viewport slider",
+    "mouseover": "On hover",
+    "always": "Always",
+    "autohide": "Auto hide",
+    "none": "Never",
+    "scroll": "While scrolling",
+    "side": "Side",
+    "left": "Left",
+    "right": "Right"
   }
 }

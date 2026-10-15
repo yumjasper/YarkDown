@@ -168,9 +168,7 @@ onUnmounted(() => {
 })
 
 const openKeybindingDocs = (): void => {
-  window.electron.shell.openExternal(
-    'https://marktext.me/docs/key-bindings'
-  )
+  window.electron.shell.openExternal('https://github.com/yumjasper/YarkDown/blob/main/README.md')
 }
 
 const saveKeybindings = (): void => {

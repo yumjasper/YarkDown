@@ -1,9 +1,9 @@
 {
   "name": "yarktext-monorepo",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "YarkText monorepo root",
   "private": true,
-  "homepage": "https://github.com/marktext/marktext",
+  "homepage": "https://github.com/yumjasper/YarkDown",
   "packageManager": "pnpm@10.33.4",
   "engines": {
     "node": ">=20.19.0",
