@@ -18,7 +18,7 @@ Windows ICO 包含 16、20、24、32、40、48、64、96、128 和 256 像素版
 安装依赖后，从仓库根目录运行：
 
 ```powershell
-pnpm pack
+pnpm run pack
 ```
 
 也可以直接运行 CLI：
@@ -52,8 +52,41 @@ node scripts/pack.mjs
 ## 产物
 
 `dist/` 保留为 electron-builder 和上游 CI 的构建暂存目录。
-成功后将安装包、便携 zip、更新描述和 blockmap 复制到根目录 `Released/`，并生成 `SHA256SUMS.txt` 和 `build-info.json`。
-默认清理旧暂存产物；只有打包完成后才替换 `Released/`。
+成功后将安装包、便携 zip、更新描述和 blockmap 复制到 `Released/v版本号/平台-架构/`，例如 `Released/v1.0.8/win-x64/`，并生成 `SHA256SUMS.txt` 和 `build-info.json`。
+默认清理旧暂存产物；只有打包完成后才替换同一版本、平台和架构的输出，保留其他历史版本。
+
+终端显示七个构建阶段的进度条，每个命令显示用时，并保留编译器、下载和 electron-builder 的实时进度。阶段计数不代表时间百分比；完整日志位于 `.tools/pack-logs/`，失败时返回非零退出码。
+
+只检查工具链和输出配置，不构建：
+
+```powershell
+node scripts/pack.mjs --check
+build.bat --no-pause --check
+```
+
+## GitHub Release
+
+发布目标为 https://github.com/yumjasper/YarkDown/releases 。根目录与 desktop 的版本号、标签必须一致。
+
+```powershell
+pnpm run release:check
+# 完成合并、提交代码后执行：
+pnpm run release:publish
+# 或：release.bat --publish
+```
+
+发布 CLI 要求工作区干净，创建 `vX.Y.Z` 标签并推送到 origin；不会自动提交代码，也不会覆盖已有远端标签。
+推送标签触发 `.github/workflows/release.yml`，构建 Windows x64/arm64、macOS Intel/Apple Silicon 和 Linux 下载文件。也可以在 GitHub Actions 的 Release YarkText 页面手动指定已有标签运行。
+所有平台成功后汇总更新元数据、生成 SHA-256 校验文件，先上传到草稿再公开 Release。失败时不会公开缺少平台的版本，可在 Actions 查看日志并重跑。
+
+工作流只需要仓库内置的 `GITHUB_TOKEN`，发布任务已声明 `contents: write`。本地推送标签使用已有 Git 登录凭据。
+
+## 发布版性能
+
+本地打包和 Release 工作流都启用 `YARKTEXT_RELEASE=1`：压缩 main/preload/renderer 的生产代码，关闭 sourcemap，使用 ASAR，并排除测试、覆盖率和调试映射文件。原生模块按 Electron 与目标架构构建，自动更新指向本项目仓库。
+
+缩略图 Worker、按需加载和大文件滚动优化同样进入发布包。安装包使用 normal 压缩；maximum 通常只增加打包时间，不会让安装后的编辑器更快。没有强制修改 V8 内存或关闭 GPU 加速。
+实际启动和滚动速度仍取决于文件、系统与硬件；每次重要发布应运行下面的打包应用冒烟验证。
 
 ```powershell
 node scripts/pack.mjs --with-unpacked

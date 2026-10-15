@@ -280,6 +280,7 @@ let spellchecker: SpellChecker | null = null
 let switchLanguageCommand: SpellcheckerLanguageCommand | null = null
 // The engine has no `scroll` event; we listen on the scroll container directly.
 let scrollHandler: ((e: Event) => void) | null = null
+let loadedDocument: { id: string | undefined; markdown: string } | null = null
 
 // The engine's undo/redo history (`getHistory()`) has a different shape than
 // the desktop store's `tab.history` (which drives the save/dirty tracking and
@@ -1586,9 +1587,14 @@ const setMarkdownToEditor = (payload: unknown) => {
   if (plainText.value) return
   const { id, markdown: newMarkdown, cursor: newCursor } = (payload ?? {}) as FileLoadedPayload
   if (editor.value) {
+    if (loadedDocument && loadedDocument.id === id && loadedDocument.markdown === (newMarkdown ?? '')) {
+      if (editorStore.TAKE_OPEN_INTENT(currentFile.value?.pathname) !== false) focusFreshEditor()
+      return
+    }
     // `setContent` resets the document and clears the undo history; only set a
     // cursor afterwards (a freshly-opened file has no history to restore).
     editor.value.setContent(newMarkdown ?? '')
+    loadedDocument = { id, markdown: newMarkdown ?? '' }
     // The freshly loaded content is this tab's clean baseline (id 0). Re-seed
     // the monotonic save-tracking allocator so undoing an edit back to this
     // content reads as clean again (matches the store's `lastSavedHistoryId: 0`).
@@ -1647,6 +1653,7 @@ const handleFileChange = (payload: unknown) => {
   if (!container) return
 
   if (typeof newMarkdown === 'string') {
+    loadedDocument = { id, markdown: newMarkdown }
     // Returning from source-code mode: the WYSIWYG engine is never unmounted
     // while source mode is up (index.vue overlays it via `v-if`), so it still
     // holds the PRE-source-mode document and undo history. Record the bulk
@@ -1936,6 +1943,7 @@ onMounted(() => {
   // the document tree and instantiates the registered UI plugins).
   muya.init({ focus: editorStore.TAKE_OPEN_INTENT(currentFile.value?.pathname) !== false })
   editor.value = muya
+  loadedDocument = { id: currentFile.value?.id, markdown: props.markdown ?? '' }
   // The first document's content is set via constructor options, so no
   // `file-loaded` / `setMarkdownToEditor` runs for it — seed its TOC here.
   editorStore.UPDATE_TOC(muya.getTOC())
@@ -2007,6 +2015,7 @@ onMounted(() => {
   // block AST), so we compute it here — mirroring the legacy engine's
   // `dispatchChange` payload.
   editor.value.on('json-change', () => {
+    loadedDocument = null
     // There is a chance that this event is fired AFTER the tab is switched. If we purely rely on this.currentFile later on
     // it can cause invalid updates. Hence, we need the id to identify changes as part of each tab
     if (plainText.value || !currentFile.value || !editor.value) return

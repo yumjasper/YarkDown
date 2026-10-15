@@ -3,35 +3,6 @@
     class="plain-text-editor"
     :class="{ 'is-active': active }"
   >
-    <div class="plain-text-toolbar">
-      <span class="plain-text-label">TXT</span>
-      <button
-        type="button"
-        @click.stop="bus.emit('find')"
-      >
-        {{ t('plainText.find') }}
-      </button>
-      <button
-        type="button"
-        @click.stop="bus.emit('replace')"
-      >
-        {{ t('plainText.replace') }}
-      </button>
-      <button
-        type="button"
-        @click="openGoTo"
-      >
-        {{ t('plainText.goTo') }}
-      </button>
-      <label><input
-        v-model="wrap"
-        type="checkbox"
-      >{{ t('plainText.wrap') }}</label>
-      <label><input
-        v-model="lineNumbers"
-        type="checkbox"
-      >{{ t('plainText.lineNumber') }}</label>
-    </div>
     <form
       v-if="showGoTo"
       class="plain-text-go-to"
@@ -60,6 +31,7 @@
     <div
       ref="container"
       class="plain-text-content"
+      :style="textStyle"
     />
     <editor-search v-if="active" />
     <div class="plain-text-status">
@@ -102,8 +74,16 @@ const encodingLabel = computed(() =>
 )
 const container = ref<HTMLDivElement | null>(null)
 const lineInput = ref<HTMLInputElement | null>(null)
-const wrap = ref(true)
-const lineNumbers = ref(true)
+const setting = (key: 'txtWordWrap' | 'txtLineNumbers') => computed({
+  get: () => preferences[key],
+  set: (value: boolean) => preferences.SET_SINGLE_PREFERENCE({ type: key, value })
+})
+const wrap = setting('txtWordWrap')
+const lineNumbers = setting('txtLineNumbers')
+const textStyle = computed(() => ({
+  '--txt-font-family': JSON.stringify(preferences.txtFontFamily) + ', monospace',
+  '--txt-font-size': preferences.txtFontSize + 'px'
+}))
 const showGoTo = ref(false)
 const targetLine = ref(1)
 const position = ref({ line: 0, ch: 0 })
@@ -320,7 +300,10 @@ const handlers: Record<string, (payload: unknown) => void> = {
   'find-action': find,
   undo,
   redo,
-  selectAll
+  selectAll,
+  goToLine: () => { if (isActive()) openGoTo() },
+  toggleTextWrap: () => { if (isActive()) wrap.value = !wrap.value },
+  toggleTextLineNumbers: () => { if (isActive()) lineNumbers.value = !lineNumbers.value }
 }
 
 watch(wrap, (value) => cm?.setOption('lineWrapping', value))
@@ -331,6 +314,8 @@ watch(
   }
 )
 watch(lineNumbers, (value) => cm?.setOption('lineNumbers', value))
+watch(() => preferences.txtTabSize, value => { cm?.setOption('tabSize', value); cm?.setOption('indentUnit', value) })
+watch(textStyle, () => nextTick(() => cm?.refresh()))
 watch(
   () => tabs.value.map((tab) => tab.id),
   (ids) => {
@@ -342,12 +327,13 @@ onMounted(() => {
     codeMirror(container.value, {
       value: '',
       mode: 'text/plain',
-      lineNumbers: true,
-      lineWrapping: true,
+      lineNumbers: lineNumbers.value,
+      lineWrapping: wrap.value,
       styleActiveLine: true,
       smartIndent: false,
       indentWithTabs: true,
-      indentUnit: 4,
+      indentUnit: preferences.txtTabSize,
+      tabSize: preferences.txtTabSize,
       viewportMargin: 10,
       direction: preferences.textDirection,
       extraKeys: {
@@ -441,11 +427,9 @@ onBeforeUnmount(() => {
   max-width: none;
   margin: 0;
   color: var(--editorColor);
-  font:
-    14px/1.6 Consolas,
-    'Cascadia Mono',
-    'Microsoft YaHei',
-    monospace;
+  font-family: var(--txt-font-family, Consolas, monospace);
+  font-size: var(--txt-font-size, 14px);
+  line-height: 1.6;
 }
 .plain-text-editor .CodeMirror-lines {
   padding: 12px 0;
@@ -466,7 +450,10 @@ onBeforeUnmount(() => {
 .plain-text-status {
   border-bottom: 0;
   border-top: 1px solid var(--editorColor04);
-  padding-block: 4px;
+  height: 28px;
+  box-sizing: border-box;
+  padding-block: 0;
+  line-height: 20px;
   gap: 18px;
 }
 .plain-text-position {

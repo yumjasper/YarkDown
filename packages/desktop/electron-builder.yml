@@ -1,9 +1,18 @@
 appId: com.github.marktext.marktext
 productName: YarkText
+asar: true
+compression: normal
+publish:
+  provider: github
+  owner: yumjasper
+  repo: YarkDown
 directories:
   buildResources: build
   output: ../../dist
 files:
+  - '!test/**'
+  - '!coverage/**'
+  - '!**/*.map'
   - '!**/.vscode/*'
   - '!src/*'
   - '!scripts/*'

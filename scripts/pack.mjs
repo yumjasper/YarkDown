@@ -25,13 +25,16 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { BuildProgress } from './build-progress.mjs'
 
 const REPO_ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)))
 const DESKTOP_ROOT = path.join(REPO_ROOT, 'packages', 'desktop')
 const DIST_DIR = path.join(REPO_ROOT, 'dist')
-const RELEASED_DIR = path.join(REPO_ROOT, 'Released')
+let RELEASED_DIR = path.join(REPO_ROOT, 'Released')
 const TOOLS_DIR = path.join(REPO_ROOT, '.tools')
 const REQUIRED_NODE_MAJOR = 22
+const progress = new BuildProgress()
+let logPath
 
 /** File kinds electron-builder produces that are worth shipping. */
 const ARTIFACT_EXTENSIONS = [
@@ -62,6 +65,7 @@ const USAGE = [
   '      --skip-rebuild              Skip the native module rebuild step',
   '      --keep-dist                 Reuse the previous dist/ contents',
   '      --keep-output               Keep the previous Released/ contents',
+  '      --check                     Check configuration without building',
   '  -h, --help                      Show this message',
   '',
   'Environment:',
@@ -71,7 +75,7 @@ const USAGE = [
 ].join('\n')
 
 function logStep (title) {
-  console.log(`\n=== ${title} ===`)
+  progress.start(title)
 }
 
 function logWarn (message) {
@@ -113,6 +117,9 @@ function parseArgs (argv) {
     }
 
     switch (key) {
+      case '--check':
+        opts.check = true
+        break
       case '-h':
       case '--help':
         opts.help = true
@@ -286,15 +293,16 @@ function requireFile (file, hint) {
   return file
 }
 
-function runCommand (label, command, args, options = {}) {
-  logStep(label)
+async function runCommand (label, command, args, options = {}) {
   console.log(`> ${[command, ...args].join(' ')}`)
-  const result = spawnSync(command, args, { stdio: 'inherit', cwd: DESKTOP_ROOT, ...options })
-  if (result.error) throw result.error
-  if (result.status !== 0) throw new Error(`${label} failed (exit code ${result.status})`)
+  await progress.run(label, command, args, { cwd: DESKTOP_ROOT, env: process.env, logPath, ...options })
 }
 
 function resetDirectory (dir) {
+  const relative = path.relative(REPO_ROOT, path.resolve(dir))
+  if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) {
+    throw new Error(`Refusing to clear a directory outside the build workspace: ${dir}`)
+  }
   try {
     fs.rmSync(dir, { recursive: true, force: true })
   } catch (err) {
@@ -344,7 +352,7 @@ function resolveToolEntry (file, hint) {
   return requireFile(file, hint)
 }
 
-function main () {
+async function main () {
   let opts
   try {
     opts = parseArgs(process.argv.slice(2))
@@ -365,6 +373,16 @@ function main () {
   const validArchs = ['x64', 'arm64']
   if (!validArchs.includes(opts.arch)) {
     fail(`Unsupported arch "${opts.arch}". Expected one of: ${validArchs.join(', ')}`)
+  }
+  const rootPkg = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'package.json'), 'utf8'))
+  const desktopVersion = JSON.parse(fs.readFileSync(path.join(DESKTOP_ROOT, 'package.json'), 'utf8')).version
+  if (!/^\d+\.\d+\.\d+$/.test(rootPkg.version) || desktopVersion !== rootPkg.version) {
+    fail('根目录和 desktop 的版本号必须一致，并使用三段数字版本号。')
+  }
+  RELEASED_DIR = path.join(RELEASED_DIR, `v${rootPkg.version}`, `${opts.platform}-${opts.arch}`)
+  if (opts.check) {
+    console.log(JSON.stringify({ version: rootPkg.version, platform: opts.platform, arch: opts.arch, node22: resolveNode22(), output: RELEASED_DIR, releaseBuild: true }, null, 2))
+    return
   }
 
   // Re-exec under Node 22 before touching any build tool: every downstream
@@ -387,6 +405,13 @@ function main () {
   }
 
   process.env.PATH = `${path.dirname(process.execPath)}${path.delimiter}${process.env.PATH || ''}`
+  process.env.NODE_ENV = 'production'
+  process.env.YARKTEXT_RELEASE = '1'
+  process.env.npm_config_user_agent ||= 'pnpm/10.33.4'
+  const logDirectory = path.join(TOOLS_DIR, 'pack-logs')
+  fs.mkdirSync(logDirectory, { recursive: true })
+  logPath = path.join(logDirectory, `${Date.now()}-${opts.platform}-${opts.arch}.log`)
+  console.log(`[pack] 完整日志：${logPath}`)
 
   console.log('[pack] Node:', process.version)
   console.log('[pack] Platform:', opts.platform, '| Arch:', opts.arch)
@@ -443,12 +468,12 @@ function main () {
   if (sevenZip) builderEnv.ELECTRON_BUILDER_7ZIP_PATH = sevenZip
 
   try {
+    logStep('准备构建目录')
     if (!opts.keepDist) {
-      logStep('Cleaning dist/')
       resetDirectory(DIST_DIR)
     }
 
-    runCommand(
+    await runCommand(
       'Minifying locales',
       process.execPath,
       [tsxCli, path.join(REPO_ROOT, 'scripts', 'minify-locales.ts')],
@@ -458,7 +483,7 @@ function main () {
     if (opts.skipRebuild) {
       logStep('Skipping native rebuild (--skip-rebuild)')
     } else {
-      runCommand('Rebuilding native modules', process.execPath, [
+      await runCommand('Rebuilding native modules', process.execPath, [
         rebuildCli,
         '-f',
         '--arch',
@@ -466,11 +491,11 @@ function main () {
       ])
     }
 
-    runCommand('Building main / preload / renderer', process.execPath, [viteCli, 'build'])
+    await runCommand('Building main / preload / renderer', process.execPath, [viteCli, 'build'])
 
     const platformFlag = `--${opts.platform}`
     const archFlag = `--${opts.arch}`
-    runCommand(
+    await runCommand(
       'Packaging with electron-builder',
       process.execPath,
       [builderCli, platformFlag, archFlag, '--publish', 'never'],
@@ -519,12 +544,14 @@ function main () {
 
   const desktopPkg = JSON.parse(fs.readFileSync(path.join(DESKTOP_ROOT, 'package.json'), 'utf8'))
   const buildInfo = {
-    product: desktopPkg.name,
+    product: desktopPkg.productName,
     version: desktopPkg.version,
     platform: opts.platform,
     arch: opts.arch,
     node: process.version,
     commit: gitCommit(),
+    dirty: !!spawnSync('git', ['status', '--porcelain'], { cwd: REPO_ROOT, encoding: 'utf8' }).stdout?.trim(),
+    buildFlavor: 'release',
     builtAt: new Date().toISOString(),
     artifacts: manifest
   }
@@ -541,4 +568,4 @@ function main () {
   }
 }
 
-main()
+main().catch(error => fail(error.message))

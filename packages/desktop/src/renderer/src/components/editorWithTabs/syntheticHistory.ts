@@ -47,17 +47,18 @@ const stripTrailingNewlines = (content: string): string =>
 // thousands of distinct snapshots (a 32-bit hash hits ~50% collision odds near
 // ~77k snapshots via the birthday bound — realistic over a long session — so the
 // extra width is worth the BigInt key).
-const FNV64_OFFSET = 0xcbf29ce484222325n
-const FNV64_PRIME = 0x100000001b3n
-const MASK64 = 0xffffffffffffffffn
-const hashContent = (content: string, preserveTrailingNewlines = false): bigint => {
+export const hashContent = (content: string, preserveTrailingNewlines = false): bigint => {
   const normalized = preserveTrailingNewlines ? content : stripTrailingNewlines(content)
-  let hash = FNV64_OFFSET
+  let high = 0xcbf29ce4
+  let low = 0x84222325
   for (let i = 0; i < normalized.length; i++) {
-    hash ^= BigInt(normalized.charCodeAt(i))
-    hash = (hash * FNV64_PRIME) & MASK64
+    low = (low ^ normalized.charCodeAt(i)) >>> 0
+    // Split FNV-1a multiplication keeps the same 64-bit result without per-character BigInts.
+    const product = low * 0x1b3
+    high = (Math.imul(high, 0x1b3) + (low << 8) + Math.floor(product / 0x100000000)) >>> 0
+    low = product >>> 0
   }
-  return hash
+  return (BigInt(high) << 32n) | BigInt(low)
 }
 
 export interface IFileHistoryLike {

@@ -7,15 +7,9 @@ type ISourceEditor = Pick<CodeMirror.Editor, 'setCursor' | 'heightAtLine'>
  * Scroll the Source Code editor so `line` sits at the TOP of the viewport,
  * animated.
  *
- * The editor runs CodeMirror with `viewportMargin: Infinity`, so CodeMirror
- * renders the whole document at full height and its own `.CodeMirror-scroll`
- * never scrolls — the OUTER `.source-code` container (`scrollContainer`) is the
- * scrollable element. So neither `cm.scrollTo` nor `cm.scrollIntoView` moves
- * anything; we scroll the container directly to the line's local Y, which puts
- * the line at the top (CodeMirror's `scrollIntoView` only scrolled minimally,
- * leaving the heading at the bottom edge with no animation). `setCursor` gets
- * `scroll: false` so its native caret-into-view scroll doesn't fight the
- * animation.
+ * `scrollContainer` is CodeMirror's scroller for a virtualized document, or
+ * the outer page for a short source. `setCursor` gets `scroll: false` so its
+ * own caret reveal does not fight the animation to the top of the viewport.
  */
 export function scrollSourceEditorToLine(
   editor: ISourceEditor,

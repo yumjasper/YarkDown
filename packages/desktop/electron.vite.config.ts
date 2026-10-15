@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
+const releaseBuild = process.env.YARKTEXT_RELEASE === '1'
 
 export default defineConfig({
   main: {
@@ -17,6 +18,8 @@ export default defineConfig({
     // electron-vite still builds the main and preload processes into commonJS
     // hence, we need to "exclude" (in order to NOT externalise) ESonly modules so that they can be converted to commonJS and can be required() afterwards correctly
     build: {
+      minify: releaseBuild,
+      sourcemap: false,
       externalizeDeps: {
         // Bundle electron-store + plist inline so they are available as a
         // CommonJS require() after electron-vite converts the main process
@@ -46,6 +49,8 @@ export default defineConfig({
     // (plus a few built-ins). Inline `pathe` and `@std/path` (ESM-only) so the
     // bundled preload doesn't try to require them from node_modules at runtime.
     build: {
+      minify: releaseBuild,
+      sourcemap: false,
       externalizeDeps: {
         exclude: ['pathe', '@jsr/std__path']
       }
@@ -60,6 +65,7 @@ export default defineConfig({
     }
   },
   renderer: {
+    build: { minify: releaseBuild, sourcemap: false },
     // --> Bundled as ES Modules
     // The renderer runs in a sandboxed Chromium context (contextIsolation: true,
     // nodeIntegration: false, sandbox: true). All Node access must go through

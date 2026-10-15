@@ -23,12 +23,13 @@
       </div>
     </template>
     <div class="word-count-wrapper">
-      <div
+      <button
+        type="button"
         class="word-count"
         @click.stop="handleWordClick"
       >
         <span class="text-center-vertical">{{ wordCountText }}</span>
-      </div>
+      </button>
     </div>
   </el-tooltip>
 </template>
@@ -84,18 +85,26 @@ const handleWordClick = () => {
 .word-count-wrapper {
   flex: none;
   display: flex;
+  align-items: center;
+  height: 100%;
   justify-content: flex-end;
-  padding-right: 12px;
   position: relative;
   z-index: 2;
 }
 
 .word-count {
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
   font-size: 12px;
   color: var(--editorColor50);
   text-align: center;
-  line-height: 24px;
+  line-height: 1;
   padding: 0 5px;
   box-sizing: border-box;
   transition: all 0.25s ease-in-out;
@@ -110,8 +119,7 @@ const handleWordClick = () => {
 }
 
 .text-center-vertical {
-  display: inline-block;
-  vertical-align: middle;
-  line-height: normal;
+  display: block;
+  line-height: 16px;
 }
 </style>

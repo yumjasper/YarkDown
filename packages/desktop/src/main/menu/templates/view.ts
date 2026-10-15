@@ -1,10 +1,20 @@
-import { type BrowserWindow, type MenuItemConstructorOptions } from 'electron'
+import { ipcMain, type BrowserWindow, type MenuItemConstructorOptions } from 'electron'
 import * as actions from '../actions/view'
 import { t } from '../../i18n'
 import type Keybindings from '../../keyboard/shortcutHandler'
 
-export default function(keybindings: Keybindings): MenuItemConstructorOptions {
+export default function(keybindings: Keybindings, minimapEnabled = true, toggleMinimap?: () => void): MenuItemConstructorOptions {
   const submenu: MenuItemConstructorOptions[] = [
+    {
+      id: 'minimapMenuItem',
+      label: t('minimap.show'),
+      type: 'checkbox',
+      checked: minimapEnabled,
+      click(item) {
+        if (toggleMinimap) toggleMinimap()
+        else ipcMain.emit('set-user-preference', { minimapEnabled: item.checked })
+      }
+    },
     {
       label: t('menu.view.commandPalette'),
       accelerator: keybindings.getAccelerator('view.command-palette') ?? undefined,

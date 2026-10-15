@@ -20,6 +20,20 @@ export type FileSortBy = 'created' | 'modified' | 'title'
 export type FileSortOrder = 'asc' | 'desc'
 
 export interface PreferencesState {
+  minimapEnabled: boolean
+  minimapSize: 'proportional' | 'fit' | 'fill'
+  minimapScale: number
+  minimapRenderCharacters: boolean
+  minimapMaxColumn: number
+  minimapShowSlider: 'mouseover' | 'always'
+  minimapSide: 'left' | 'right'
+  minimapAutohide: 'none' | 'mouseover' | 'scroll'
+  txtToolbarExpanded: boolean
+  txtWordWrap: boolean
+  txtLineNumbers: boolean
+  txtFontFamily: string
+  txtFontSize: number
+  txtTabSize: number
   // ----- General -----
   autoSave: boolean
   autoSaveDelay: number
@@ -149,6 +163,20 @@ interface ModeTogglePayload {
 
 export const usePreferencesStore = defineStore('preferences', {
   state: (): PreferencesState => ({
+    minimapEnabled: true,
+    minimapSize: 'proportional',
+    minimapScale: 1,
+    minimapRenderCharacters: true,
+    minimapMaxColumn: 100,
+    minimapShowSlider: 'mouseover',
+    minimapSide: 'right',
+    minimapAutohide: 'none',
+    txtToolbarExpanded: false,
+    txtWordWrap: true,
+    txtLineNumbers: true,
+    txtFontFamily: 'Consolas',
+    txtFontSize: 14,
+    txtTabSize: 4,
     autoSave: false,
     autoSaveDelay: 5000,
     titleBarStyle: 'custom',

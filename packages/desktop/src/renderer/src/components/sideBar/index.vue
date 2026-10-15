@@ -7,7 +7,7 @@
   >
     <div class="side-bar-rail">
       <button
-        v-for="tab of sideBarIcons"
+        v-for="tab of visibleSideBarIcons"
         :key="tab.id"
         type="button"
         class="rail-icon"
@@ -37,7 +37,7 @@
         :tabs="tabs"
       />
       <side-bar-search v-else-if="rightColumn === 'search'" />
-      <toc v-else-if="rightColumn === 'toc'" />
+      <toc v-else-if="rightColumn === 'toc' && !plainText" />
     </div>
     <div
       v-show="rightColumn"
@@ -52,6 +52,7 @@ import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useLayoutStore } from '@/store/layout'
 import { useProjectStore } from '@/store/project'
 import { useEditorStore } from '@/store/editor'
+import { isPlainTextFile } from '@shared/plainText'
 
 import { sideBarIcons, sideBarBottomIcons } from './help'
 import Tree from './tree.vue'
@@ -75,6 +76,18 @@ const { rightColumn, showSideBar, sideBarWidth } = storeToRefs(layoutStore)
 
 const { projectTree } = storeToRefs(projectStore)
 const { tabs } = storeToRefs(editorStore)
+const plainText = computed(() => isPlainTextFile(editorStore.currentFile?.filename || ''))
+const visibleSideBarIcons = computed(() => sideBarIcons.filter(tab => !plainText.value || tab.id !== 'toc'))
+let markdownColumn: string | undefined
+watch(plainText, value => {
+  if (value && rightColumn.value === 'toc') {
+    markdownColumn = 'toc'
+    layoutStore.SET_LAYOUT({ rightColumn: 'files' })
+  } else if (!value && markdownColumn) {
+    if (rightColumn.value === 'files') layoutStore.SET_LAYOUT({ rightColumn: markdownColumn })
+    markdownColumn = undefined
+  }
+}, { immediate: true })
 
 const RAIL_WIDTH = SIDEBAR_RAIL_WIDTH
 const MIN_CONTENT_WIDTH = MIN_SIDEBAR_CONTENT_WIDTH
@@ -162,8 +175,7 @@ const handleLeftIconClick = (name: string): void => {
   position: relative;
   color: var(--sideBarColor);
   user-select: none;
-  background: color-mix(in srgb, var(--editorBgColor) 96%, var(--editorColor));
-  border-right: 1px solid var(--editorColor10);
+  background: var(--shell-bg);
   box-sizing: border-box;
   font-size: 13px;
   line-height: 1.5;
@@ -180,14 +192,15 @@ const handleLeftIconClick = (name: string): void => {
   gap: 4px;
   padding: 8px 0;
   box-sizing: border-box;
-  border-right: 1px solid var(--editorColor04);
 }
 .rail-icon {
   position: relative;
   border: none;
   background: transparent;
-  padding: 9px 0;
-  width: 100%;
+  padding: 8px 0;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--shell-item-radius);
   display: flex;
   justify-content: center;
   cursor: pointer;
@@ -200,13 +213,17 @@ const handleLeftIconClick = (name: string): void => {
 .rail-icon:hover svg {
   color: var(--themeColor);
 }
+.rail-icon:hover,
+.rail-icon.active {
+  background: var(--editorColor10);
+}
 .rail-icon.active svg {
   color: var(--themeColor);
 }
 .rail-icon.active::before {
   content: '';
   position: absolute;
-  left: 0;
+  left: -5px;
   top: 7px;
   bottom: 7px;
   width: 2px;
@@ -222,6 +239,44 @@ const handleLeftIconClick = (name: string): void => {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
+  --sidebar-inset: 10px;
+  padding-top: 0;
+  box-sizing: border-box;
+  margin-top: 4px;
+  margin-bottom: 6px;
+  background: color-mix(in srgb, var(--editorBgColor) 98%, var(--editorColor));
+  border: 1px solid var(--editorColor10);
+  border-radius: var(--shell-panel-radius);
+}
+.right-column :deep(.opened-file),
+.right-column :deep(.side-bar-file),
+.right-column :deep(.folder-name) {
+  margin-inline: 6px;
+  border-radius: var(--shell-item-radius);
+}
+.right-column :deep(.opened-file.active) {
+  background: var(--themeColor20);
+}
+.right-column :deep(.side-bar-file.current::before) {
+  height: 16px;
+  border-radius: 2px;
+}
+.right-column :deep(.el-tree-node__content) {
+  margin-right: 6px;
+  border-radius: var(--shell-item-radius);
+}
+.right-column :deep(.search-wrapper) {
+  border-radius: var(--shell-item-radius);
+}
+.right-column :deep(.matches ul li) {
+  border-radius: var(--shell-item-radius);
+}
+.right-column :deep(.opened-files > .title),
+.right-column :deep(.project-tree > .title) {
+  padding-inline: var(--sidebar-inset);
+}
+.right-column :deep(.search-wrapper) {
+  margin: var(--sidebar-inset);
 }
 
 .drag-bar {

@@ -7,6 +7,20 @@
 // is mechanically derived from schema.json in a follow-up.
 
 export interface IUserPreferences {
+  minimapEnabled?: boolean
+  minimapSize?: 'proportional' | 'fit' | 'fill'
+  minimapScale?: number
+  minimapRenderCharacters?: boolean
+  minimapMaxColumn?: number
+  minimapShowSlider?: 'mouseover' | 'always'
+  minimapSide?: 'left' | 'right'
+  minimapAutohide?: 'none' | 'mouseover' | 'scroll'
+  txtToolbarExpanded?: boolean
+  txtWordWrap?: boolean
+  txtLineNumbers?: boolean
+  txtFontFamily?: string
+  txtFontSize?: number
+  txtTabSize?: number
   autoSave?: boolean
   autoSaveDelay?: number
   titleBarStyle?: 'custom' | 'native'

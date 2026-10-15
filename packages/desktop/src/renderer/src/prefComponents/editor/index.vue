@@ -1,6 +1,7 @@
 <template>
   <div class="pref-editor">
     <h4>{{ t('preferences.editor.title') }}</h4>
+    <minimap-preference />
     <compound>
       <template #head>
         <h6 class="title">
@@ -191,6 +192,7 @@
 
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
+import MinimapPreference from '../common/minimap/index.vue'
 import { useI18n } from 'vue-i18n'
 import { usePreferencesStore } from '@/store/preferences'
 import type { PreferencesState } from '@/store/preferences'

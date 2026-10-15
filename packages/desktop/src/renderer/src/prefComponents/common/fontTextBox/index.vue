@@ -20,6 +20,9 @@
       :fetch-suggestions="querySearch"
       :placeholder="t('preferences.selectFont')"
       @select="handleSelect"
+      @change="handleSelect(selectValue)"
+      @blur="handleSelect(selectValue)"
+      @input="handleSelect(selectValue)"
     >
       <template #suffix>
         <ArrowDown

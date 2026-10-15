@@ -145,6 +145,7 @@ class EditorWindow extends BaseWindow {
     Object.assign(winOptions, editorBackdropOptions(process.platform, os.release(), titleBarStyle ?? 'custom'))
 
     let win: BrowserWindow | null = (this.browserWindow = new BrowserWindow(winOptions))
+    win.once('ready-to-show', () => this.bringToFront())
 
     // Give every editor window a stable id for session buffer persistence.
     // We cant use win.id as it might collide with same IDs from closed windows
@@ -171,12 +172,10 @@ class EditorWindow extends BaseWindow {
       showEditorContextMenu(win!, event, params, preferences.getItem('spellcheckerEnabled'))
     })
 
-    win.webContents.once('did-finish-load', () => {
+    // Page loading can finish before Vue's asynchronous command setup registers IPC listeners.
+    win.webContents.ipc.once('mt::editor-ready', () => {
       this.lifecycle = WindowLifecycle.READY
       this.emit('window-ready')
-
-      // Restore and focus window
-      this.bringToFront()
 
       const lineEnding = preferences.getPreferredEol()
       appMenu.updateLineEndingMenu(this.id!, lineEnding)
@@ -491,7 +490,7 @@ class EditorWindow extends BaseWindow {
     this._openedRootDirectory = ''
     this._openedFiles = []
 
-    browserWindow!.webContents.once('did-finish-load', () => {
+    browserWindow!.webContents.ipc.once('mt::editor-ready', () => {
       this.lifecycle = WindowLifecycle.READY
       const { preferences } = this._accessor
       const { sideBarVisibility, restoreLayoutState, tabBarVisibility, sourceCodeModeEnabled } =

@@ -11,6 +11,8 @@ import { onInternalChannel } from '../utils/internalIpc'
 import { viewLayoutChanged } from '../menu/actions/view'
 import configureMenu, { configSettingMenu } from '../menu/templates'
 import { setLanguage } from '../i18n.js'
+import { setPlainTextEditor, isPlainTextEditor } from '../windows/editorMode'
+import { nativeMenuPosition } from '../utils/menuPosition'
 import type Preference from '../preferences'
 import type Keybindings from '../keyboard/shortcutHandler'
 import type { IUserPreferences } from '@shared/types/preferences'
@@ -30,6 +32,8 @@ export type MenuTypeValue = (typeof MenuType)[keyof typeof MenuType]
 interface WindowMenuEntry {
   menu: Menu | null
   type: MenuTypeValue
+  plainText?: boolean
+  markdownChecks?: Map<string, boolean>
 }
 
 interface AddEditorMenuOptions {
@@ -300,7 +304,7 @@ class AppMenu {
       const { menu: oldMenu, type } = value
       if (type !== MenuType.EDITOR || !oldMenu) return
 
-      const { menu: newMenu } = this._buildEditorMenu(recentUsedDocuments)
+      const { menu: newMenu } = this._buildEditorMenu(recentUsedDocuments, !!value.plainText)
       if (!newMenu) return
 
       // all other menu items are set automatically
@@ -309,6 +313,10 @@ class AppMenu {
       updateMenuItem(oldMenu, newMenu, 'focusModeMenuItem')
       updateMenuItem(oldMenu, newMenu, 'sideBarMenuItem')
       updateMenuItem(oldMenu, newMenu, 'tabBarMenuItem')
+      for (const [id, checked] of value.markdownChecks ?? []) {
+        const item = newMenu.getMenuItemById(id)
+        if (item && !oldMenu.getMenuItemById(id)) item.checked = checked
+      }
 
       // update window menu
       value.menu = newMenu
@@ -330,7 +338,7 @@ class AppMenu {
       let newMenu: Menu | null
       if (type === MenuType.EDITOR) {
         if (!oldMenu) return
-        const { menu: rebuilt } = this._buildEditorMenu(recentUsedDocuments)
+        const { menu: rebuilt } = this._buildEditorMenu(recentUsedDocuments, !!value.plainText)
         if (!rebuilt) return
 
         updateMenuItem(oldMenu, rebuilt, 'sourceCodeModeMenuItem')
@@ -432,14 +440,14 @@ class AppMenu {
     })
   }
 
-  _buildEditorMenu(recentUsedDocuments: string[] | null = null): WindowMenuEntry {
+  _buildEditorMenu(recentUsedDocuments: string[] | null = null, plainText = false): WindowMenuEntry {
     if (!recentUsedDocuments) {
       recentUsedDocuments = this.getRecentlyUsedDocuments()
     }
 
-    const menuTemplate = configureMenu(this._keybindings, this._preferences, recentUsedDocuments)
+    const menuTemplate = configureMenu(this._keybindings, this._preferences, recentUsedDocuments, plainText)
     const menu = Menu.buildFromTemplate(menuTemplate)
-    return { menu, type: MenuType.EDITOR }
+    return { menu, type: MenuType.EDITOR, plainText }
   }
 
   _buildSettingMenu(): WindowMenuEntry {
@@ -495,8 +503,9 @@ class AppMenu {
 
     return menu.items.map((item) => ({
       label: item.label,
+      checked: item.type === 'checkbox' ? item.checked : undefined,
       // Items carrying only a role still execute it through `click()`.
-      enabled: item.enabled !== false && !!item.submenu,
+      enabled: item.enabled !== false,
       submenu: !!item.submenu && !!item.submenu.items.length
     }))
   }
@@ -542,13 +551,18 @@ class AppMenu {
     if (!menu) {
       menu = Menu.getApplicationMenu()
     }
-    const submenu = menu?.items[topIndex]?.submenu
+    const top = menu?.items[topIndex]
+    if (top && !top.submenu) {
+      this.executeMenuItem(windowId, topIndex, -1)
+      window.webContents.send('mt::menu::closed')
+      return
+    }
+    const submenu = top?.submenu
     if (!submenu) return
 
     submenu.popup({
       window,
-      x: position?.x,
-      y: position?.y,
+      ...nativeMenuPosition(position, window.webContents.getZoomFactor()),
       callback: () => {
         if (!window.isDestroyed()) {
           window.webContents.send('mt::menu::closed')
@@ -615,7 +629,9 @@ class AppMenu {
           log.error(`UpdateApplicationMenu: Cannot find window menu for window id ${windowId}.`)
           return
         }
-        updateFormatMenu(this.getWindowMenuById(windowId), formats)
+        if (!this.windowMenus.get(windowId)?.plainText) {
+          updateFormatMenu(this.getWindowMenuById(windowId), formats)
+        }
       }
     )
     ipcMain.on('mt::update-sidebar-menu', (_e, windowId: number, value: unknown) => {
@@ -640,7 +656,9 @@ class AppMenu {
         log.error(`UpdateApplicationMenu: Cannot find window menu for window id ${windowId}.`)
         return
       }
-      updateSelectionMenus(this.getWindowMenuById(windowId), changes)
+      if (!this.windowMenus.get(windowId)?.plainText) {
+        updateSelectionMenus(this.getWindowMenuById(windowId), changes)
+      }
     })
 
     // In source-code mode the Paragraph and Format commands act on the hidden
@@ -648,6 +666,21 @@ class AppMenu {
     // and the next selection change refines them (#3531).
     ipcMain.on('mt::set-editor-format-menus-enabled', (_e, windowId: number, enabled: boolean, plainText = false) => {
       if (!this.has(windowId)) return
+      const window = BrowserWindow.fromId(windowId)
+      if (!window || window.webContents !== _e.sender) return
+      const entry = this.windowMenus.get(windowId)!
+      if (isPlainTextEditor(window.webContents) !== plainText) {
+        if (plainText) {
+          entry.markdownChecks = new Map(
+            ['sourceCodeModeMenuItem', 'typewriterModeMenuItem', 'focusModeMenuItem']
+              .map(id => [id, entry.menu?.getMenuItemById(id)?.checked ?? false])
+          )
+        }
+        setPlainTextEditor(window.webContents, plainText)
+        entry.plainText = plainText
+        this.updateAppMenu()
+        this._broadcastMenuBar()
+      }
       const menu = this.getWindowMenuById(windowId)
       for (const id of ['exportMenuEntry', 'pandocMenuEntry', 'printMenuEntry']) {
         const entry = menu.getMenuItemById(id)
@@ -667,6 +700,9 @@ class AppMenu {
     })
 
     onInternalChannel('broadcast-preferences-changed', async(prefs: Partial<IUserPreferences>) => {
+      if (prefs.minimapEnabled !== undefined || prefs.txtWordWrap !== undefined || prefs.txtLineNumbers !== undefined) {
+        this.updateAppMenu()
+      }
       if (prefs.theme !== undefined || prefs.followSystemTheme !== undefined) {
         this.updateAppMenu()
       }

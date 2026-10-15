@@ -20,7 +20,10 @@
       <div
         v-if="!init"
         class="editor-placeholder"
-      />
+        role="status"
+      >
+        正在准备编辑器…
+      </div>
       <recent v-if="!hasCurrentFile && init" />
       <editor-with-tabs
         v-if="hasCurrentFile && init"
@@ -207,6 +210,7 @@ onMounted(async () => {
   editorStore.LISTEN_FOR_RELOAD_IMAGES()
   editorStore.LISTEN_FOR_CONTEXT_MENU()
   editorStore.LISTEN_FOR_STATE_REPLACE()
+  window.electron.ipcRenderer.send('mt::editor-ready')
 
   // module: notification
   notificationStore.listenForNotification()
@@ -232,6 +236,10 @@ onMounted(async () => {
 <style scoped>
 .editor-placeholder,
 .editor-container {
+  --shell-panel-radius: 10px;
+  --shell-item-radius: 6px;
+  --shell-bg: color-mix(in srgb, var(--editorBgColor) 94%, var(--editorColor));
+  background: var(--shell-bg);
   display: flex;
   flex-direction: row;
   position: absolute;
@@ -252,6 +260,10 @@ onMounted(async () => {
   width: 100%;
   height: 100%;
   background: var(--editorBgColor);
+  align-items: center;
+  justify-content: center;
+  color: var(--editorColor50);
+  font: 13px var(--uiFontFamily);
 }
 .editor-middle {
   display: flex;
@@ -263,7 +275,7 @@ onMounted(async () => {
   margin-top: calc(var(--titleBarHeight) + var(--menuBarHeight));
   box-sizing: border-box;
   position: relative;
-  background: var(--editorBgColor);
+  background: transparent;
   & > .editor {
     flex: 1;
   }

@@ -20,6 +20,7 @@ export interface MenuTemplateItem {
 export type MenuTemplate = MenuTemplateItem[]
 
 export interface MenuPopupPosition {
+  // Viewport-relative CSS pixels, before the webContents zoom factor is applied.
   x: number
   y: number
 }
@@ -29,6 +30,7 @@ export interface MenuPopupPosition {
  * draw an in-app menu bar; clicks are resolved by index on the main side.
  */
 export interface MenuBarItem {
+  checked?: boolean
   label: string
   enabled: boolean
   submenu: boolean

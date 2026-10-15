@@ -7,6 +7,7 @@ import {
   type WebContents
 } from 'electron'
 import log from 'electron-log'
+import { nativeMenuPosition } from '../utils/menuPosition'
 import { type CommandManager } from '../commands'
 import type { MenuTemplate, MenuTemplateItem, MenuPopupPosition } from '@shared/types/menu'
 import type AppMenu from '../menu'
@@ -119,8 +120,7 @@ export const registerWindowHandlers = (commandManager: CommandManager): void => 
       const menu = buildMenu(template, win.id)
       menu.popup({
         window: win,
-        x: position?.x,
-        y: position?.y,
+        ...nativeMenuPosition(position, win.webContents.getZoomFactor()),
         callback: () => {
           popups.delete(win.id)
           try {
@@ -142,7 +142,7 @@ export const registerWindowHandlers = (commandManager: CommandManager): void => 
     try {
       const appMenu = Menu.getApplicationMenu()
       if (!appMenu) return
-      appMenu.popup({ window: win, x: position?.x, y: position?.y })
+      appMenu.popup({ window: win, ...nativeMenuPosition(position, win.webContents.getZoomFactor()) })
     } catch (err) {
       log.error('application menu popup failed:', err)
     }

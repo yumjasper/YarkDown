@@ -4,7 +4,7 @@ import Store, { type Schema } from 'electron-store'
 import { BrowserWindow, ipcMain, nativeTheme } from 'electron'
 import log from 'electron-log'
 import { isWindows } from '../config'
-import { hasSameKeys } from '../utils'
+import { mergePreferenceDefaults } from './defaults'
 import { onInternalChannel } from '../utils/internalIpc'
 import { TypedEmitter } from '@shared/types/typedEmitter'
 import type { IUserPreferences } from '@shared/types/preferences'
@@ -44,6 +44,7 @@ class Preference extends TypedEmitter<PreferenceEvents> {
     this.store = new Store<IUserPreferences>({
       schema: schema as unknown as Schema<IUserPreferences>,
       name: PREFERENCES_FILE_NAME,
+      cwd: preferencesPath,
       migrations: {
         '0.18.6': (store) => {
           if (store.get('startUpAction') === 'lastState') {
@@ -85,39 +86,8 @@ class Preference extends TypedEmitter<PreferenceEvents> {
     if (!this.hasPreferencesFile) {
       this.store.set(defaultSettings)
     } else {
-      // Because `this.getAll()` will return a plainObject, so we can not use `hasOwnProperty` method
-      // const plainObject = () => Object.create(null)
-      const userSetting = this.getAll() as Record<string, unknown>
-      // Update outdated settings
-      const requiresUpdate = !hasSameKeys(defaultSettings, userSetting)
-      const userSettingKeys = Object.keys(userSetting)
-      const defaultSettingKeys = Object.keys(defaultSettings)
-
-      if (requiresUpdate) {
-        // TODO(fxha): For performance reasons, we should try to replace 'electron-store' because
-        //   it does multiple blocking I/O calls when changing entries. There is no transaction or
-        //   async I/O available. The core reason we changed to it was JSON scheme validation.
-
-        // Remove outdated settings
-        for (const key of userSettingKeys) {
-          if (!defaultSettingKeys.includes(key)) {
-            delete userSetting[key]
-            this.store.delete(key)
-          }
-        }
-
-        // Add new setting options
-        let addedNewEntries = false
-        for (const key in defaultSettings) {
-          if (!userSettingKeys.includes(key)) {
-            addedNewEntries = true
-            userSetting[key] = defaultSettings[key]
-          }
-        }
-        if (addedNewEntries) {
-          this.store.set(userSetting)
-        }
-      }
+      // Upgrade defaults fill gaps without removing user settings from earlier versions.
+      this.store.set(mergePreferenceDefaults(defaultSettings, this.getAll()))
     }
 
     this._listenForIpcMain()

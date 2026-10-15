@@ -29,8 +29,8 @@
     "description": "General--The zoom level. Between 0.5 and 2.0 inclusive.",
     "type": "number",
     "minimum": 0.5,
-    "maximum": 2.0,
-    "default": 1.0
+    "maximum": 2,
+    "default": 1
   },
   "hideScrollbar": {
     "description": "General--Whether to hide scrollbars.",
@@ -457,5 +457,93 @@
     "description": "Watcher--Whether to use polling. Polling may leads to high CPU utilization but is necessary to watch files over a network.--internal",
     "type": "boolean",
     "default": false
+  },
+  "txtToolbarExpanded": {
+    "type": "boolean",
+    "default": false,
+    "description": "TXT--Remember whether the TXT toolbar is expanded"
+  },
+  "txtWordWrap": {
+    "type": "boolean",
+    "default": true,
+    "description": "TXT--Wrap long lines"
+  },
+  "txtLineNumbers": {
+    "type": "boolean",
+    "default": true,
+    "description": "TXT--Show line numbers"
+  },
+  "txtFontFamily": {
+    "type": "string",
+    "default": "Consolas",
+    "description": "TXT--Font family"
+  },
+  "txtFontSize": {
+    "type": "number",
+    "default": 14,
+    "description": "TXT--Font size",
+    "minimum": 10,
+    "maximum": 40
+  },
+  "txtTabSize": {
+    "type": "number",
+    "default": 4,
+    "description": "TXT--Tab width",
+    "enum": [2, 4, 8]
+  },
+  "treePathExcludePatterns": {
+    "type": "array",
+    "items": {
+      "type": "string"
+    },
+    "default": [],
+    "description": "General--File tree exclusion patterns"
+  },
+  "minimapEnabled": {
+    "type": "boolean",
+    "default": true,
+    "description": "Editor--minimapEnabled"
+  },
+  "minimapSize": {
+    "type": "string",
+    "enum": ["proportional", "fit", "fill"],
+    "default": "proportional",
+    "description": "Editor--minimapSize"
+  },
+  "minimapScale": {
+    "type": "number",
+    "enum": [1, 2, 3],
+    "default": 1,
+    "description": "Editor--minimapScale"
+  },
+  "minimapRenderCharacters": {
+    "type": "boolean",
+    "default": true,
+    "description": "Editor--minimapRenderCharacters"
+  },
+  "minimapMaxColumn": {
+    "type": "number",
+    "minimum": 40,
+    "maximum": 160,
+    "default": 100,
+    "description": "Editor--minimapMaxColumn"
+  },
+  "minimapShowSlider": {
+    "type": "string",
+    "enum": ["mouseover", "always"],
+    "default": "mouseover",
+    "description": "Editor--minimapShowSlider"
+  },
+  "minimapSide": {
+    "type": "string",
+    "enum": ["left", "right"],
+    "default": "right",
+    "description": "Editor--minimapSide"
+  },
+  "minimapAutohide": {
+    "type": "string",
+    "enum": ["none", "mouseover", "scroll"],
+    "default": "none",
+    "description": "Editor--minimapAutohide"
   }
 }

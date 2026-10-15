@@ -1,5 +1,5 @@
 @echo off
-setlocal EnableExtensions
+setlocal EnableExtensions DisableDelayedExpansion
 pushd "%~dp0"
 set "NO_PAUSE=0"
 if /i "%~1"=="--no-pause" (
@@ -7,8 +7,10 @@ if /i "%~1"=="--no-pause" (
   shift
 )
 set "ARGS="
+set "CHECK_ONLY=0"
 :collect
 if "%~1"=="" goto run
+if /i "%~1"=="--check" set "CHECK_ONLY=1"
 set ARGS=%ARGS% "%~1"
 shift
 goto collect
@@ -22,7 +24,11 @@ if errorlevel 1 (
 node "%~dp0scripts\pack.mjs" %ARGS%
 set "EXITCODE=%ERRORLEVEL%"
 if "%EXITCODE%"=="0" (
-  echo [done] Artifacts are in "%~dp0Released".
+  if "%CHECK_ONLY%"=="1" (
+    echo [ready] Packaging configuration checked. No files were built.
+  ) else (
+    echo [done] Versioned artifacts are in "%~dp0Released".
+  )
 ) else (
   echo [error] Packaging failed with exit code %EXITCODE%.
 )

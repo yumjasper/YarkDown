@@ -35,7 +35,6 @@ import pandoc, {
   shouldMirrorMedia
 } from '../../utils/pandoc'
 import { t, getCurrentLanguage } from '../../i18n'
-import { exportDocumentBinary } from '../../utils/documentExport'
 import type { PandocExportPayload, TabOptions, UnsavedFile } from '@shared/types/files'
 
 type Win = BrowserWindow | null | undefined
@@ -144,6 +143,7 @@ const handleResponseForExport = async(e: IpcMainEvent, payload: ExportPayload): 
           throw new Error('No HTML content found.')
         }
         if (type === 'png' || type === 'docx') {
+          const { exportDocumentBinary } = await import('../../utils/documentExport')
           const data = await exportDocumentBinary(content, type)
           await writeFile(filePath, data, extension, 'binary')
         } else {

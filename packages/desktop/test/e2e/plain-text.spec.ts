@@ -39,6 +39,10 @@ test('edits TXT literally, preserves saved bytes and undo across Markdown tabs, 
     }, value)
   try {
     await expect(page.locator('.plain-text-editor')).toBeVisible()
+    await expect(page.locator('.plain-text-toolbar')).toHaveCount(0)
+    await expect(page.locator('.rail-icon[title="目录"]')).toHaveCount(0)
+    await expect(page.locator('.app-menu-bar')).toContainText('跳转')
+    await expect(page.locator('.app-menu-bar')).not.toContainText('段落')
     expect(await read()).toBe(original.replace(/\r\n/g, '\n'))
     await expect(page.locator('.editor-wrapper')).not.toBeVisible()
     await expect(page.locator('.plain-text-status')).toContainText('UTF-8 BOM')
@@ -53,6 +57,7 @@ test('edits TXT literally, preserves saved bytes and undo across Markdown tabs, 
     await sendIpcToRenderer(app, 'mt::new-untitled-tab', true, '# Markdown tab\n\nbody')
     await expect(page.locator('.editor-wrapper')).toBeVisible()
     await expect(page.locator('.editor-component')).toContainText('Markdown tab')
+    await expect(page.locator('.app-menu-bar')).toContainText('段落')
     const markdownTabId = await page.locator('.tabs-container li.active').getAttribute('data-id')
     await clickMenuById(app, 'sourceCodeModeMenuItem')
     await page.locator('.source-code .CodeMirror').evaluate(element => {
@@ -76,7 +81,7 @@ test('edits TXT literally, preserves saved bytes and undo across Markdown tabs, 
     expect(await read()).toBe(original.replace(/\r\n/g, '\n'))
     await expect(page.locator('.tabs-container li.active')).toHaveClass(/unsaved/)
 
-    await page.locator('.plain-text-toolbar button').nth(1).click()
+    await page.locator('.app-menu-bar button').filter({ hasText: /^替换$/ }).dispatchEvent('mousedown', { button: 0 })
     const searchInput = page.locator('.plain-text-editor .search input[type="text"]')
     await searchInput.fill('needle')
     await expect(page.locator('.plain-text-editor .search-result')).toContainText('2')
@@ -85,7 +90,8 @@ test('edits TXT literally, preserves saved bytes and undo across Markdown tabs, 
     await expect.poll(read).toContain('found found')
     await page.keyboard.press('Escape')
 
-    await page.locator('.plain-text-toolbar button').nth(2).click()
+    await page.locator('.plain-text-editor .CodeMirror').click()
+    await page.keyboard.press('Control+g')
     await page.locator('.plain-text-go-to input').fill('3')
     await page.locator('.plain-text-go-to button[type="submit"]').click()
     await expect
@@ -99,7 +105,8 @@ test('edits TXT literally, preserves saved bytes and undo across Markdown tabs, 
           )
       )
       .toBe(2)
-    await page.locator('.plain-text-toolbar input[type="checkbox"]').first().uncheck()
+    await page.locator('.app-menu-bar button').filter({ hasText: /自动换行/ }).dispatchEvent('mousedown', { button: 0 })
+    await expect(page.locator('.app-menu-bar button').filter({ hasText: /自动换行/ })).toHaveAttribute('aria-pressed', 'false')
     expect(
       await page
         .locator('.plain-text-editor .CodeMirror')

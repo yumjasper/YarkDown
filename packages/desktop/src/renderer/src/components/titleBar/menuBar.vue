@@ -5,11 +5,12 @@
       :key="`${index}-${item.label}`"
       type="button"
       class="menu-bar-item"
-      :class="{ 'is-open': openedIndex === index }"
+      :class="{ 'is-open': openedIndex === index, 'is-checked': item.checked }"
+      :aria-pressed="item.checked"
       :disabled="!item.enabled"
       @mousedown.stop.prevent="openMenu(index, $event)"
     >
-      {{ item.label }}
+      {{ item.checked ? '✓ ' : '' }}{{ item.label }}
     </button>
   </div>
 </template>
@@ -37,12 +38,10 @@ const openMenu = (index: number, event: MouseEvent): void => {
   openedIndex.value = isClosing ? -1 : index
   if (isClosing) return
 
-  // `popupTopMenu` coordinates are window-relative, which is what
-  // `getBoundingClientRect` reports inside a frameless window.
   const rect = target.getBoundingClientRect()
   window.electron.windowControl.popupTopMenu(index, {
-    x: Math.round(rect.left),
-    y: Math.round(rect.bottom)
+    x: rect.left,
+    y: rect.bottom
   })
 }
 

@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import LinkIcon from '@/components/icons/LinkIcon.vue'
 import type { PrefControlBaseProps } from '../types'
 
@@ -61,11 +61,12 @@ const props = withDefaults(defineProps<TextBoxProps>(), {
   more: '',
   disable: false,
   defaultValue: '',
-  emitTime: 800,
+  emitTime: 0,
   regexValidator: () => /(.*?)/
 })
 
 let inputTimer: ReturnType<typeof setTimeout> | null = null
+let pendingValue: string | undefined
 const inputText = ref(props.input)
 const invalidInput = ref(false)
 
@@ -85,25 +86,33 @@ const handleMoreClick = () => {
 }
 
 const handleInput = (value: string) => {
-  const result = props.regexValidator.test(value)
+  if (inputTimer) clearTimeout(inputTimer)
+  inputTimer = null
+  pendingValue = undefined
+  const result = new RegExp(props.regexValidator).test(value)
   invalidInput.value = !result
 
   if (result) {
-    if (inputTimer) {
-      clearTimeout(inputTimer)
-    }
-
     if (props.emitTime === 0) {
       props.onChange(value)
       return
     }
 
-    inputTimer = setTimeout(() => {
-      inputTimer = null
-      props.onChange(value)
-    }, props.emitTime)
+    pendingValue = value
+    inputTimer = setTimeout(flushInput, props.emitTime)
   }
 }
+const flushInput = () => {
+  if (inputTimer) clearTimeout(inputTimer)
+  inputTimer = null
+  if (pendingValue !== undefined) props.onChange(pendingValue)
+  pendingValue = undefined
+}
+onMounted(() => window.addEventListener('beforeunload', flushInput))
+onBeforeUnmount(() => {
+  flushInput()
+  window.removeEventListener('beforeunload', flushInput)
+})
 </script>
 
 <style>

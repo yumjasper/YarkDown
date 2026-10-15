@@ -85,6 +85,12 @@ export const getCategory = (): PrefCategory[] => [
     path: '/preference/markdown'
   },
   {
+    name: 'TXT',
+    label: 'txt',
+    icon: MarkdownIcon,
+    path: '/preference/txt'
+  },
+  {
     name: t('preferences.categories.spelling'),
     label: 'spelling',
     icon: SpellIcon,
@@ -161,6 +167,7 @@ export const getTranslatedSearchContent: CachedTranslator = (() => {
         'general',
         'editor',
         'markdown',
+        'txt',
         'spelling',
         'theme',
         'image',

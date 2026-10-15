@@ -2,6 +2,7 @@
   <div
     ref="sourceCodeContainer"
     class="source-code"
+    :class="{ virtualized }"
   />
 </template>
 
@@ -39,6 +40,7 @@ const editor = shallowRef<CodeMirror.Editor | null>(null)
 const commitTimer = ref<ReturnType<typeof setTimeout> | null>(null)
 const viewDestroyed = ref(false)
 const tabId = ref<string | null>(null)
+const virtualized = ref((props.markdown?.length || 0) > 160000)
 
 const {
   theme,
@@ -187,6 +189,8 @@ const handleFileChange = (payload: unknown) => {
   }
 
   if (typeof newMarkdown === 'string') {
+    virtualized.value = newMarkdown.length > 160000
+    editor.value.setOption('viewportMargin', virtualized.value ? 30 : Infinity)
     editor.value.setValue(newMarkdown)
   }
 
@@ -349,9 +353,15 @@ const saveContent = (cm: CodeMirror.Editor) => {
 
 const listenChange = (cm: CodeMirror.Editor) => {
   cm.on('cursorActivity', (instance: CodeMirror.Editor) => {
-    saveContent(instance)
+    if (currentTab.value?.id === tabId.value) {
+      currentTab.value.muyaIndexCursor = { anchor: instance.getCursor('anchor'), focus: instance.getCursor('head') }
+    }
     updateSelectionWordCount(instance)
   })
+  cm.on('changes', saveContent)
+}
+const flushSource = () => {
+  if (editor.value && sourceCode.value && currentTab.value?.id === tabId.value) saveContent(editor.value)
 }
 
 // #3580: in Source Code mode the WYSIWYG container is hidden, so the
@@ -363,9 +373,8 @@ const handleScrollToHeader = (slug: unknown) => {
   if (index < 0) return
   const line = findMarkdownHeadingLine(editor.value.getValue(), index)
   if (line < 0) return
-  // `.source-code` is the scroll container (CodeMirror renders full-height with
-  // viewportMargin: Infinity, so its own scroller never scrolls).
-  scrollSourceEditorToLine(editor.value, line, sourceCodeContainer.value)
+  // Large sources scroll inside CodeMirror; short sources retain the outer page scroller.
+  scrollSourceEditorToLine(editor.value, line, virtualized.value ? editor.value.getScrollerElement() : sourceCodeContainer.value)
 }
 
 onMounted(() => {
@@ -387,7 +396,7 @@ onMounted(() => {
     lineWrapping: true,
     styleActiveLine: true,
     direction: textDirection,
-    viewportMargin: Infinity
+    viewportMargin: virtualized.value ? 30 : Infinity
   }
 
   if (railscastsThemes.includes(theme.value)) {
@@ -403,6 +412,7 @@ onMounted(() => {
   bus.on('redo', handleRedo)
   bus.on('image-action', handleImageAction)
   bus.on('scroll-to-header', handleScrollToHeader)
+  bus.on('flush-active-editor', flushSource)
 
   // CodeMirror's line tree relies on object identity and must not be proxied by Vue.
   const codeMirrorInstance = markRaw(codeMirror(container, codeMirrorConfig))
@@ -454,6 +464,7 @@ onBeforeUnmount(() => {
   editorStore.SET_SELECTION_WORD_COUNT(null)
   lastSelectionKey = ''
   bus.off('scroll-to-header', handleScrollToHeader)
+  bus.off('flush-active-editor', flushSource)
 
   if (editor.value && tabId.value === currentTab.value?.id && !isPlainTextFile(currentTab.value?.filename || '')) {
     const { cursor, markdown: newMarkdown } = getMarkdownAndCursor(editor.value)
@@ -479,6 +490,8 @@ onBeforeUnmount(() => {
   max-width: var(--editorAreaWidth);
   background: transparent;
 }
+.source-code.virtualized { overflow: hidden; }
+.source-code.virtualized .CodeMirror { height: calc(100% - 40px); margin: 20px auto; }
 .source-code .CodeMirror-gutters {
   border-right: none;
   background-color: transparent;

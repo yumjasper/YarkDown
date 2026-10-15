@@ -6,6 +6,7 @@ import log from 'electron-log'
 import { electronLocalshortcut, isValidElectronAccelerator } from '@hfelix/electron-localshortcut'
 import { isFile2 } from 'common/filesystem'
 import { isEqualAccelerator } from 'common/keybinding'
+import { isPlainTextEditor } from '../windows/editorMode'
 import { isLinux, isOsx } from '../config'
 import { getKeyboardInfo, keyboardLayoutMonitor, type KeyboardInfo } from '../keyboard'
 import keybindingsDarwin from './keybindingsDarwin'
@@ -80,6 +81,10 @@ class Keybindings {
     for (const [id, accelerator] of this.keys) {
       if (accelerator && accelerator.length > 1) {
         this.registerAccelerator(win, accelerator, () => {
+          if (isPlainTextEditor(win.webContents) && isEqualAccelerator(accelerator, 'Ctrl+G')) {
+            win.webContents.send('mt::editor-edit-action', 'goToLine')
+            return
+          }
           this.commandManager.execute(id, win)
         })
       }

@@ -316,7 +316,8 @@ onBeforeUnmount(() => {
     display: none;
   }
   & > li {
-    transition: all 0.15s ease-in-out;
+      transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out;
+      border-radius: var(--shell-item-radius) var(--shell-item-radius) 0 0;
     position: relative;
     padding: 0 8px;
     color: var(--editorColor50);

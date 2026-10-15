@@ -9,6 +9,8 @@ import window from './window'
 import paragraph from './paragraph'
 import format from './format'
 import theme from './theme'
+import { textActions } from './plainText'
+import { t } from '../../i18n'
 import type Keybindings from '../../keyboard/shortcutHandler'
 import type Preference from '../../preferences'
 
@@ -37,8 +39,31 @@ export const configSettingMenu = (keybindings: Keybindings): MenuItemConstructor
 export default function(
   keybindings: Keybindings,
   preferences: Preference,
-  recentlyUsedFiles: string[] = []
+  recentlyUsedFiles: string[] = [],
+  plainText = false
 ): MenuItemConstructorOptions[] {
+  const viewMenu = view(keybindings, !!preferences.getItem('minimapEnabled'), () => {
+    preferences.setItem('minimapEnabled', !preferences.getItem('minimapEnabled'))
+  })
+  if (plainText) {
+    const fileMenu = file(keybindings, preferences, recentlyUsedFiles)
+    fileMenu.submenu = (fileMenu.submenu as MenuItemConstructorOptions[]).filter(item =>
+      !['exportMenuEntry', 'pandocMenuEntry', 'printMenuEntry'].includes(item.id || ''))
+    const editMenu = edit(keybindings)
+    const allowed = ['undo', 'redo', 'cut', 'copy', 'paste', 'selectAll', 'findInFolder']
+      .map(key => t(`menu.edit.${key}`))
+    editMenu.submenu = (editMenu.submenu as MenuItemConstructorOptions[])
+      .filter(item => allowed.includes(item.label || ''))
+    viewMenu.submenu = (viewMenu.submenu as MenuItemConstructorOptions[]).filter(item =>
+      !['sourceCodeModeMenuItem', 'typewriterModeMenuItem', 'focusModeMenuItem', 'tocMenuItem']
+        .includes(item.id || '') && item.label !== t('menu.view.reloadImages'))
+    return [
+      ...(process.platform === 'darwin' ? [marktext(keybindings)] : []),
+      fileMenu, editMenu,
+      ...textActions(!!preferences.getItem('txtWordWrap'), !!preferences.getItem('txtLineNumbers')),
+      window(keybindings), theme(preferences), viewMenu, help()
+    ]
+  }
   return [
     ...(process.platform === 'darwin' ? [marktext(keybindings)] : []),
     file(keybindings, preferences, recentlyUsedFiles),
@@ -47,7 +72,7 @@ export default function(
     format(keybindings),
     window(keybindings),
     theme(preferences),
-    view(keybindings),
+    viewMenu,
     help()
   ]
 }
