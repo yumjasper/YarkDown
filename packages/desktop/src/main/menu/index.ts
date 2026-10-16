@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import { app, Menu, ipcMain, BrowserWindow } from 'electron'
+import { app, Menu, ipcMain, BrowserWindow, type MenuItem } from 'electron'
 import log from 'electron-log'
 import { ensureDirSync, isDirectory2, isFile2 } from 'common/filesystem'
 import { isOsx, isWindows } from '../config'
@@ -488,10 +488,7 @@ class AppMenu {
     }
   }
 
-  /**
-   * Serialize a window menu into the flat top-level shape the renderer's
-   * in-app menu bar renders.
-   */
+  /** Serialize display data only; commands and role handling remain in main. */
   getMenuBar(windowId: number): MenuBarItem[] {
     let menu: Menu | null = null
     if (this.windowMenus.has(windowId)) {
@@ -502,20 +499,25 @@ class AppMenu {
     }
     if (!menu) return []
 
-    return menu.items.map((item) => ({
+    const serialize = (entries: MenuItem[]): MenuBarItem[] => entries.map((item, index) => ({
+      index,
+      type: item.type === 'header' || item.type === 'palette' ? 'normal' : item.type,
       label: item.label,
-      checked: item.type === 'checkbox' ? item.checked : undefined,
-      // Items carrying only a role still execute it through `click()`.
+      checked: ['checkbox', 'radio'].includes(item.type) ? item.checked : undefined,
+      accelerator: item.accelerator || undefined,
+      visible: item.visible,
       enabled: item.enabled !== false,
-      submenu: !!item.submenu && !!item.submenu.items.length
+      submenu: !!item.submenu && !!item.submenu.items.length,
+      children: item.submenu ? serialize(item.submenu.items) : undefined
     }))
+    return serialize(menu.items)
   }
 
   /**
    * Invoke a menu item by its position in the menu bar. Used by the renderer's
    * in-app menu bar, which cannot ship click handlers across the bridge.
    */
-  executeMenuItem(windowId: number, topIndex: number, subIndex: number): void {
+  executeMenuItem(windowId: number, topIndex: number, subIndex: number | number[]): void {
     let menu: Menu | null = null
     if (this.windowMenus.has(windowId)) {
       menu = this.getWindowMenuById(windowId)
@@ -526,9 +528,13 @@ class AppMenu {
     if (!menu) return
 
     const window = BrowserWindow.fromId(windowId) ?? undefined
-    const top = menu.items[topIndex]
-    const target = subIndex >= 0 ? top?.submenu?.items[subIndex] : top
-    if (!target || !target.enabled) return
+    let target: MenuItem | undefined = menu.items[topIndex]
+    const indices = Array.isArray(subIndex) ? subIndex : subIndex >= 0 ? [subIndex] : []
+    for (const index of indices) {
+      if (!target?.enabled || !target.visible || !Number.isInteger(index) || index < 0) return
+      target = target.submenu?.items[index]
+    }
+    if (!target || !target.enabled || !target.visible || target.submenu || target.type === 'separator') return
 
     // `menuItem.click` is the documented way to run an item's click handler;
     // for submenus it opens them, so the renderer only ever targets leaves.
@@ -616,6 +622,7 @@ class AppMenu {
   }
 
   _listenForIpcMain(): void {
+    ipcMain.handle('mt::recent-documents', () => this.getRecentlyUsedDocuments().filter(isFile2))
     ipcMain.on('mt::add-recently-used-document', (_e, pathname: string) => {
       this.addRecentlyUsedDocument(pathname)
     })

@@ -14,7 +14,6 @@ import bus from '../bus'
 import { create, paste, rename, type FileCreateType, type PasteOptions } from '../util/fileSystem'
 import { PATH_SEPARATOR } from '../config'
 import notice from '../services/notification'
-import { getFileStateFromData } from './help'
 import { useLayoutStore } from './layout'
 import { useEditorStore } from './editor'
 import { debouncedSendBufferedState } from './bufferedState'
@@ -87,7 +86,6 @@ export const useProjectStore = defineStore('project', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const activeItem = ref<any>({})
   const createCache = ref<CreateCacheEntry | Record<string, never>>({})
-  const newFileNameCache = ref<string>('')
   const renameCache = ref<string | null>(null)
   // Text of whichever inline rename/create input is open. It lives here (not in
   // the row components) so the click-away handler can commit the edit.
@@ -180,13 +178,7 @@ export const useProjectStore = defineStore('project', () => {
     const editorStore = useEditorStore()
     switch (type) {
       case 'add': {
-        const { pathname, data, isMarkdown } = change
         addFile(projectTree.value!, change as Parameters<typeof addFile>[1], String(preferencesStore.fileSortBy), String(preferencesStore.fileSortOrder))
-        if (isMarkdown && newFileNameCache.value && pathname === newFileNameCache.value) {
-          const fileState = getFileStateFromData(data as Record<string, unknown>)
-          editorStore.UPDATE_CURRENT_FILE(fileState)
-          newFileNameCache.value = ''
-        }
         break
       }
       case 'unlink':
@@ -399,7 +391,7 @@ export const useProjectStore = defineStore('project', () => {
 
       await create(fullName, type as FileCreateType)
       if (type === 'file') {
-        newFileNameCache.value = fullName
+        window.electron.ipcRenderer.send('mt::open-file', fullName, {})
       }
     } catch (err) {
       notice.notify({
@@ -451,7 +443,6 @@ export const useProjectStore = defineStore('project', () => {
   return {
     activeItem,
     createCache,
-    newFileNameCache,
     renameCache,
     nameInputValue,
     clipboard,

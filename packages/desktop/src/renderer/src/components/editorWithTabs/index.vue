@@ -3,19 +3,23 @@
     <tabs v-show="showTabBar" />
     <div
       class="container"
-      :class="{ 'has-minimap': preferences.minimapEnabled && !pdf, 'minimap-left': preferences.minimapSide === 'left' }"
+      :class="{ 'has-minimap': preferences.minimapEnabled && !pdf && !plainText, 'minimap-left': preferences.minimapSide === 'left' }"
       :style="{ '--minimap-width': `${Math.min(160, Math.max(60, preferences.minimapMaxColumn * preferences.minimapScale))}px` }"
       @contextmenu.capture="!pdf && handleScrollContextMenu($event)"
     >
       <editor
+        v-if="hasMarkdown"
         v-show="!plainText && !pdf"
+        v-ui-motion="!sourceCode && !plainText && !pdf"
         :markdown="markdown"
         :cursor="cursor"
         :text-direction="textDirection"
         :platform="platform"
+        @ready="editorMounted"
       />
       <source-code
-        v-if="sourceCode && !plainText && !pdf"
+        v-if="sourceCode && renderedReady && !plainText && !pdf"
+        v-ui-motion.appear="sourceCode"
         :markdown="markdown"
         :muya-index-cursor="muyaIndexCursor"
         :text-direction="textDirection"
@@ -23,10 +27,11 @@
       <plain-text-editor
         v-if="hasPlainText"
         v-show="plainText"
+        v-ui-motion.appear="plainText"
         :active="plainText"
       />
       <editor-minimap
-        v-if="preferences.minimapEnabled && !pdf"
+        v-if="preferences.minimapEnabled && !pdf && !plainText"
         :plain-text="plainText"
         :source-code="sourceCode"
       />
@@ -105,20 +110,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, ref, watch } from 'vue'
+import { vUiMotion } from '@/util/uiMotion'
+import { computed, defineAsyncComponent, onBeforeUnmount, ref, watch } from 'vue'
 import { isPdfFile } from '@shared/pdf'
 import { useI18n } from 'vue-i18n'
 import { isPlainTextFile } from '@shared/plainText'
 import { usePreferencesStore } from '@/store/preferences'
-import EditorMinimap from '../minimap/index.vue'
+const EditorMinimap = defineAsyncComponent(() => import('../minimap/index.vue'))
 import bus from '@/bus'
 import { handleScrollContextMenu } from '@/contextMenu/minimap'
-import PlainTextEditor from './plainText.vue'
+const PlainTextEditor = defineAsyncComponent(() => import('./plainTextWorkspace.vue'))
 import { useEditorStore } from '@/store/editor'
 import { storeToRefs } from 'pinia'
 import Tabs from './tabs.vue'
-import Editor from './editor.vue'
-import SourceCode from './sourceCode.vue'
+// TXT never crosses this boundary; both MD views share initialization and engine history.
+let markdownEditors: Promise<[typeof import('./editor.vue'), typeof import('./sourceCode.vue')]> | undefined
+const loadMarkdownEditors = () => markdownEditors ??= Promise.all([import('./editor.vue'), import('./sourceCode.vue')])
+const Editor = defineAsyncComponent(async() => (await loadMarkdownEditors())[0])
+const SourceCode = defineAsyncComponent(async() => (await loadMarkdownEditors())[1])
 import TabNotifications from './notifications.vue'
 import BottomToolbar from '../bottomToolbar/index.vue'
 import EditorContextMenu from '../editorContextMenu/index.vue'
@@ -147,8 +156,28 @@ const pdfEnabled = window.electron.pdfEnabled
 const pdf = computed(() => isPdfFile(currentFile.value?.filename || ''))
 const plainText = computed(() => isPlainTextFile(currentFile.value?.filename || ''))
 const hasPlainText = ref(false)
+const hasMarkdown = ref(false)
+const renderedReady = ref(false)
+let pendingExport: { options: unknown; fileId: string | undefined } | undefined
+const requestExport = (options: unknown) => {
+  if (renderedReady.value || plainText.value || pdf.value) return
+  pendingExport = { options, fileId: currentFile.value?.id }
+  hasMarkdown.value = true
+}
+const editorMounted = () => {
+  renderedReady.value = true
+  if (pendingExport && pendingExport.fileId === currentFile.value?.id) bus.emit('export', pendingExport.options)
+  pendingExport = undefined
+}
+bus.on('export', requestExport)
+onBeforeUnmount(() => bus.off('export', requestExport))
 const preferences = usePreferencesStore()
 watch(plainText, value => { if (value) hasPlainText.value = true }, { immediate: true })
+watch(() => !plainText.value && !pdf.value, value => { if (value) hasMarkdown.value = true }, { immediate: true })
+watch(() => [props.sourceCode, plainText.value, pdf.value] as const, ([source, plain, isPdf]) => {
+  const windowId = window.marktext?.env?.windowId ?? -1
+  window.electron.ipcRenderer.send('mt::set-editor-format-menus-enabled', windowId, !source && !plain && !isPdf, plain || isPdf, isPdf)
+}, { immediate: true })
 watch(() => [currentFile.value?.id, plainText.value] as const, ([id, plain], [oldId, oldPlain]) => {
   if (id !== oldId || plain === oldPlain || !currentFile.value) return
   const { markdown, cursor, history, muyaIndexCursor } = currentFile.value

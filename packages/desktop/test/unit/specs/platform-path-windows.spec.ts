@@ -152,23 +152,26 @@ describe('path consistency with a native win32 window.path (#5683)', () => {
   })
 
   it('creates a file with the native separator and matches the watcher add', async() => {
+    const send = vi.spyOn(window.electron.ipcRenderer, 'send')
     const store = useProjectStore()
     store.LISTEN_FOR_UPDATE_PROJECT()
-    store.projectTree = makeTree() as never
+    const tree = makeTree()
+    store.projectTree = tree as never
     store.createCache = { dirname: ROOT, type: 'file' }
 
     await store.CREATE_FILE_DIRECTORY('note')
 
     const nativeNew = `${NATIVE_ROOT}\\note.md`
-    expect(store.newFileNameCache).toBe(nativeNew)
+    expect(send).toHaveBeenCalledWith('mt::open-file', nativeNew, {})
 
     const handler = ipcListeners.get('mt::update-object-tree')
     expect(handler).toBeTruthy()
     handler!({}, {
       type: 'add',
-      change: { pathname: nativeNew, isMarkdown: true, data: { markdown: '# note' } }
+      change: { pathname: nativeNew, name: 'note.md', isFile: true, isDirectory: false, isMarkdown: true }
     })
-    expect(store.newFileNameCache).toBe('')
+    expect(tree.files[0]?.pathname).toBe(nativeNew)
+    send.mockRestore()
   })
 
   it('renames tabs and tracks save status by native path', () => {

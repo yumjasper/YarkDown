@@ -1,0 +1,165 @@
+:root {
+  --ui-motion-press: 80ms;
+  --ui-motion-fast: 110ms;
+  --ui-motion-normal: 160ms;
+  --ui-motion-ease: cubic-bezier(0.2, 0, 0, 1);
+  --el-transition-duration: var(--ui-motion-normal);
+  --el-transition-duration-fast: var(--ui-motion-fast);
+}
+
+/* Theme and Element Plus hover rules must not change a control's hit area. */
+button.button,
+button.button-primary,
+.muya-button,
+.el-button {
+  box-sizing: border-box;
+  border-width: 1px !important;
+  border-style: solid !important;
+  transition: color var(--ui-motion-fast) ease,
+    background-color var(--ui-motion-fast) ease,
+    border-color var(--ui-motion-fast) ease,
+    box-shadow var(--ui-motion-fast) ease,
+    opacity var(--ui-motion-fast) ease;
+}
+.el-button.is-text { border-color: transparent; }
+.el-button { font-family: var(--uiFontFamily); }
+
+/* Only small controls repaint on hover; document contents have no blanket transitions. */
+.rail-icon,
+.editor-mode-switch button,
+.context-icon-button,
+.context-menu-row,
+.bottom-toolbar-button,
+.bottom-toolbar-menu-item,
+.pdf-toolbar button,
+.pdf-toolbar summary,
+.pdf-annotation-tools button,
+.pdf-annotation-tools summary,
+.plain-text-group-bar button,
+.plain-text-go-to button,
+.pref-container .el-button,
+.pref-container .el-radio-button__inner,
+.pref-container .el-checkbox__inner,
+.pref-sidebar .category .item {
+  transition:
+    color var(--ui-motion-fast) ease,
+    background-color var(--ui-motion-fast) ease,
+    border-color var(--ui-motion-fast) ease,
+    opacity var(--ui-motion-fast) ease,
+    scale var(--ui-motion-press) var(--ui-motion-ease);
+}
+
+/* Individual scale preserves positioning transforms without changing layout. */
+.editor-mode-switch button:active:not(:disabled),
+.context-icon-button:active:not(:disabled),
+.bottom-toolbar-button:active:not(:disabled),
+.pdf-toolbar button:active:not(:disabled),
+.pdf-annotation-tools button:active:not(:disabled),
+.plain-text-group-bar button:active:not(:disabled),
+.plain-text-go-to button:active:not(:disabled),
+.pref-container .el-button:active:not(:disabled):not(.is-disabled) {
+  scale: 0.97;
+}
+
+.pref-sidebar .category .item > svg,
+.frameless-titlebar-button,
+.frameless-titlebar-button svg {
+  transition:
+    color var(--ui-motion-fast) ease,
+    background-color var(--ui-motion-fast) ease,
+    fill var(--ui-motion-fast) ease;
+}
+
+.side-bar .icon-arrow,
+.search-bar .left-arrow .el-icon {
+  transition: transform var(--ui-motion-normal) var(--ui-motion-ease);
+}
+
+.ui-fade-enter-active,
+.ui-fade-leave-active {
+  transition: opacity var(--ui-motion-normal) var(--ui-motion-ease);
+}
+.ui-fade-enter-from,
+.ui-fade-leave-to { opacity: 0; }
+.ui-fade-leave-active { pointer-events: none; }
+
+.dialog-fade-enter-active,
+.dialog-fade-leave-active {
+  animation-duration: var(--ui-motion-normal);
+}
+.dialog-fade-enter-active .el-overlay-dialog,
+.dialog-fade-leave-active .el-overlay-dialog {
+  animation: none;
+}
+.dialog-fade-enter-active .el-dialog {
+  animation: ui-panel-in var(--ui-motion-normal) var(--ui-motion-ease);
+}
+.dialog-fade-leave-active .el-dialog {
+  animation: ui-panel-out var(--ui-motion-fast) ease;
+}
+
+@keyframes ui-panel-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes ui-panel-out {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(-4px); }
+}
+
+/* Scope the override to application chrome, not authored Markdown or embedded games. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ui-motion-press: 0ms;
+    --ui-motion-fast: 0ms;
+    --ui-motion-normal: 0ms;
+    --el-transition-duration: 0ms;
+    --el-transition-duration-fast: 0ms;
+  }
+  .side-bar,
+  .side-bar *,
+  .side-bar *::before,
+  .editor-mode-switch *,
+  .editor-context-menu,
+  .editor-context-menu *,
+  .editor-status-bar *,
+  .editor-tabs *,
+  .title-bar *,
+  .title-bar-stack,
+  .search-bar,
+  .search-bar *,
+  .editor-notifications,
+  .bottom-toolbar-host *,
+  .bottom-toolbar-menu-item,
+  .pdf-toolbar *,
+  .pdf-annotation-tools *,
+  .plain-text-group-bar *,
+  .plain-text-go-to *,
+  .pref-container *,
+  .pref-container *::before,
+  .pref-container *::after,
+  .pref-autocomplete *,
+  .el-overlay,
+  .el-overlay-dialog,
+  .el-dialog,
+  .el-popper,
+  .command-palette .commands {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+  .editor-mode-switch button,
+  .context-icon-button,
+  .bottom-toolbar-button,
+  .pdf-toolbar button,
+  .pdf-annotation-tools button,
+  .plain-text-group-bar button,
+  .plain-text-go-to button,
+  .pref-container .el-button {
+    scale: none !important;
+  }
+}
+
+@media print {
+  .el-overlay, .el-dialog, .editor-context-menu { animation: none !important; }
+}

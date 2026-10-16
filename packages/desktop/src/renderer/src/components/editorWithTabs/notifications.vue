@@ -1,6 +1,7 @@
 <template>
   <div
     v-if="currentNotification"
+    v-ui-motion.appear="currentNotification"
     class="editor-notifications"
     :class="currentNotification.style"
     :style="{ 'max-width': `calc(100vw - ${effectiveSideBarWidth}px)` }"
@@ -34,6 +35,7 @@
 </template>
 
 <script setup lang="ts">
+import { vUiMotion } from '@/util/uiMotion'
 import { computed } from 'vue'
 import { useEditorStore } from '@/store/editor'
 import { useLayoutStore } from '@/store/layout'

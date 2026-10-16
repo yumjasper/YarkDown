@@ -352,10 +352,10 @@ const handleResponseForSave = async(
         ipcMain.emit('menu-add-recently-used', filePath)
 
         const newFilename = path.basename(filePath!)
-        win.webContents.send('mt::set-pathname', { id, pathname: filePath, filename: newFilename })
+        win.webContents.send('mt::set-pathname', { id, pathname: filePath, filename: newFilename, savedMarkdown: markdown })
       } else {
         ipcMain.emit('window-file-saved', win.id, filePath)
-        win.webContents.send('mt::tab-saved', id)
+        win.webContents.send('mt::tab-saved', id, markdown)
       }
       return id
     })
@@ -520,7 +520,8 @@ ipcMain.on(
             win.webContents.send('mt::set-pathname', {
               id,
               pathname: filePath,
-              filename: newFilename
+              filename: newFilename,
+              savedMarkdown: markdown
             })
           } else if (pathname !== filePath) {
             // Update window file list and watcher.
@@ -530,11 +531,12 @@ ipcMain.on(
             win.webContents.send('mt::set-pathname', {
               id,
               pathname: filePath,
-              filename: newFilename
+              filename: newFilename,
+              savedMarkdown: markdown
             })
           } else {
             ipcMain.emit('window-file-saved', win.id, filePath)
-            win.webContents.send('mt::tab-saved', id)
+            win.webContents.send('mt::tab-saved', id, markdown)
           }
         })
         .catch((err: unknown) => {
@@ -558,42 +560,15 @@ ipcMain.on('mt::close-window-confirm', async(e, unsavedFiles: UnsavedFile[]) => 
 
   const { needSave } = userResult
   if (needSave) {
-    Promise.all(
-      unsavedFiles.map((file) =>
-        handleResponseForSave(
-          e,
-          file.id,
-          file.filename,
-          file.pathname,
-          file.markdown,
-          file.options,
-          file.defaultPath
-        )
+    for (const file of unsavedFiles) {
+      const savedId = await handleResponseForSave(
+        e, file.id, file.filename, file.pathname, file.markdown, file.options, file.defaultPath
       )
-    )
-      .then(() => {
-        ipcMain.emit('window-close-by-id', win.id)
-      })
-      .catch((err: unknown) => {
-        log.error('Error while saving before quit:', err)
-
-        const msg = err instanceof Error ? err.message : String(err)
-        // Notify user about the problem.
-        dialog
-          .showMessageBox(win, {
-            type: 'error',
-            buttons: [t('dialog.close'), t('dialog.keepOpen')],
-            message: t('dialog.saveFailure'),
-            detail: msg
-          })
-          .then(({ response }) => {
-            if (win.id && response === 0) {
-              ipcMain.emit('window-close-by-id', win.id)
-            }
-          })
-      })
+      if (!savedId) return
+    }
+    win.webContents.send('mt::close-confirmed', false)
   } else {
-    ipcMain.emit('window-close-by-id', win.id)
+    win.webContents.send('mt::close-confirmed', true)
   }
 })
 
@@ -650,6 +625,7 @@ ipcMain.on('mt::rename', async(e, { id, pathname, newPathname }: RenamePayload) 
     fsRename(pathname, newPathname, (err: NodeJS.ErrnoException | null) => {
       if (err) {
         log.error(`mt::rename: Cannot rename "${pathname}" to "${newPathname}".\n${err.stack}`)
+        e.sender.send('mt::show-notification', { title: t('dialog.rename'), type: 'error', message: err.message })
         return
       }
 

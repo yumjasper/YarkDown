@@ -4,7 +4,7 @@
     :class="{ 'ag-underdevelop': disable }"
   >
     <div class="description">
-      <span>{{ description }}:</span>
+      <span>{{ description }}</span>
       <LinkIcon
         v-if="more"
         :size="14"
@@ -16,7 +16,7 @@
     <el-autocomplete
       v-model="selectValue"
       class="font-autocomplete"
-      popper-class="font-autocomplete-popper"
+      popper-class="font-autocomplete-popper pref-control-popper"
       :fetch-suggestions="querySearch"
       :placeholder="t('preferences.selectFont')"
       @select="handleSelect"

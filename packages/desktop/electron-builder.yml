@@ -10,6 +10,21 @@ directories:
   buildResources: build
   output: ../../dist
 files:
+  # Dependencies and package.json are added by electron-builder automatically.
+  # Limit app files to build output so local reports never enter release builds.
+  - out/**
+  # These libraries are bundled into renderer assets and cannot be required
+  # from the sandbox. Keeping their source trees duplicates the renderer and
+  # enlarges the ASAR index that Electron retains in the main process.
+  - '!node_modules/{@muyajs,element-plus,@element-plus,es-toolkit,rxjs,prismjs,lodash-es,mermaid,@mermaid-js,underscore,codemirror,katex,vega*,cytoscape,d3*,snapsvg*,flowchart.js,pinia,vue*,@vue,@floating-ui,@intlify,@chevrotain,khroma,snabbdom*,dompurify,dragula,dom-autoscroller,webfontloader,github-markdown-css,deep-equal}/**'
+  - '!node_modules/{cytoscape-*,elkjs,layout-base,cose-base,raphael}/**'
+  # PDF.js runs in Chromium; its Node canvas backend and npm distribution
+  # duplicate the worker, fonts and codecs copied by electron.vite.config.ts.
+  - '!node_modules/{pdfjs-dist,@napi-rs/canvas*}/**'
+  # The main process resolves docx's CommonJS export; the renderer bundles ESM.
+  - '!node_modules/docx/dist/!(index.cjs)'
+  - '!node_modules/pdf-lib/{dist,es,src,ts3.4}/**'
+  - '!node_modules/@pdf-lib/{standard-fonts,upng}/{dist,es,src}/**'
   - '!test/**'
   - '!coverage/**'
   - '!**/*.map'
@@ -46,6 +61,9 @@ files:
   - '!eslint.config.js'
   - '!jsconfig.json'
   - '!docs/*'
+  - '!vendor/**'
+  # Static assets are installed once through extraResources below.
+  - '!static/**'
 extraResources:
   - from: build/icons
     to: icons # ends up at resources/icons/
@@ -100,8 +118,6 @@ asarUnpack:
   - out/main/pdfAnnotations*
   - node_modules/pdf-lib/**
   - node_modules/@pdf-lib/**
-  - node_modules/pdfjs-dist/**
-  - node_modules/@napi-rs/canvas*/**
 win:
   executableName: YarkText
   # NSIS association registration is owned by build/windows/installer.nsh.

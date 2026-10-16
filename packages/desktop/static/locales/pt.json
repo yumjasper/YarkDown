@@ -364,7 +364,12 @@
   },
   "recent": {
     "noTabsOpen": "Você não tem abas abertas.",
-    "newFile": "Novo Arquivo"
+    "newFile": "Novo Arquivo",
+    "openFile": "Abrir arquivo",
+    "openFolder": "Abrir pasta",
+    "continue": "Continuar: {name}",
+    "recentFiles": "Arquivos recentes",
+    "welcome": "Escolha um arquivo para ler ou editar."
   },
   "import": {
     "title": "Importar ou Abrir",

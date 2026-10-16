@@ -160,6 +160,14 @@ export const registerWindowHandlers = (commandManager: CommandManager): void => 
     }
   })
 
+  ipcMain.handle('mt::menu::execute', (event, topIndex: number, indices: number | number[]) => {
+    const win = windowFromEvent(event as unknown as IpcMainEvent)
+    if (!win || !Number.isInteger(topIndex) || topIndex < 0) return
+    if (!Array.isArray(indices) && !Number.isInteger(indices)) return
+    if (Array.isArray(indices) && (indices.length > 10 || !indices.every(Number.isInteger))) return
+    menuProvider?.()?.executeMenuItem(win.id, topIndex, indices)
+  })
+
   ipcMain.on('mt::menu::popup-top-menu', (event, topIndex: number, position?: MenuPopupPosition) => {
     const win = windowFromEvent(event)
     const menu = menuProvider?.()

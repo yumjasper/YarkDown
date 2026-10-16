@@ -39,6 +39,7 @@ test('edits TXT literally, preserves saved bytes and undo across Markdown tabs, 
     }, value)
   try {
     await expect(page.locator('.plain-text-editor')).toBeVisible()
+    await expect(page.locator('.editor-wrapper')).toHaveCount(0)
     await expect(page.locator('.plain-text-toolbar')).toHaveCount(0)
     await expect(page.locator('.rail-icon[title="目录"]')).toHaveCount(0)
     await expect(page.locator('.app-menu-bar')).toContainText('跳转')
@@ -166,6 +167,7 @@ test('edits TXT literally, preserves saved bytes and undo across Markdown tabs, 
       .toBe('folder-search-token')
     await expectNoRendererErrors(app)
   } finally {
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().forEach(win => win.destroy()))
     await app.close()
     rmSync(directory, { recursive: true, force: true })
   }

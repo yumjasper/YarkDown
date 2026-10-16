@@ -3,7 +3,14 @@ import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import type CodeMirror from 'codemirror'
-import { enterSourceMode, expectNoRendererErrors, getMarkdownContent, launchWithDoc, launchWithMarkdown, placeCaretInEditor } from './helpers'
+import {
+  enterSourceMode,
+  expectNoRendererErrors,
+  getMarkdownContent,
+  launchWithDoc,
+  launchWithMarkdown,
+  placeCaretInEditor
+} from './helpers'
 
 test('arcade scores, resume, source mode and quick hide never change the document', async() => {
   test.setTimeout(60000)
@@ -22,15 +29,21 @@ test('arcade scores, resume, source mode and quick hide never change the documen
     expect(await getMarkdownContent(page, app)).toBe(before)
     await dialog.getByRole('button', { name: '轻消消', exact: true }).click()
     await expect(dialog.locator('.arcade-match button')).toHaveCount(49)
-    const move = await dialog.locator('.arcade-match button').evaluateAll(cells => {
-      const values = cells.map(cell => cell.textContent?.trim())
+    const move = await dialog.locator('.arcade-match button').evaluateAll((cells) => {
+      const values = cells.map((cell) => cell.textContent?.trim())
       for (let i = 0; i < 49; i++) {
         for (const j of [i + 1, i + 7]) {
           if (j >= 49 || (j === i + 1 && i % 7 === 6)) continue
           const board = [...values]
           ;[board[i], board[j]] = [board[j], board[i]]
-          if (board.some((value, k) => (k % 7 < 5 && value === board[k + 1] && value === board[k + 2]) ||
-            (k < 35 && value === board[k + 7] && value === board[k + 14]))) return [i, j]
+          if (
+            board.some(
+              (value, k) =>
+                (k % 7 < 5 && value === board[k + 1] && value === board[k + 2]) ||
+                (k < 35 && value === board[k + 7] && value === board[k + 14])
+            )
+          )
+            return [i, j]
         }
       }
       throw new Error('No playable match found')
@@ -38,13 +51,14 @@ test('arcade scores, resume, source mode and quick hide never change the documen
     await dialog.locator('.arcade-match button').nth(move[0]).click()
     await dialog.locator('.arcade-match button').nth(move[1]).click()
     await expect(dialog.locator('.arcade-stats b')).not.toHaveText('0')
+    await expect(dialog.locator('.match-adventure')).toHaveAttribute('aria-busy', 'false')
     const score = await dialog.locator('.arcade-stats b').innerText()
     const board = await dialog.locator('.arcade-match button').allTextContents()
     await dialog.getByRole('button', { name: '榜单', exact: true }).click()
     await expect(dialog.locator('.arcade-ranking').first()).toContainText(score)
     await page.keyboard.press('Escape')
     await expect(dialog).not.toBeVisible()
-    await page.getByRole('button', { name: '打开小憩', exact: true }).click()
+    await page.keyboard.press('Control+Alt+g')
     await expect(dialog.locator('.arcade-stats b')).toHaveText(score)
     await expect(dialog.locator('.arcade-match button')).toHaveText(board)
     await page.screenshot({ path: '../../.tools/arcade-preview.png' })
@@ -73,12 +87,14 @@ test('arcade in a TXT tab preserves literal text and reloads the saved Sudoku sc
   const file = path.join(directory, 'notes.txt')
   const original = '# literal text\n* stays text\n'
   writeFileSync(file, original)
-  const { app, page } = await launchWithDoc(file, { suppressErrorDialog: true })
+  const options = { suppressErrorDialog: true, userDataDir: path.join(directory, 'profile') }
+  let { app, page } = await launchWithDoc(file, options)
   try {
     await expect(page.locator('.plain-text-editor')).toBeVisible()
-    await page.getByRole('button', { name: '打开小憩', exact: true }).click()
+    await page.keyboard.press('Control+Alt+g')
     const dialog = page.getByRole('dialog', { name: '小憩', exact: true })
     await dialog.getByRole('button', { name: '迷你数独', exact: true }).click()
+    await expect(dialog.locator('.arcade-sudoku button')).toHaveCount(36)
     const answer = await page.evaluate(() => {
       const saved = JSON.parse(localStorage.getItem('yarktext.arcade.v1') || '{}')
       const state = saved.sessions.sudoku.state
@@ -89,14 +105,22 @@ test('arcade in a TXT tab preserves literal text and reloads the saved Sudoku sc
     await page.keyboard.press(String(answer.value))
     await expect(dialog.locator('.arcade-stats b')).toHaveText('10')
     await page.keyboard.press('Escape')
-    expect(await page.locator('.plain-text-editor .CodeMirror').evaluate(element =>
-      (element as HTMLElement & { CodeMirror: CodeMirror.Editor }).CodeMirror.getValue())).toBe(original)
+    expect(
+      await page
+        .locator('.plain-text-editor .CodeMirror')
+        .evaluate((element) =>
+          (element as HTMLElement & { CodeMirror: CodeMirror.Editor }).CodeMirror.getValue()
+        )
+    ).toBe(original)
     expect(readFileSync(file, 'utf8')).toBe(original)
-    await page.reload()
-    await expect(page.getByRole('button', { name: '打开小憩', exact: true })).toBeVisible()
-    await page.getByRole('button', { name: '打开小憩', exact: true }).click()
-    await expect(dialog.locator('.arcade-stats b')).toHaveText('10')
-    await expect(dialog.locator('.arcade-sudoku button').nth(answer.index)).toHaveText(String(answer.value))
+    await app.close()
+    ;({ app, page } = await launchWithDoc(file, options))
+    await page.keyboard.press('Control+Alt+g')
+    const restored = page.getByRole('dialog', { name: '小憩', exact: true })
+    await expect(restored.locator('.arcade-stats b')).toHaveText('10')
+    await expect(restored.locator('.arcade-sudoku button').nth(answer.index)).toHaveText(
+      String(answer.value)
+    )
     await expectNoRendererErrors(app)
   } finally {
     await app.close()

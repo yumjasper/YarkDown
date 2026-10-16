@@ -5,7 +5,7 @@
     class="side-bar-file"
     :style="{ 'padding-left': `${depth * 6 + 10}px`, opacity: file.isMarkdown ? 1 : 0.75 }"
     :class="[
-      { current: currentFile?.pathname === file.pathname, active: file.id === activeItem.id }
+      { current: isCurrentFile, active: file.id === activeItem.id }
     ]"
     @click="handleFileClick"
     @dblclick="handleFileDblClick"
@@ -25,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { inject, ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useProjectStore } from '@/store/project'
 import { useEditorStore } from '@/store/editor'
@@ -63,6 +63,7 @@ const { nameInputValue } = storeToRefs(projectStore)
 const { activeItem } = storeToRefs(projectStore)
 const { clipboard } = storeToRefs(projectStore)
 const { currentFile, tabs } = storeToRefs(editorStore)
+const isCurrentFile = computed(() => !!currentFile.value?.pathname && window.fileUtils.isSamePathSync(currentFile.value.pathname, props.file.pathname))
 
 const handleFileClick = (event: MouseEvent): void => {
   // Select before the open-file branch runs, so non-markdown rows select too.
@@ -73,9 +74,7 @@ const handleFileClick = (event: MouseEvent): void => {
   if (!isMarkdown) return
   const openedTab = tabs.value.find((f) => window.fileUtils.isSamePathSync(f.pathname, pathname))
   if (openedTab) {
-    if (currentFile.value?.pathname === openedTab.pathname) {
-      return
-    }
+    editorStore.SET_OPEN_INTENT(pathname, false)
     editorStore.UPDATE_CURRENT_FILE(openedTab)
     // Restoring the tab's caret pulls DOM focus into the editor.
     bus.emit('SIDEBAR::focus-tree')

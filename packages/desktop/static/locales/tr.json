@@ -364,7 +364,12 @@
   },
   "recent": {
     "noTabsOpen": "Açık sekmeniz yok.",
-    "newFile": "Yeni Dosya"
+    "newFile": "Yeni Dosya",
+    "openFile": "Dosya aç",
+    "openFolder": "Klasör aç",
+    "continue": "Devam et: {name}",
+    "recentFiles": "Son dosyalar",
+    "welcome": "Okumak veya düzenlemek için bir dosya seçin."
   },
   "import": {
     "title": "İçe Aktar veya Aç",

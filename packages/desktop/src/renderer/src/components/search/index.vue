@@ -1,6 +1,7 @@
 <template>
   <div
     v-show="showSearch"
+    v-ui-motion="showSearch"
     class="search-bar"
   >
     <div
@@ -135,6 +136,7 @@
 </template>
 
 <script setup lang="ts">
+import { vUiMotion } from '@/util/uiMotion'
 import { ref, watch, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import bus from '../../bus'
 import FindCaseIcon from '@/assets/icons/searchIcons/iconCase.svg'

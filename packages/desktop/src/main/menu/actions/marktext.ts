@@ -1,5 +1,5 @@
-import { autoUpdater } from 'electron-updater'
 import { BrowserWindow, Menu, ipcMain } from 'electron'
+import type { AppUpdater } from 'electron-updater'
 import { COMMANDS } from '../../commands'
 import type { CommandManager } from '../../commands'
 import { isOsx } from '../../config'
@@ -7,53 +7,76 @@ import { isOsx } from '../../config'
 let runningUpdate = false
 let win: BrowserWindow | null = null
 
-autoUpdater.autoDownload = false
+let updaterPromise: Promise<AppUpdater> | undefined
 
-autoUpdater.on('error', (error: Error) => {
-  if (win) {
-    // Preserve the JS behavior: it tolerated `null` here; the typed event
-    // shape doesn't, but the same defensive code below stays in place.
-    const err = error as Error | null
-    win.webContents.send(
-      'mt::UPDATE_ERROR',
-      err === null ? 'Error: unknown' : (err.message || err).toString()
-    )
-  }
-})
-
-autoUpdater.on('update-available', (_info) => {
-  if (win) {
-    win.webContents.send(
-      'mt::UPDATE_AVAILABLE',
-      'Found an update, do you want download and install now?'
-    )
-  }
+const reportUpdateError = (error: unknown): void => {
   runningUpdate = false
-})
-
-autoUpdater.on('update-not-available', (_info) => {
-  if (win) {
-    win.webContents.send('mt::UPDATE_NOT_AVAILABLE', 'Current version is up-to-date.')
+  if (win && !win.isDestroyed()) {
+    win.webContents.send('mt::UPDATE_ERROR', error instanceof Error ? error.message : String(error))
   }
-  runningUpdate = false
-})
+}
 
-autoUpdater.on('update-downloaded', (_event) => {
-  // TODO: We should ask the user, so that the user can save all documents and
-  // not just force close the application.
+const getUpdater = (): Promise<AppUpdater> => {
+  updaterPromise ??= import('electron-updater')
+    .then(({ autoUpdater }) => {
+      autoUpdater.autoDownload = false
 
-  if (win) {
-    win.webContents.send(
-      'mt::UPDATE_DOWNLOADED',
-      'Update downloaded, application will be quit for update...'
-    )
-  }
-  setImmediate(() => autoUpdater.quitAndInstall())
-})
+      autoUpdater.on('error', (error: Error) => {
+        runningUpdate = false
+        if (win && !win.isDestroyed()) {
+          // Preserve the JS behavior: it tolerated `null` here; the typed event
+          // shape doesn't, but the same defensive code below stays in place.
+          const err = error as Error | null
+          win.webContents.send(
+            'mt::UPDATE_ERROR',
+            err === null ? 'Error: unknown' : (err.message || err).toString()
+          )
+        }
+      })
+
+      autoUpdater.on('update-available', (_info) => {
+        if (win && !win.isDestroyed()) {
+          win.webContents.send(
+            'mt::UPDATE_AVAILABLE',
+            'Found an update, do you want download and install now?'
+          )
+        }
+        runningUpdate = false
+      })
+
+      autoUpdater.on('update-not-available', (_info) => {
+        if (win && !win.isDestroyed()) {
+          win.webContents.send('mt::UPDATE_NOT_AVAILABLE', 'Current version is up-to-date.')
+        }
+        runningUpdate = false
+      })
+
+      autoUpdater.on('update-downloaded', (_event) => {
+        // TODO: We should ask the user, so that the user can save all documents and
+        // not just force close the application.
+
+        if (win && !win.isDestroyed()) {
+          win.webContents.send(
+            'mt::UPDATE_DOWNLOADED',
+            'Update downloaded, application will be quit for update...'
+          )
+        }
+        setImmediate(() => autoUpdater.quitAndInstall())
+      })
+      return autoUpdater
+    })
+    .catch((error) => {
+      updaterPromise = undefined
+      throw error
+    })
+  return updaterPromise
+}
 
 ipcMain.on('mt::NEED_UPDATE', (_e, { needUpdate }: { needUpdate: boolean }) => {
   if (needUpdate) {
-    autoUpdater.downloadUpdate()
+    void getUpdater()
+      .then((updater) => updater.downloadUpdate())
+      .catch(reportUpdateError)
   } else {
     runningUpdate = false
   }
@@ -74,7 +97,9 @@ export const checkUpdates = (browserWindow: BrowserWindow | null): void => {
   if (!runningUpdate) {
     runningUpdate = true
     win = browserWindow
-    autoUpdater.checkForUpdates()
+    void getUpdater()
+      .then((updater) => updater.checkForUpdates())
+      .catch(reportUpdateError)
   }
 }
 

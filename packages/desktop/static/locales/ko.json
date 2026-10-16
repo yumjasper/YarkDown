@@ -364,7 +364,12 @@
   },
   "recent": {
     "noTabsOpen": "열린 탭이 없습니다.",
-    "newFile": "새 파일"
+    "newFile": "새 파일",
+    "openFile": "파일 열기",
+    "openFolder": "폴더 열기",
+    "continue": "계속: {name}",
+    "recentFiles": "최근 파일",
+    "welcome": "읽거나 편집할 파일을 선택하세요."
   },
   "import": {
     "title": "가져오기 또는 열기",

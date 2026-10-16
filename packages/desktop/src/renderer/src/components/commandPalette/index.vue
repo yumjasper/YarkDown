@@ -460,9 +460,9 @@ ul.commands li span.shortcut > kbd {
 
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.2s;
+  transition: opacity var(--ui-motion-normal) var(--ui-motion-ease);
 }
-.fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
+.fade-enter-from, .fade-leave-to {
   opacity: 0;
 }
 </style>

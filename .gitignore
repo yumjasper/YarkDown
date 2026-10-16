@@ -19,6 +19,8 @@ logs/
 test-results/
 playwright-report/
 .playwright-mcp/
+.cod-analysis/
+.tmp-shot/
 *.min.json
 .claude/settings.local.json
 .claude/

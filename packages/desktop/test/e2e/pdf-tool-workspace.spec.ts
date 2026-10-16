@@ -1,0 +1,68 @@
+import { test, expect } from '@playwright/test'
+import { mkdtempSync, writeFileSync, readFileSync, existsSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
+import { PDFDocument } from 'pdf-lib'
+import { launchElectron, expectNoRendererErrors } from './helpers'
+
+test('PDF workspace fills fields, appends content, exports and creates documents', async() => {
+  test.setTimeout(120000)
+  const directory = mkdtempSync(path.join(tmpdir(), 'yarktext-pdf-workspace-'))
+  const filename = path.join(directory, 'workspace.pdf'), exported = path.join(directory, 'export.txt'), created = path.join(directory, 'created.pdf')
+  const doc = await PDFDocument.create(), pdfPage = doc.addPage([595, 842])
+  pdfPage.drawText('Workspace export text', { x: 40, y: 760 })
+  const field = doc.getForm().createTextField('Customer')
+  field.setText('Before'); field.addToPage(pdfPage, { x: 40, y: 650, width: 180, height: 30 })
+  writeFileSync(filename, await doc.save())
+  const { app, page } = await launchElectron([], { suppressErrorDialog: true })
+  try {
+    await page.evaluate(file => window.electron.ipcRenderer.send('mt::window::drop', [file]), filename)
+    await expect(page.locator('.pdf-reader .textLayer').first()).toContainText('Workspace export text')
+    const workspace = page.getByRole('region', { name: 'PDF 工具工作区' })
+    for (const name of ['填写和签名', '编辑 PDF', '导出 PDF', '创建 PDF']) await expect(workspace.getByRole('button', { name, exact: true })).toBeVisible()
+    await workspace.getByRole('button', { name: '填写和签名', exact: true }).click()
+    await workspace.getByRole('button', { name: '读取表单字段' }).click()
+    await expect(workspace.getByRole('status')).toContainText('1', { timeout: 5000 })
+    await workspace.getByLabel('Customer', { exact: true }).fill('After')
+    await page.getByRole('button', { name: '保存批注', exact: true }).click()
+    await expect.poll(async() => (await PDFDocument.load(readFileSync(filename))).getForm().getTextField('Customer').getText()).toBe('After')
+    await expect(page.getByRole('button', { name: '保存批注', exact: true })).toBeDisabled()
+    await page.getByRole('button', { name: '手写画笔', exact: true }).click()
+    await expect(page.locator('.pdf-annotation-workspace')).toHaveAttribute('data-pdf-tool', 'Ink')
+    const bounds = await page.locator('.canvasWrapper').first().boundingBox()
+    if (!bounds) throw new Error('Missing page bounds')
+    await page.mouse.move(bounds.x + 100, bounds.y + 230)
+    await page.mouse.down()
+    await page.mouse.move(bounds.x + 160, bounds.y + 250, { steps: 5 })
+    await page.mouse.up()
+    await expect(page.locator('.pdf-draft-layer polyline')).toHaveCount(1)
+    await page.getByRole('button', { name: '保存批注', exact: true }).click()
+    await expect(page.locator('.pdf-draft-layer polyline')).toHaveCount(0)
+    await workspace.getByRole('button', { name: '编辑 PDF', exact: true }).click()
+    await page.locator('.append-tools > summary').click()
+    await workspace.getByLabel('文字', { exact: true }).fill('新增中文文字')
+    await workspace.getByRole('button', { name: '追加文字到本页' }).click()
+    await expect(page.locator('.pdf-draft-layer image')).toHaveCount(1)
+    await page.getByRole('button', { name: '保存批注', exact: true }).click()
+    await expect(page.locator('.pdf-draft-layer image')).toHaveCount(0)
+    await workspace.getByRole('button', { name: '导出 PDF', exact: true }).click()
+    await app.evaluate(({ dialog }, file) => { dialog.showSaveDialog = async() => ({ canceled: false, filePath: file }) }, exported)
+    await workspace.getByRole('button', { name: '导出文件', exact: true }).click()
+    await expect.poll(() => existsSync(exported)).toBe(true)
+    expect(readFileSync(exported, 'utf-8')).toContain('Workspace export text')
+    for (const format of ['docx', 'png']) {
+      const target = path.join(directory, `export.${format}`)
+      await workspace.getByRole('combobox', { name: 'PDF 导出格式' }).selectOption(format)
+      await app.evaluate(({ dialog }, file) => { dialog.showSaveDialog = async() => ({ canceled: false, filePath: file }) }, target)
+      await workspace.getByRole('button', { name: '导出文件', exact: true }).click()
+      await expect.poll(() => existsSync(target)).toBe(true)
+      expect(readFileSync(target).subarray(0, 2)).toEqual(format === 'docx' ? Buffer.from('PK') : Buffer.from([137, 80]))
+    }
+    await workspace.getByRole('button', { name: '创建 PDF', exact: true }).click()
+    await app.evaluate(({ dialog }, file) => { dialog.showSaveDialog = async() => ({ canceled: false, filePath: file }) }, created)
+    await workspace.getByRole('button', { name: '创建空白 PDF' }).click()
+    await expect.poll(() => existsSync(created)).toBe(true)
+    expect((await PDFDocument.load(readFileSync(created))).getPageCount()).toBe(1)
+    await expectNoRendererErrors(app)
+  } finally { await app.close(); rmSync(directory, { recursive: true, force: true }) }
+})

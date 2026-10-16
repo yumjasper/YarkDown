@@ -2,6 +2,7 @@
   <div
     v-show="showSideBar"
     ref="sideBar"
+    v-ui-motion="showSideBar"
     class="side-bar"
     :style="{ width: `${finalSideBarWidth}px` }"
   >
@@ -19,23 +20,47 @@
       >
         <component :is="tab.icon" />
       </button>
-      <button
-        type="button"
-        class="rail-icon rail-settings"
-        :title="settingsEntry.name()"
-        @click="openSettings"
-      >
-        <component :is="settingsEntry.icon" />
-      </button>
+      <div class="rail-bottom">
+        <button
+          type="button"
+          class="rail-icon"
+          aria-label="打开小憩"
+          title="小憩 · Ctrl+Alt+G"
+          @pointerdown.prevent
+          @click="bus.emit('open-arcade')"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path
+              d="M7 7h10c3 0 4 3 4 6l1 4c0 3-3 4-5 1l-2-2H9l-2 2c-2 3-5 2-5-1l1-4c0-3 1-6 4-6ZM6 10v5M3.5 12.5h5M16 11h.01M19 14h.01"
+            />
+          </svg>
+        </button>
+        <button
+          type="button"
+          class="rail-icon rail-settings"
+          :title="settingsEntry.name()"
+          @click="openSettings"
+        >
+          <component :is="settingsEntry.icon" />
+        </button>
+      </div>
     </div>
     <div
       v-show="rightColumn"
+      v-ui-motion.slide="rightColumn"
       class="right-column"
     >
       <tree
         v-if="rightColumn === 'files'"
         :project-tree="projectTree"
-        :opened-files="openedFiles"
         :tabs="tabs"
       />
       <side-bar-search v-else-if="rightColumn === 'search'" />
@@ -55,6 +80,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { vUiMotion } from '@/util/uiMotion'
 import { useLayoutStore } from '@/store/layout'
 import { useProjectStore } from '@/store/project'
 import { useEditorStore } from '@/store/editor'
@@ -69,8 +95,8 @@ import PdfNavigation from './pdf.vue'
 import { Grid } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
-import type { TabDescriptor } from './types'
 import { SIDEBAR_RAIL_WIDTH, MIN_SIDEBAR_CONTENT_WIDTH } from '@/util/shellLayout'
+import bus from '@/bus'
 
 const layoutStore = useLayoutStore()
 const projectStore = useProjectStore()
@@ -80,7 +106,6 @@ const { locale } = useI18n()
 const sideBar = ref<HTMLDivElement | null>(null)
 const dragBar = ref<HTMLDivElement | null>(null)
 
-const openedFiles = ref<TabDescriptor[]>([])
 const sideBarViewWidth = ref(Number(layoutStore.sideBarWidth))
 
 const { rightColumn, showSideBar, sideBarWidth } = storeToRefs(layoutStore)
@@ -91,25 +116,43 @@ const plainText = computed(() => {
   const filename = editorStore.currentFile?.filename || ''
   return isPlainTextFile(filename)
 })
-const pdf = computed(() => isPdfFile(editorStore.currentFile?.filename || ''))
+const pdf = computed(() => editorStore.editorActivated && isPdfFile(editorStore.currentFile?.filename || ''))
 const visibleSideBarIcons = computed(() => [
-  ...sideBarIcons.filter(tab => !plainText.value || tab.id !== 'toc'),
-  ...(pdf.value ? [{ id: 'pdf-thumbnails', name: () => locale.value.startsWith('zh') ? 'PDF 缩略图' : 'PDF thumbnails', icon: Grid }] : [])
+  ...sideBarIcons.filter((tab) => !plainText.value || tab.id !== 'toc'),
+  ...(pdf.value
+    ? [
+        {
+          id: 'pdf-thumbnails',
+          name: () => (locale.value.startsWith('zh') ? 'PDF 缩略图' : 'PDF thumbnails'),
+          icon: Grid
+        }
+      ]
+    : [])
 ])
-watch(pdf, value => {
-  if (value && rightColumn.value === 'files' && showSideBar.value) layoutStore.SET_LAYOUT({ rightColumn: 'toc' })
-  if (!value && rightColumn.value === 'pdf-thumbnails') layoutStore.SET_LAYOUT({ rightColumn: plainText.value ? 'files' : 'toc' })
-}, { immediate: true })
+watch(
+  pdf,
+  (value) => {
+    if (value && rightColumn.value === 'files' && showSideBar.value)
+      layoutStore.SET_LAYOUT({ rightColumn: 'toc' })
+    if (!value && rightColumn.value === 'pdf-thumbnails')
+      layoutStore.SET_LAYOUT({ rightColumn: plainText.value ? 'files' : 'toc' })
+  },
+  { immediate: true }
+)
 let markdownColumn: string | undefined
-watch(plainText, value => {
-  if (value && rightColumn.value === 'toc') {
-    markdownColumn = 'toc'
-    layoutStore.SET_LAYOUT({ rightColumn: 'files' })
-  } else if (!value && markdownColumn) {
-    if (rightColumn.value === 'files') layoutStore.SET_LAYOUT({ rightColumn: markdownColumn })
-    markdownColumn = undefined
-  }
-}, { immediate: true })
+watch(
+  plainText,
+  (value) => {
+    if (value && rightColumn.value === 'toc') {
+      markdownColumn = 'toc'
+      layoutStore.SET_LAYOUT({ rightColumn: 'files' })
+    } else if (!value && markdownColumn) {
+      if (rightColumn.value === 'files') layoutStore.SET_LAYOUT({ rightColumn: markdownColumn })
+      markdownColumn = undefined
+    }
+  },
+  { immediate: true }
+)
 
 const RAIL_WIDTH = SIDEBAR_RAIL_WIDTH
 const MIN_CONTENT_WIDTH = MIN_SIDEBAR_CONTENT_WIDTH
@@ -253,7 +296,13 @@ const handleLeftIconClick = (name: string): void => {
   border-radius: 1px;
 }
 .rail-settings {
+  margin-top: 0;
+}
+.rail-bottom {
   margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .right-column {

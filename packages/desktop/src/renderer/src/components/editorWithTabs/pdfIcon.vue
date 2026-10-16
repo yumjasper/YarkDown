@@ -16,6 +16,10 @@
 <script setup lang="ts">
 defineProps<{ name: string }>()
 const paths: Record<string, string> = {
+  fill: 'M3 3h12v18H3ZM7 7h4M7 11h4M17 14l4-4 2 2-4 4-3 1Z',
+  edit: 'M3 3h12v18H3ZM7 7h4M7 11h4M13 18l7-7 2 2-7 7-3 1Z',
+  export: 'M3 3h12v18H3ZM7 7h4M14 12h8m-3-3 3 3-3 3',
+  create: 'M3 3h12v18H3ZM7 7h4M17 15h6M20 12v6',
   Select: 'M5 3 19 13l-7 1-3 7Z',
   Hand: 'M8 12V5a2 2 0 0 1 4 0v6-8a2 2 0 0 1 4 0v8-6a2 2 0 0 1 4 0v10c0 5-3 7-7 7h-1c-2 0-3-1-4-3l-4-6a2 2 0 0 1 3-2l3 3',
   Highlight: 'm5 14 9-10 6 5-9 10H5Zm3 3 9-10M4 21h12',
@@ -23,6 +27,7 @@ const paths: Record<string, string> = {
   StrikeOut: 'M17 5c-2-3-10-3-10 2 0 2 3 3 5 3M7 19c3 3 10 1 10-3 0-2-2-3-5-3M3 12h18',
   Text: 'M4 3h16v13H9l-5 5ZM8 7h8M8 11h5',
   FreeText: 'M3 3h18v18H3ZM7 8h10M12 8v9M9 17h6',
+  Ink: 'M3 18c4-12 7-14 7-8s-6 12-2 10 8-12 7-6-1 7 6 2',
   Square: 'M4 4h16v16H4Z',
   Erase: 'm3 14 10-10a2 2 0 0 1 3 0l5 5a2 2 0 0 1 0 3l-9 9H8Zm4-4 9 8M12 21h9',
   undo: 'm8 4-5 5 5 5M3 9h10a7 7 0 0 1 0 14',

@@ -9,7 +9,8 @@ import {
   PDFString,
   StandardFonts
 } from 'pdf-lib'
-import type { PdfAnnotation } from '@shared/pdf'
+import type { PdfAnnotation, PdfFormValue } from '@shared/pdf'
+import { assertUnsignedPdf, fillPdfFields } from './pdfTools'
 
 export const pdfHash = (data: Uint8Array): string => createHash('sha256').update(data).digest('hex')
 const name = PDFName.of
@@ -83,6 +84,13 @@ export const validatePdfAnnotations = (changes: PdfAnnotation[], pageCount: numb
         (!Number.isFinite(item.letterSpacing) || item.letterSpacing < 0 || item.letterSpacing > 12))
     )
       throw new Error('Invalid caption typography.')
+    if (
+      item.asContent !== undefined &&
+      (typeof item.asContent !== 'boolean' ||
+        (item.asContent &&
+          (item.kind !== 'FreeText' || item.sourceId || !item.appearance || item.deleted)))
+    )
+      throw new Error('Invalid PDF content addition.')
     ids.add(item.id)
   }
 }
@@ -97,24 +105,30 @@ const matches = (ref: PDFRef, dict: PDFDict, id: string): boolean => {
 
 export const annotatePdf = async(
   source: Uint8Array,
-  changes: PdfAnnotation[]
+  changes: PdfAnnotation[],
+  formValues: PdfFormValue[] = []
 ): Promise<Uint8Array> => {
   const doc = await PDFDocument.load(source, { updateMetadata: false })
-  if (
-    doc.context
-      .enumerateIndirectObjects()
-      .some(
-        ([, object]) =>
-          object instanceof PDFDict &&
-          (object.has(name('ByteRange')) || object.get(name('FT')) === name('Sig'))
-      )
-  ) {
-    throw new Error('Digitally signed PDFs are read-only to preserve their signatures.')
-  }
+  assertUnsignedPdf(doc)
   validatePdfAnnotations(changes, doc.getPageCount())
+  if (formValues.length) await fillPdfFields(doc, formValues)
   const font = await doc.embedFont(StandardFonts.Helvetica)
   for (const change of changes) {
     const page = doc.getPage(change.page - 1)
+    if (change.asContent) {
+      const box = page.getCropBox()
+      if (!change.appearance || change.rect[0] < box.x || change.rect[1] < box.y ||
+        change.rect[2] > box.x + box.width || change.rect[3] > box.y + box.height)
+        throw new Error('Added content must fit within the page.')
+      const image = await doc.embedPng(change.appearance)
+      page.drawImage(image, {
+        x: change.rect[0],
+        y: change.rect[1],
+        width: change.rect[2] - change.rect[0],
+        height: change.rect[3] - change.rect[1]
+      })
+      continue
+    }
     let annots = page.node.Annots()
     if (!annots) {
       annots = doc.context.obj([])

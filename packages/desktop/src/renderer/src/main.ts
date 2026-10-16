@@ -5,32 +5,7 @@ import axios from './axios'
 import pinia from './store'
 import './assets/symbolIcon'
 
-// Element Plus instead of Element UI for Vue 3
-import { ElAutocomplete, ElButton, ElCol, ElDialog, ElForm, ElFormItem, ElIcon, ElInput, ElInputNumber, ElOption, ElPopover, ElRadio, ElRadioGroup, ElRow, ElSelect, ElSlider, ElSwitch, ElTabPane, ElTable, ElTableColumn, ElTabs, ElText, ElTooltip, ElTree } from 'element-plus'
-import 'element-plus/es/components/autocomplete/style/css'
-import 'element-plus/es/components/button/style/css'
-import 'element-plus/es/components/col/style/css'
-import 'element-plus/es/components/dialog/style/css'
-import 'element-plus/es/components/form/style/css'
-import 'element-plus/es/components/form-item/style/css'
-import 'element-plus/es/components/icon/style/css'
-import 'element-plus/es/components/input/style/css'
-import 'element-plus/es/components/input-number/style/css'
-import 'element-plus/es/components/option/style/css'
-import 'element-plus/es/components/popover/style/css'
-import 'element-plus/es/components/radio/style/css'
-import 'element-plus/es/components/radio-group/style/css'
-import 'element-plus/es/components/row/style/css'
-import 'element-plus/es/components/select/style/css'
-import 'element-plus/es/components/slider/style/css'
-import 'element-plus/es/components/switch/style/css'
-import 'element-plus/es/components/tab-pane/style/css'
-import 'element-plus/es/components/table/style/css'
-import 'element-plus/es/components/table-column/style/css'
-import 'element-plus/es/components/tabs/style/css'
-import 'element-plus/es/components/text/style/css'
-import 'element-plus/es/components/tooltip/style/css'
-import 'element-plus/es/components/tree/style/css'
+import { registerElementComponents } from './elementComponents'
 
 // I18n translation system
 import i18nPlugin from './i18n'
@@ -41,6 +16,9 @@ import routes from './router'
 import Main from './Main.vue'
 
 import './assets/styles/index.css'
+import './assets/styles/motion.css'
+import './assets/styles/chrome.css'
+import './assets/styles/surfaces.css'
 import './assets/styles/printService.css'
 
 // -----------------------------------------------
@@ -54,8 +32,7 @@ bootstrapRenderer()
 // Create Vue app
 const app: App<Element> = createApp(Main)
 
-// Configure Element Plus with locale
-for (const component of [ElAutocomplete, ElButton, ElCol, ElDialog, ElForm, ElFormItem, ElIcon, ElInput, ElInputNumber, ElOption, ElPopover, ElRadio, ElRadioGroup, ElRow, ElSelect, ElSlider, ElSwitch, ElTabPane, ElTable, ElTableColumn, ElTabs, ElText, ElTooltip, ElTree]) app.use(component)
+registerElementComponents(app)
 
 const envType = window.marktext?.env?.type as string | undefined
 

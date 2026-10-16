@@ -3,9 +3,18 @@ import { createReadStream } from 'node:fs'
 import { createHash, randomUUID } from 'node:crypto'
 import path from 'node:path'
 import { BrowserWindow, dialog, ipcMain } from 'electron'
-import { isPdfFile, type PdfSaveRequest, type PdfSaveResult } from '@shared/pdf'
+import {
+  isPdfFile,
+  type PdfCreateRequest,
+  type PdfSaveRequest,
+  type PdfSaveResult
+} from '@shared/pdf'
 import { requirePdfReader } from '../utils/pdfComponent'
 import { writeFile } from '../filesystem'
+import { assertPdfWritable, writePdfWithRetry } from '../utils/pdfSave'
+import { registerPdfAdvancedHandlers } from './pdfAdvanced'
+
+import log from 'electron-log'
 
 const pendingSaves = new Map<string, Promise<PdfSaveResult>>()
 const pendingReads = new Map<string, Set<Promise<void>>>()
@@ -66,6 +75,22 @@ const verifySession = async(session: PdfSession) => {
 }
 
 export const registerPdfHandlers = (): void => {
+  registerPdfAdvancedHandlers()
+  ipcMain.handle('mt::pdf::create', async(event, request: PdfCreateRequest) => {
+    requirePdfReader()
+    const win = BrowserWindow.fromWebContents(event.sender)
+    if (!win) throw new Error('PDF window is unavailable.')
+    const result = await dialog.showSaveDialog(win, {
+      defaultPath: 'Untitled.pdf',
+      filters: [{ name: 'PDF', extensions: ['pdf'] }]
+    })
+    if (result.canceled || !result.filePath) return null
+    const destination = /\.pdf$/i.test(result.filePath) ? result.filePath : `${result.filePath}.pdf`
+    const { createPdf } = await import('../utils/pdfTools')
+    const bytes = await createPdf(request)
+    await writeFile(destination, Buffer.from(bytes), undefined, undefined)
+    return destination
+  })
   ipcMain.handle('mt::pdf::print', async(event, pathname: string) => {
     requirePdfReader()
     const parent = BrowserWindow.fromWebContents(event.sender)
@@ -211,21 +236,34 @@ export const registerPdfHandlers = (): void => {
         if (result.canceled || !result.filePath) return null
         destination = /\.pdf$/i.test(result.filePath) ? result.filePath : `${result.filePath}.pdf`
       }
-      const annotated = request.annotations.length
-        ? await annotatePdf(source, request.annotations)
-        : source
+      const annotated =
+        request.annotations.length || request.formValues?.length
+          ? await annotatePdf(source, request.annotations, request.formValues)
+          : source
       if (pdfHash(await readFile(request.pathname)) !== request.sourceHash)
         throw new Error('PDF changed during save. Reload before trying again.')
       try {
-        await writeFile(destination, Buffer.from(annotated), undefined, undefined)
+        await assertPdfWritable(destination)
+        await writePdfWithRetry(
+          () => writeFile(destination, Buffer.from(annotated), undefined, undefined),
+          async() => {
+            if (pdfHash(await readFile(request.pathname)) !== request.sourceHash)
+              throw new Error('PDF changed during save. Reload before trying again.')
+          }
+        )
       } catch (error) {
-        if (!['EPERM', 'EACCES', 'EBUSY'].includes((error as NodeJS.ErrnoException).code || ''))
+        if (!['EPERM', 'EACCES', 'EBUSY', 'EPDFREADONLY'].includes((error as NodeJS.ErrnoException).code || ''))
           throw error
+        log.error('PDF atomic save failed:', { pathname: destination, code: (error as NodeJS.ErrnoException).code, syscall: (error as NodeJS.ErrnoException).syscall, error })
+        const readOnly = (error as NodeJS.ErrnoException).code === 'EPDFREADONLY'
         const { response } = await dialog.showMessageBox(win, {
           type: 'warning',
-          message: 'PDF 文件被占用或没有写入权限 / PDF file is locked or not writable',
-          detail:
-            '请关闭正在预览此文件的软件后重试，或将批注另存为副本。原文件和未保存的批注草稿均会保留。\nClose other PDF viewers and retry, or save an annotated copy. Your original and drafts are retained.',
+          message: readOnly
+            ? 'PDF 文件为只读，无法覆盖保存 / PDF file is read-only'
+            : 'PDF 写入失败，尚未确定是否被占用 / PDF write failed',
+          detail: readOnly
+            ? '文件带有只读属性，未尝试覆盖，也没有修改原文件属性。请另存为副本；如确需覆盖，请先自行取消只读属性。批注草稿仍保留。'
+            : `已等待并重试，但系统仍拒绝写入（${(error as NodeJS.ErrnoException).code}）。请关闭 Acrobat、资源管理器预览或同步软件，并检查文件/文件夹写入权限；也可另存为副本。原文件和批注草稿均保留。\nThe OS still denies writing after retries. Close other viewers/preview handlers or check file and folder permissions. You can save a copy without losing drafts.`,
           buttons: ['另存为副本 / Save a copy', '取消 / Cancel'],
           defaultId: 0,
           cancelId: 1,
@@ -243,10 +281,11 @@ export const registerPdfHandlers = (): void => {
           : `${result.filePath}.pdf`
         if (pathKey(copyPath) === pathKey(destination) || pathKey(copyPath) === key)
           throw new Error(
-            '请选择新的副本文件名，原文件仍被占用。 / Choose a different name for the PDF copy.',
+            '请选择新的副本文件名，原文件不可写。 / Choose a different name for the PDF copy.',
             { cause: error }
           )
         destination = copyPath
+        await assertPdfWritable(destination)
         await writeFile(destination, Buffer.from(annotated), undefined, undefined)
       }
       ipcMain.emit('window-file-saved', win.id, destination)

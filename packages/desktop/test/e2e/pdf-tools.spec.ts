@@ -28,7 +28,10 @@ test('selection menu, marker settings, captions, navigation and native printing'
   outline.set(PDFName.of('Last'), entry)
   doc.catalog.set(PDFName.of('Outlines'), outlineRef)
   writeFileSync(filename, await doc.save())
-  const { app, page } = await launchElectron([], { suppressErrorDialog: true })
+  const { app, page } = await launchElectron([], {
+    suppressErrorDialog: true,
+    env: { YARKTEXT_OPENCODE: path.join(directory, 'missing-opencode.exe') }
+  })
   try {
     await page.evaluate(() => {
       const state = globalThis as unknown as { pdfProgress: number[] }
@@ -81,9 +84,11 @@ test('selection menu, marker settings, captions, navigation and native printing'
       shell.openExternal = async url => { (globalThis as unknown as { pdfExternalUrl: string }).pdfExternalUrl = url }
     })
     await selectText()
-    await page.locator('.pdf-selection-more summary').click()
-    await page.getByRole('button', { name: '在线翻译选区', exact: true }).click()
-    await expect.poll(() => app.evaluate(() => (globalThis as unknown as { pdfExternalUrl: string }).pdfExternalUrl)).toContain('text=Select%20this%20text')
+    await page.getByRole('button', { name: 'OpenCode 翻译', exact: true }).click()
+    await expect(page.locator('.pdf-opencode')).toBeVisible()
+    await expect(page.locator('.source-preview pre')).toHaveText('Select this text')
+    expect(await app.evaluate(() => (globalThis as unknown as { pdfExternalUrl?: string }).pdfExternalUrl)).toBeUndefined()
+    await page.getByRole('button', { name: '关闭翻译面板', exact: true }).click()
     await selectText()
     await page
       .getByRole('toolbar', { name: '选区批注菜单' })

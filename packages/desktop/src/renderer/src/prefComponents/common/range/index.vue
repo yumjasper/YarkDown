@@ -7,7 +7,7 @@
       class="description"
       style="display: flex; align-items: center; justify-content: space-between"
     >
-      <span>{{ description }}:</span>
+      <span>{{ description }}</span>
       <div style="display: flex; align-items: center">
         <span
           v-if="selectValue"

@@ -26,10 +26,15 @@ export interface MenuPopupPosition {
 }
 
 /**
- * Serialized top-level entry of a window's menu bar. Renderers use this to
- * draw an in-app menu bar; clicks are resolved by index on the main side.
+ * Display data for a menu entry. Indices retain their native positions even
+ * when invisible entries are omitted from the renderer's presentation.
  */
 export interface MenuBarItem {
+  index?: number
+  type?: 'normal' | 'separator' | 'submenu' | 'checkbox' | 'radio'
+  accelerator?: string
+  visible?: boolean
+  children?: MenuBarItem[]
   checked?: boolean
   label: string
   enabled: boolean

@@ -56,6 +56,12 @@ export interface IFrontmatterToken {
     lang: 'yaml' | 'toml' | 'json';
 }
 
+export interface IGameDirectiveToken {
+    type: 'gameDirective';
+    raw: string;
+    text: string;
+}
+
 export interface IBlockEndToken {
     type: 'block-end';
     tokenType: 'blockquote' | 'multilineBlockquote' | 'list' | 'list-item' | 'footnote';
@@ -69,7 +75,8 @@ export interface IBlockEndToken {
 // to `Tokens.Table` instead of `Tokens.Table | Tokens.Generic` — the
 // latter would poison field access with the Generic's `[index: string]: any`.
 export type TLexedToken
-    = | Exclude<MarkedToken, Tokens.Heading | Tokens.List | Tokens.ListItem>
+    = | IGameDirectiveToken
+        | Exclude<MarkedToken, Tokens.Heading | Tokens.List | Tokens.ListItem>
         | Heading
         | ListToken
         | ListItemToken

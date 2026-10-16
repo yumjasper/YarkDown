@@ -36,30 +36,38 @@
         :platform="platform"
       />
       <command-palette />
-      <about-dialog />
-      <export-setting-dialog />
-      <rename />
-      <import-modal />
-      <arcade />
+      <lazy-event-panel
+        event="aboutDialog"
+        :loader="() => import('@/components/about/index.vue')"
+      />
+      <lazy-event-panel
+        event="showExportDialog"
+        :loader="() => import('@/components/exportSettings/index.vue')"
+      />
+      <lazy-event-panel
+        event="rename"
+        :loader="() => import('@/components/rename/index.vue')"
+      />
+      <lazy-event-panel
+        event="importDialog"
+        :loader="() => import('@/components/import/index.vue')"
+      />
+      <arcade-launcher />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, watch, nextTick, onMounted, ref } from 'vue'
+import { computed, watch, nextTick, onMounted, ref, defineAsyncComponent } from 'vue'
 import { useMainStore } from '@/store'
 import { storeToRefs } from 'pinia'
 import { addStyles, addThemeStyle, addCustomStyle, type AddStylesOptions } from '@/util/theme'
 import Recent from '@/components/recent/index.vue'
-import EditorWithTabs from '@/components/editorWithTabs/index.vue'
 import TitleBar from '@/components/titleBar/index.vue'
 import SideBar from '@/components/sideBar/index.vue'
-import AboutDialog from '@/components/about/index.vue'
+import LazyEventPanel from '@/components/lazyEventPanel.vue'
+import ArcadeLauncher from '@/components/arcade/launcher.vue'
 import CommandPalette from '@/components/commandPalette/index.vue'
-import ExportSettingDialog from '@/components/exportSettings/index.vue'
-import Rename from '@/components/rename/index.vue'
-import ImportModal from '@/components/import/index.vue'
-import Arcade from '@/components/arcade/index.vue'
 import bus from '@/bus'
 import { DEFAULT_STYLE } from '@/config'
 import { useLayoutStore } from '@/store/layout'
@@ -72,6 +80,8 @@ import { useAutoUpdatesStore } from '@/store/autoUpdates'
 import { useNotificationStore } from '@/store/notification'
 import { shellHeaderHeights } from '@/util/shellLayout'
 import { isMac } from '@/util'
+
+const EditorWithTabs = defineAsyncComponent(() => import('@/components/editorWithTabs/index.vue'))
 
 const mainStore = useMainStore()
 const editorStore = useEditorStore()
@@ -112,7 +122,7 @@ const muyaIndexCursor = computed<Record<string, unknown> | undefined>(
 )
 
 const hasCurrentFile = computed<boolean>(() => {
-  return currentFile.value?.markdown !== undefined
+  return editorStore.editorActivated && currentFile.value?.markdown !== undefined
 })
 
 // Watchers

@@ -118,6 +118,7 @@
       </button>
       <select
         :disabled="!ready"
+        :value="readingLayout"
         :aria-label="zh ? '页面布局' : 'Page layout'"
         @change="setLayout(($event.target as HTMLSelectElement).value)"
       >
@@ -143,6 +144,7 @@
         :pdf-document="activeDocument"
         :page="page"
         :file="file"
+        @translation="openTranslation()"
       />
       <div class="pdf-search">
         <input
@@ -173,6 +175,27 @@
         >
           <pdf-icon name="down" />
         </button>
+        <details class="pdf-find-options">
+          <summary :aria-label="zh ? '搜索选项' : 'Search options'">
+            <pdf-icon name="settings" />
+          </summary><div>
+            <label><input
+              v-model="searchCase"
+              type="checkbox"
+              @change="search()"
+            >{{ zh ? '区分大小写' : 'Match case' }}</label>
+            <label><input
+              v-model="searchWord"
+              type="checkbox"
+              @change="search()"
+            >{{ zh ? '全词匹配' : 'Whole words' }}</label>
+            <label><input
+              v-model="searchAll"
+              type="checkbox"
+              @change="search()"
+            >{{ zh ? '突出显示全部' : 'Highlight all' }}</label>
+          </div>
+        </details>
       </div>
     </div>
     <div
@@ -218,26 +241,55 @@
         zh ? '正在解析页面…' : 'Preparing pages…'
       }}</span>
     </div>
-    <pdf-annotations
-      :file="file"
-      :pdf-document="activeDocument"
-      :viewer="viewer"
-      :events="events"
-      :restriction="restriction"
-      @discard="discardDrafts"
-    >
-      <div class="pdf-viewport">
-        <div
-          ref="container"
-          class="pdf-scroll"
-          
-          :aria-label="labels.pages"
-          tabindex="0"
-        >
-          <div class="pdfViewer" />
+    <div class="pdf-reading-body">
+      <pdf-annotations
+        ref="annotationWorkspace"
+        :page="page"
+        :file="file"
+        :pdf-document="activeDocument"
+        :viewer="viewer"
+        :events="events"
+        :restriction="restriction"
+        @tool="value => { if (!['Select', 'Hand'].includes(value)) toolWorkspace?.closePanel() }"
+        @discard="discardDrafts"
+        @translate="openTranslation"
+      >
+        <template #tools>
+          <pdf-tool-workspace
+            ref="toolWorkspace"
+            :viewer="viewer"
+            :file="file"
+            :pdf-document="activeDocument"
+            :page="page"
+            :restriction="restriction"
+            :content-restriction="contentRestriction"
+            :export-restriction="exportRestriction"
+            @group="value => { if (value) annotationWorkspace?.chooseTool('Select') }"
+            @tool="kind => annotationWorkspace?.chooseTool(kind)"
+            @appearance="(number, rect, image, text, content) => annotationWorkspace?.addPageAppearance(number, rect, image, text, content)"
+          />
+        </template>
+        <div class="pdf-viewport">
+          <div
+            ref="container"
+            class="pdf-scroll"
+
+            :aria-label="labels.pages"
+            tabindex="0"
+          >
+            <div class="pdfViewer" />
+          </div>
         </div>
-      </div>
-    </pdf-annotations>
+      </pdf-annotations>
+      <pdf-open-code
+        v-if="translationOpen"
+        :source="translationSource"
+        :request-id="translationRequest"
+        :has-document="!!activeDocument"
+        @close="translationOpen = false"
+        @page="showTranslationPage"
+      />
+    </div>
   </section>
 </template>
 
@@ -248,17 +300,34 @@ import * as pdfjs from 'pdfjs-dist'
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import 'pdfjs-dist/web/pdf_viewer.css'
 import type { PDFViewer, PDFLinkService, EventBus } from 'pdfjs-dist/web/pdf_viewer.mjs'
+import { PDF_MAX_CANVAS_PIXELS, trimPdfCanvasCache } from '@/util/pdfCanvasCache'
 import type { IFileState } from '@shared/types/files'
 import bus from '@/bus'
 import { useEditorStore } from '@/store/editor'
 import PdfAnnotations from './pdfAnnotations.vue'
+import PdfToolWorkspace from './pdfToolWorkspace.vue'
+import { pdfFieldEntries } from '@/util/pdfFormFields'
 import { useLayoutStore } from '@/store/layout'
 import { usePdfNavigationStore } from '@/store/pdfNavigation'
 import PdfIcon from './pdfIcon.vue'
 import { LocalPdfTransport } from '@/services/pdfTransport'
 import PdfDocumentActions from './pdfDocumentActions.vue'
+import PdfOpenCode from './pdfOpenCode.vue'
 
 const props = defineProps<{ file: IFileState }>()
+const translationOpen = ref(false), translationSource = ref(''), translationRequest = ref(0)
+const openTranslation = (text = '') => {
+  translationSource.value = text
+  translationRequest.value = text.trim() ? translationRequest.value + 1 : 0
+  translationOpen.value = true
+}
+const showTranslationPage = async() => {
+  try {
+    const content = await (await activeDocument.value?.getPage(page.value))?.getTextContent()
+    translationSource.value = content?.items.map(item => 'str' in item ? item.str + (item.hasEOL ? '\n' : ' ') : '').join('') || ''
+  } catch { translationSource.value = zh.value ? '无法读取本页文字。' : 'Could not read this page’s text.' }
+}
+const annotationWorkspace = ref<InstanceType<typeof PdfAnnotations>>()
 const editorStore = useEditorStore()
 const { locale } = useI18n()
 const zh = computed(() => locale.value.startsWith('zh'))
@@ -319,6 +388,11 @@ const pages = ref(0)
 const scale = ref('page-width')
 const query = ref('')
 const matches = ref('')
+const toolWorkspace = ref<InstanceType<typeof PdfToolWorkspace>>()
+const searchCase = ref(false)
+const searchWord = ref(false)
+const searchAll = ref(true)
+const readingLayout = ref('continuous')
 const ready = ref(false)
 const firstPaint = ref(false)
 const layout = useLayoutStore()
@@ -332,6 +406,7 @@ let sessionToken: string | undefined
 const formatBytes = (value: number) =>
   value >= 1024 * 1024 ? `${(value / 1024 / 1024).toFixed(1)} MB` : `${Math.round(value / 1024)} KB`
 const setLayout = (value: string) => {
+  readingLayout.value = value
   if (!viewer) return
   viewer.scrollMode = value === 'single' ? 3 : 0
   viewer.spreadMode = value === 'spread' ? 1 : 0
@@ -353,6 +428,8 @@ const toggleFullscreen = () => {
 }
 const activeDocument = shallowRef<pdfjs.PDFDocumentProxy>()
 const restriction = ref('')
+const contentRestriction = ref('')
+const exportRestriction = ref('')
 const error = ref('')
 const passwordRequired = ref(false)
 const password = ref('')
@@ -366,6 +443,24 @@ let disposed = false
 let generation = 0
 let resizeObserver: ResizeObserver | undefined
 let resizeFrame = 0
+let cacheTimer: ReturnType<typeof setTimeout> | undefined
+const scheduleCacheTrim = () => {
+  clearTimeout(cacheTimer)
+  cacheTimer = setTimeout(() => {
+    if (disposed || !viewer || !container.value) return
+    const cachedPages = viewer.getCachedPageViews()
+    const protectedPages = new Set<number>()
+    const selection = window.getSelection()
+    for (const view of cachedPages) {
+      const selected = selection && !selection.isCollapsed &&
+        Array.from({ length: selection.rangeCount }, (_, index) => selection.getRangeAt(index))
+          .some(range => range.intersectsNode(view.div))
+      if (selected ||
+        view.div.contains(document.activeElement)) protectedPages.add(view.id)
+    }
+    trimPdfCanvasCache(cachedPages, container.value.getBoundingClientRect(), page.value, protectedPages)
+  }, 200)
+}
 pdfjs.GlobalWorkerOptions.workerSrc = workerUrl
 
 const saveView = () => {
@@ -412,9 +507,9 @@ const search = (type = '', previous = false) => {
     source: viewer,
     type,
     query: query.value,
-    caseSensitive: false,
-    entireWord: false,
-    highlightAll: true,
+    caseSensitive: searchCase.value,
+    entireWord: searchWord.value,
+    highlightAll: searchAll.value,
     findPrevious: previous,
     matchDiacritics: false
   })
@@ -440,11 +535,18 @@ const handleKey = (event: KeyboardEvent) => {
     event.preventDefault()
     event.stopPropagation()
     focusSearch()
+    return
   }
+  const target = event.target as HTMLElement
+  if (target.closest('input, textarea, select, button, [contenteditable=true]')) return
+  if (event.key === 'Home') { event.preventDefault(); goTo(1) }
+  if (event.key === 'End') { event.preventDefault(); goTo(pages.value) }
+  if (event.key === 'PageDown' && readingLayout.value === 'single') { event.preventDefault(); goTo(page.value + 1) }
+  if (event.key === 'PageUp' && readingLayout.value === 'single') { event.preventDefault(); goTo(page.value - 1) }
 }
 const openLink = (event: MouseEvent) => {
   const anchor = (event.target as Element).closest('a[href]') as HTMLAnchorElement | null
-  if (!anchor || anchor.classList.contains('internalLink')) return
+  if (!anchor || anchor.closest('[data-internal-link], .internalLink')) return
   event.preventDefault()
   event.stopPropagation()
   if (/^(https?:|mailto:)/i.test(anchor.href)) void window.electron.shell.openExternal(anchor.href)
@@ -466,6 +568,8 @@ const load = async () => {
   pdfNavigation.clear(props.file.id)
   activeDocument.value = undefined
   restriction.value = ''
+  contentRestriction.value = ''
+  exportRestriction.value = ''
   error.value = ''
   passwordRequired.value = false
   matches.value = ''
@@ -530,7 +634,7 @@ const load = async () => {
     // Existing drafts must match the source before they are overlaid on its pages.
     const hash = await hashPromise
     if (disposed || request !== generation) return
-    if (props.file.pdfAnnotations?.length && props.file.pdfSourceHash !== hash) {
+    if ((props.file.pdfAnnotations?.length || props.file.pdfFormValues?.length) && props.file.pdfSourceHash !== hash) {
       throw new Error(
         zh.value
           ? '文件已被外部修改。草稿已保留，请放弃草稿后重新加载。'
@@ -562,7 +666,7 @@ const load = async () => {
     } else if (
       (metadata.info as { EncryptFilterName?: string }).EncryptFilterName ||
       (fields &&
-        Object.values(fields).some((values) =>
+        pdfFieldEntries(fields).some(([, values]) =>
           (values as Array<{ type?: string }>).some((field) => field.type === 'signature')
         ))
     ) {
@@ -574,6 +678,10 @@ const load = async () => {
         ? '此 PDF 未允许修改批注。'
         : 'This PDF does not permit annotation changes.'
     }
+    contentRestriction.value = inspectionFailed || (permissions && !permissions.has(pdfjs.PermissionFlag.MODIFY_CONTENTS))
+      ? (zh.value ? '此 PDF 未允许修改正文。' : 'This PDF does not permit content changes.') : ''
+    exportRestriction.value = inspectionFailed || (permissions && !permissions.has(pdfjs.PermissionFlag.COPY))
+      ? (zh.value ? '此 PDF 未允许复制或导出内容。' : 'This PDF does not permit copying or export.') : ''
     activeDocument.value = pdfDocument
     pdfNavigation.attach(props.file.id, pdfDocument, page.value, goTo, navigateDestination)
   } catch (reason) {
@@ -615,7 +723,7 @@ onMounted(async () => {
       findController: find,
       annotationMode: pdfjs.AnnotationMode.ENABLE_STORAGE,
       imageResourcesPath: new URL('./pdfjs/images/', document.baseURI).href,
-      maxCanvasPixels: 16777216
+      maxCanvasPixels: PDF_MAX_CANVAS_PIXELS
     })
     links.setViewer(viewer)
     events.on('pagesinit', () => {
@@ -634,11 +742,14 @@ onMounted(async () => {
       if (disposed) return
       if (renderError) error.value = renderError.message
       else firstPaint.value = true
+      scheduleCacheTrim()
     })
+    events.on('scalechanging', () => { if (viewer) { scale.value = viewer.currentScaleValue; saveView() } })
     events.on('pagechanging', ({ pageNumber }: { pageNumber: number }) => {
       page.value = pageNumber
       pdfNavigation.setPage(props.file.id, pageNumber)
       saveView()
+      scheduleCacheTrim()
     })
     events.on(
       'updatefindmatchescount',
@@ -674,6 +785,7 @@ onBeforeUnmount(() => {
   generation++
   resizeObserver?.disconnect()
   cancelAnimationFrame(resizeFrame)
+  clearTimeout(cacheTimer)
   bus.off('find', focusSearch)
   bus.off('selectAll', selectAll)
   bus.off('file-changed', reloadChangedFile)
@@ -702,6 +814,8 @@ onBeforeUnmount(() => {
   color: var(--editorColor);
   background: var(--editorBgColor);
 }
+.pdf-reading-body { display: flex; flex: 1; min-height: 0; min-width: 0; overflow: hidden; }
+.pdf-reading-body :deep(.pdf-annotation-workspace) { min-width: 0; }
 .pdf-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -789,4 +903,8 @@ onBeforeUnmount(() => {
 .pdf-toolbar button { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 30px; padding: 5px; border-color: transparent; background: transparent; }
 .pdf-toolbar button[aria-pressed=true] { color: var(--themeColor); background: var(--themeColor20); }
 .pdf-toolbar button:focus-visible { outline: 2px solid var(--themeColor); outline-offset: 1px; }
+.pdf-find-options { position: relative; }
+.pdf-find-options summary { cursor: pointer; list-style: none; padding: 5px; }
+.pdf-find-options > div { position: absolute; right: 0; top: 30px; z-index: 30; width: 170px; padding: 12px; display: flex; flex-direction: column; gap: 10px; background: var(--editorBgColor); border: 1px solid var(--editorColor10); border-radius: 8px; box-shadow: 0 5px 20px #0003; }
+.pdf-find-options label { display: flex; align-items: center; gap: 5px; }
 </style>

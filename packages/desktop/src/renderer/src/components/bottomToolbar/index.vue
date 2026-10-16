@@ -5,6 +5,7 @@
   >
     <div
       v-if="!hidden"
+      v-ui-motion.appear="!hidden"
       class="bottom-toolbar"
       role="toolbar"
       :aria-label="t('bottomToolbar.title')"
@@ -77,6 +78,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { vUiMotion } from '@/util/uiMotion'
 import bus from '@/bus'
 import ToolbarIcon from './toolbarIcon.vue'
 import ToolbarMenu from './toolbarMenu.vue'

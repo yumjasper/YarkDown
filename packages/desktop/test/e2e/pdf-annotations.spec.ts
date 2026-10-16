@@ -19,6 +19,7 @@ test('creates standard annotations, keeps drafts across tabs, roundtrips comment
   const original = Buffer.from(await doc.save())
   writeFileSync(filename, original)
   const { app, page } = await launchWithDoc(filename, { suppressErrorDialog: true })
+  await expect(page.locator('.editor-wrapper')).toHaveCount(0)
   const rendererErrors: string[] = []
   page.on('console', (message) => {
     if (message.type() !== 'error') return
@@ -51,6 +52,8 @@ test('creates standard annotations, keeps drafts across tabs, roundtrips comment
         .getByRole('button', { name: kind, exact: true })
         .click()
       await expect(page.locator('.pdf-draft-layer')).toHaveCount(1)
+      if (!await page.locator('.pdf-annotation-sidebar').isVisible()) await page.getByRole('button', { name: /^批注列表/ }).click()
+      await page.locator('.pdf-annotation-item').filter({ hasText: kind }).last().click()
       await page.getByRole('textbox', { name: '批注正文', exact: true }).fill(`${kind}的中文评论`)
       await page.getByRole('button', { name: '应用修改' }).click()
       if (kind === '下划线')
@@ -58,6 +61,7 @@ test('creates standard annotations, keeps drafts across tabs, roundtrips comment
     }
     const clickPointTool = async(tool: string, x: number, y: number) => {
       await page.getByRole('button', { name: tool, exact: true }).click()
+      await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
       const bounds = await page.locator('.pdf-reader .canvasWrapper').first().boundingBox()
       if (!bounds) throw new Error('PDF page not visible')
       await page.mouse.click(bounds.x + x, bounds.y + y)
@@ -79,19 +83,24 @@ test('creates standard annotations, keeps drafts across tabs, roundtrips comment
         await page.locator('.pdf-marker-settings summary').click()
       }
       await page.getByRole('button', { name: tool, exact: true }).click()
+      await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
       const bounds = await page.locator('.pdf-reader .canvasWrapper').first().boundingBox()
       if (!bounds) throw new Error('PDF page not visible')
-      await page.mouse.move(bounds.x + 80, bounds.y + 280)
+      await page.mouse.move(bounds.x + 80, bounds.y + (tool === '高亮' ? 340 : 280))
       await page.mouse.down()
-      await page.mouse.move(bounds.x + 130, bounds.y + 300, { steps: 5 })
-      await page.mouse.move(bounds.x + 190, bounds.y + 280, { steps: 5 })
+      await page.mouse.move(bounds.x + 130, bounds.y + (tool === '高亮' ? 360 : 300), { steps: 5 })
+      await page.mouse.move(bounds.x + 190, bounds.y + (tool === '高亮' ? 340 : 280), { steps: 5 })
       await page.mouse.up()
     }
+    await expect(page.locator('.pdf-annotation-item')).toHaveCount(7)
+    await page.getByRole('searchbox', { name: '搜索批注', exact: true }).fill('作者甲')
+    await expect(page.locator('.pdf-annotation-item')).toHaveCount(1)
+    await page.getByRole('searchbox', { name: '搜索批注', exact: true }).fill('')
     await expect(page.locator('.pdf-annotation-item')).toHaveCount(7)
     await expect(page.locator('.tabs-container li.active')).toHaveClass(/unsaved/)
     await sendIpcToRenderer(app, 'mt::new-untitled-tab', true, '# Another tab')
     await page.locator('.tabs-container li').filter({ hasText: 'source.pdf' }).click()
-    await expect(page.getByRole('button', { name: /批注列表/ })).toHaveAccessibleName('批注列表 (7)')
+    await expect(page.getByRole('button', { name: /^批注列表/ })).toHaveAccessibleName('批注列表 (7)')
     await app.evaluate(({ dialog }, filePath) => {
       dialog.showSaveDialog = async(_window, _options?: SaveDialogOptions) => ({
         canceled: false,
@@ -100,7 +109,7 @@ test('creates standard annotations, keeps drafts across tabs, roundtrips comment
     }, copy)
     await page.getByRole('button', { name: '保存副本', exact: true }).click()
     await expect(page.locator('.tabs-container li.active')).toContainText('annotated.pdf')
-    await page.getByRole('button', { name: /批注列表/ }).click()
+    await page.getByRole('button', { name: /^批注列表/ }).click()
     await expect(page.locator('.pdf-annotation-item')).toHaveCount(7)
     await expect(page.locator('.pdf-annotation-sidebar')).toContainText(
       '这是一条可以共享的中文评论'
@@ -158,7 +167,7 @@ test('creates standard annotations, keeps drafts across tabs, roundtrips comment
     await expect(page.locator('.pdf-annotation-item')).toHaveCount(6)
     await expect(page.locator('.tabs-container li.active')).not.toHaveClass(/unsaved/)
     await expect(page.locator('.pdf-reader .textLayer')).toContainText('PDF text for highlighting')
-    await expect(page.getByRole('button', { name: /批注列表/ })).toHaveAccessibleName('批注列表 (6)')
+    await expect(page.getByRole('button', { name: /^批注列表/ })).toHaveAccessibleName('批注列表 (6)')
     await expect
       .poll(() =>
         page

@@ -3,6 +3,7 @@ import type { IFrontmatterToken, ILexOption, TLexedToken } from './types';
 import { Marked } from 'marked';
 import compatibleTaskList from './compatibleTaskList';
 import footnoteExtension from './extensions/footnote';
+import gameExtension from './extensions/game';
 import mathExtension, { doubleBackslashMathExtension, gfmMathExtension, singleBackslashMathExtension } from './extensions/math';
 import multilineBlockquoteExtension from './extensions/multilineBlockquote';
 import fm from './frontMatter';
@@ -21,6 +22,7 @@ export function lexBlock(
     // marked.use() on the global singleton would make math / footnote sticky:
     // any consumer that once passed `texMathDollars: true` would get math parsing forever.
     const m = new Marked();
+    m.use(gameExtension());
 
     if (texMathDollars) {
         m.use(

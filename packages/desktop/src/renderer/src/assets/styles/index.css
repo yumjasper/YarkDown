@@ -50,7 +50,7 @@
   --buttonBorder: 1px solid #dcdfe6;
   --buttonShadow: none;
   --buttonFontColorHover: var(--buttonFontColor);
-  --buttonBgColorHover: linear-gradient(#f9f9f9, #f2f2f2);
+  --buttonBgColorHover: #f5f5f7;
   --buttonBorderHover: var(--buttonBorder);
   --buttonFontColorActive: var(--buttonFontColor);
   --buttonBgColorActive: #f0f0f0;
@@ -59,15 +59,15 @@
 
   --buttonPrimaryFontColor: #ffffff;
   --buttonPrimaryBgColor: var(--themeColor);
-  --buttonPrimaryBorder: none;
-  --buttonPrimaryShadow: 0 0 8px 0 rgba(0, 0, 0, 0.1);
+  --buttonPrimaryBorder: 1px solid transparent;
+  --buttonPrimaryShadow: none;
   --buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
   --buttonPrimaryBgColorHover: var(--buttonPrimaryBgColor);
   --buttonPrimaryBorderHover: var(--buttonPrimaryBorder);
   --buttonPrimaryFontColorActive: var(--buttonPrimaryFontColor);
   --buttonPrimaryBgColorActive: var(--buttonPrimaryBgColor);
   --buttonPrimaryBorderActive: var(--buttonPrimaryBorder);
-  --buttonPrimaryFocusBorder: none;
+  --buttonPrimaryFocusBorder: 1px solid transparent;
   --buttonPrimaryFocusShadow: inset 0 0 0 1px rgba(13, 91, 55, 0.5), 0 0 0 1px var(--themeColor);
   --tableBorderColor: #e5e5e5;
 
@@ -116,22 +116,22 @@
   --notificationErrorBg: #ff6969;
 }
 
-::-webkit-scrollbar,
-::-webkit-scrollbar-corner {
-  background: var(--floatHoverColor);
+html::-webkit-scrollbar,
+html ::-webkit-scrollbar { width: 10px; height: 10px; background: transparent; }
+html::-webkit-scrollbar-corner,
+html ::-webkit-scrollbar-corner { background: transparent; }
+html::-webkit-scrollbar-thumb,
+html ::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--editorColor) 24%, transparent);
+  background-clip: padding-box;
+  min-height: 32px;
 }
-
-::-webkit-scrollbar:vertical {
-  width: 12px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--editorColor30);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--editorColor50);
-}
+html::-webkit-scrollbar-thumb:hover,
+html ::-webkit-scrollbar-thumb:hover { background-color: color-mix(in srgb, var(--editorColor) 42%, transparent); }
+html::-webkit-scrollbar-button,
+html ::-webkit-scrollbar-button { display: none; }
 
 :focus {
   outline: none;
@@ -290,7 +290,7 @@ div.el-tab-pane {
   color: var(--buttonFontColor);
   background: var(--buttonBgColor);
   border: var(--buttonBorder);
-  border-radius: 5px;
+  border-radius: 8px;
   box-shadow: var(--buttonShadow);
   padding: 7px 14px;
 }
@@ -323,7 +323,7 @@ div.el-tab-pane {
   color: var(--buttonPrimaryFontColor);
   background: var(--buttonPrimaryBgColor);
   border: var(--buttonPrimaryBorder);
-  border-radius: 5px;
+  border-radius: 8px;
   box-shadow: var(--buttonPrimaryShadow);
   padding: 7px 14px;
 }

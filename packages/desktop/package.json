@@ -1,7 +1,7 @@
 {
-  "name": "marktext",
+"name": "marktext",
   "productName": "YarkText",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "YarkText",
   "main": "./out/main/index.js",
   "author": {
@@ -109,9 +109,9 @@
     "write-file-atomic": "^8.0.0"
   },
   "optionalDependencies": {
-    "native-keymap": "^3.3.9",
+    "@vscode/ripgrep-win32-arm64": "1.18.0",
     "@vscode/ripgrep-win32-x64": "1.18.0",
-    "@vscode/ripgrep-win32-arm64": "1.18.0"
+    "native-keymap": "^3.3.9"
   },
   "devDependencies": {
     "@electron/rebuild": "^4.2.1",

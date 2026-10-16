@@ -11,7 +11,7 @@
         <li
           v-for="file of tabs"
           :key="file.id"
-          :title="file.pathname"
+          :title="file.isSaved ? file.pathname : `${file.filename} — 未保存，按 Ctrl+S 保存`"
           :class="{ active: currentFile?.id === file.id, unsaved: !file.isSaved }"
           :data-id="file.id"
           @click.stop="selectFile(file)"
@@ -19,7 +19,12 @@
           @contextmenu.prevent="handleContextMenu($event, file)"
         >
           <span>{{ file.filename }}</span>
-          <span class="unsaved-dot" />
+          <span
+            class="unsaved-dot"
+            title="未保存的修改"
+            role="img"
+            aria-label="未保存的修改"
+          />
           <el-icon
             class="close-icon"
             :size="12"
@@ -83,12 +88,7 @@ const selectFile = (file: IFileState) => {
 }
 
 const removeFileInTab = (file: IFileState) => {
-  const { isSaved } = file
-  if (isSaved) {
-    editorStore.FORCE_CLOSE_TAB(file)
-  } else {
-    editorStore.CLOSE_UNSAVED_TAB(file)
-  }
+  void editorStore.CLOSE_TAB(file)
 }
 
 // Original methods
@@ -275,7 +275,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .close-icon {
   cursor: pointer;
-  transition: opacity 0.15s ease-in-out;
+  transition: opacity var(--ui-motion-fast) ease, color var(--ui-motion-fast) ease;
 }
 
 .close-icon:hover {
@@ -316,8 +316,8 @@ onBeforeUnmount(() => {
     display: none;
   }
   & > li {
-      transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out;
-      border-radius: var(--shell-item-radius) var(--shell-item-radius) 0 0;
+    transition: color var(--ui-motion-fast) ease, background-color var(--ui-motion-fast) ease;
+    border-radius: var(--shell-item-radius) var(--shell-item-radius) 0 0;
     position: relative;
     padding: 0 8px;
     color: var(--editorColor50);
@@ -406,13 +406,14 @@ onBeforeUnmount(() => {
   cursor: pointer;
   color: var(--editorColor50);
   opacity: 0;
+  transition: opacity var(--ui-motion-fast) ease, color var(--ui-motion-fast) ease;
   &.always-visible {
     opacity: 1;
   }
 }
 
 .editor-tabs > .new-file:hover {
-  transition: all 0.15s ease-in-out;
+  color: var(--focusColor);
   & > svg {
     fill: var(--focusColor);
   }

@@ -429,6 +429,7 @@ export class MarkdownToState {
                 break;
             }
 
+            case 'gameDirective':
             case 'paragraph': {
                 value = token.text;
                 // A standalone `[TOC]` line is a table-of-contents marker, not

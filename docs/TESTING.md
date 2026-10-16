@@ -12,10 +12,38 @@ PDF.js 通过受窗口隔离的 IPC 会话按需读取 256 KB 数据块，首屏
 加载提示显示当前阶段、已读取字节与文件大小，首屏绘制后收起；SHA-256 在主进程流式计算，
 校验及权限检查完成前可阅读，批注编辑暂不可用。每次分块读取后立即关闭句柄，避免 Windows 原子保存锁冲突。
 PDF 目录与缩略图位于全局左侧边栏，目录复用 Markdown 的 toc.vue 树、展开状态、当前项和主题样式；缩略图只绘制附近页面。支持单页、连续、双页和全屏阅读。工具栏使用 SVG 图标，按钮保留文字提示和无障碍名称。
-选中文字后，复制、搜索、高亮、下划线、删除线、评论及在线翻译菜单出现在选区结束位置，滚动或 Escape 收起。
+选中文字后，复制、搜索、高亮、下划线、删除线、评论及 OpenCode 翻译入口出现在选区结束位置，滚动或 Escape 收起。
 记号笔提供五色、粗细和“仅文本突出显示”开关；自由标记仍写入 Highlight，不提供手绘画笔创建入口。
 题注支持直接输入、颜色、字号、字间距、拖动及宽度调整；橡皮擦支持撤销。
-在线翻译由用户点击后打开 Bing，最多传入 5000 字符。
+OpenCode 翻译入口先检测本地 CLI、OpenCode 2 版本、服务商登录记录及零单价文本模型，
+浮动菜单直接展示翻译 SVG 图标；点击后通过官方 `opencode run --format json` 提交选区，
+侧栏显示原文与译文，支持选择语言、零单价模型、取消、重试和复制译文。主进程重新核验
+模型目录，不允许付费模型或自动切换付费来源；源文本通过 stdin 传递，最多 30,000 字符。
+CLI 保留官方内置 build 代理，限制为仅读取本次临时工作区，禁止编辑、Shell 及其他工具，
+不替换官方 system prompt。120 秒超时或取消会终止 CLI 子进程，
+并通过官方会话中断接口尝试中断本次创建的会话，
+不会停止共享服务。服务端拒绝免费调用时显示限制，不将部分输出或原始错误作为译文。
+仅打开工具栏翻译入口时，检测就绪后自动通过官方 `opencode pair` 在应用内打开
+未修改的官方 Web UI；返回设置后不会立即重新打开。官方会话上方保留可折叠的原文对照。
+配对地址仅由主进程
+消费，只允许本机回环地址；原生视图使用独立内存会话、沙箱和上下文隔离，不加载 YarkText
+preload。用户复制选区或本页文字的翻译提示后，在官方界面创建会话、选择免费模型、
+粘贴并手动发送，译文保留在原生会话中；官方界面模式不自动提交文字或提取模型输出。
+关闭面板或窗口会释放原生视图，不停止用户的共享 OpenCode 服务。隐藏 PDF 标签页和
+显示应用内弹窗时隐藏视图；布局会随窗口及编辑器缩放更新。
+Windows 可发现 npm 安装及桌面版附带 CLI，三个平台均可手动选择 CLI；面板提供各平台安装与登录
+指引，安装及登录命令只复制，不自动执行。
+专项测试为 `test/e2e/pdf-opencode.spec.ts`、`test/unit/specs/opencode-setup.spec.ts` 和
+`test/unit/specs/opencode-web.spec.ts`、`test/unit/specs/opencode-translation.spec.ts` 和
+`test/unit/specs/opencode-translation-process.spec.ts`。
+常规成功、拒绝、取消及过期响应的界面测试使用模拟 CLI 响应。
+设置 `YARKTEXT_OPENCODE_TRANSLATION_TEST=1` 可用实际安装的 CLI 和 Big Pickle 免费模型
+翻译测试 PDF 选区并验证侧栏中的中文译文；此测试会发送一条不含个人数据的测试句。
+设置 `YARKTEXT_OPENCODE_WEB_TEST=1` 可运行
+依赖本机 OpenCode 2 的原生配对、隔离、布局、弹窗与释放检查；此用例不发送模型消息。
+`test/e2e/pdf-link-navigation.spec.ts` 检查 PDF 目录页的显式目标、命名目标、翻页动作和
+侧栏书签均在阅读器内跳转，只有真正的网页链接交给外部浏览器；兼容 PDF.js 当前的
+`data-internal-link` 标记。
 打印前保存当前草稿，再通过 Chromium PDF 插件调用原生打印对话框，避免把编辑器工具栏打印进正文。
 
 批注使用 `pdf-lib` 在主进程写入标准 PDF 注释字典及独立的外观流，没有把批注压平进正文：
@@ -87,6 +115,12 @@ Playwright 的 `headless: true` 不控制 Electron 的原生窗口。
 系统快捷键、主题细节和打包后的行为。相关变更仍需运行对应 spec。
 打包后的验证使用 `node scripts/smoke-packaged.mjs <exe路径>`。
 
+依赖裁剪由 `packages/desktop/electron-builder.yml` 的 `files` 控制：浏览器端 PDF.js、
+Canvas 原生后端和图表依赖不再重复收录 npm 源文件；PDF 字体、CMap、WASM 和 Worker
+仍保留在 `out/renderer`。主进程保留 `docx/dist/index.cjs` 和 `pdf-lib` 的 CommonJS
+入口。调整这些规则后，须验证实际安装包中的离线 PDF 阅读与批注保存、Word 导出和
+Mermaid 渲染；开发构建能访问完整 `node_modules`，不能单独作为裁剪正确性的依据。
+
 连续开发时可在单独终端运行：
 
 ```sh
@@ -111,6 +145,28 @@ pnpm -C packages/muya exec vitest run src/state/__tests__/tocBlock.spec.ts
 新增回归优先放在能重现问题的最低层：解析、序列化、状态、路径和命令逻辑用单元测试；
 真实浏览器的光标、布局、输入行为用 Muya 浏览器 E2E；跨 Electron 进程和原生功能用 desktop E2E。
 等待可观察状态或使用 `expect.poll`，避免用长固定延时掩盖时序问题。
+
+编辑器布局回归使用 `pnpm -C packages/desktop exec playwright test test/e2e/editor-layout.spec.ts`，
+运行前先执行 `pnpm build:unpack`。用例检查图片插入时源码与占位提示分行，
+并通过 Electron 的 `before-input-event` 检查 Ctrl+N（macOS 为 Command+N）在当前窗口新建标签页。
+TXT 分栏用例检查同文档共享编辑与撤销、不同文件分别保存、当前栏查找替换、独立光标、
+分隔线拖动和键盘调宽、缩略图及 PDF 不显示拆分按钮。
+TXT 右上角的拆分按钮或 Ctrl+\\（macOS 为 Command+\\）打开左右两栏；
+各栏顶部下拉框选择已打开的 TXT，关闭栏保留文件标签，双击分隔线恢复等宽。
+
+应用控件回归见 `test/e2e/ui-controls.spec.ts`：检查首页按钮边缘悬停与聚焦时尺寸稳定、
+顶部菜单及底部菜单重复点击开关、外部点击与 Escape 关闭、嵌套命令和复选菜单执行，
+以及偏好设置的开关、圆角卡片、滚动条、分类导航和浅深色主题。
+顶部菜单由应用内界面展示，命令通过原生菜单路径在主进程执行；
+TXT 的查找、替换、自动换行等直接操作入口不作为弹出菜单处理。
+`menu-zoom-preferences.spec.ts` 继续检查原生菜单 API 的缩放定位与设置持久化。
+
+`settings-arcade-style.spec.ts` 逐一检查八个设置分类与小憩的公共字体、字号、原生滚动条、
+Element Plus 下拉列表的自绘滚动条、分类切换后滚动位置、小窗口无横向溢出、
+精选游戏单双列切换、棋盘可见性及文档内容保持。
+设置与小憩以 `ui-surface` 标记使用 `assets/styles/surfaces.css` 的公共样式，
+下拉列表通过 `pref-control-popper` 覆盖传送到页面外层的菜单；
+游戏 iframe 的作者内容与文档中的字体保持独立。
 
 Windows 安装页默认勾选“同时安装 PDF 阅读器”。取消后移除独立 unpack 的 PDF 阅读脚本、Worker、字体、编解码资源及批注写入依赖，写入组件禁用标志，并移除 PDF 关联声明；Markdown/TXT 与 Markdown 导出 PDF 不受影响。
 PDF 批注写入模块延迟加载，编辑器模式无需 PDF 依赖即可启动。交互安装可以重新选择组件；静默升级保留上次选择，`/NOPDF` 和 `/PDF` 可显式指定组件状态。ZIP 和开发构建保留完整功能。

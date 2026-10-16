@@ -1,5 +1,18 @@
 <template>
   <div class="pref-sidebar">
+    <button
+      class="pref-back"
+      @click="closeSettings"
+    >
+      <ArrowLeft
+        width="16"
+        height="16"
+      />
+      {{ locale.startsWith('zh') ? '返回应用' : 'Back to app' }}
+    </button>
+    <div class="pref-brand">
+      YarkText
+    </div>
     <h3 class="title">
       {{ t('preferences.title') }}
     </h3>
@@ -27,16 +40,17 @@
       </el-autocomplete>
     </section>
     <section class="category">
-      <div
+      <button
         v-for="c of getCategory()"
         :key="c.name"
         class="item"
         :class="{ active: c.label === currentCategory }"
+        :aria-current="c.label === currentCategory ? 'page' : undefined"
         @click="handleCategoryItemClick(c)"
       >
         <component :is="c.icon" />
         <span>{{ c.name }}</span>
-      </div>
+      </button>
     </section>
   </div>
 </template>
@@ -44,7 +58,7 @@
 import { getCategory, getTranslatedSearchContent } from './config'
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Search } from '@element-plus/icons-vue'
+import { Search, ArrowLeft } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 
 interface SearchEntry {
@@ -63,7 +77,8 @@ interface CategoryItem {
   path: string
 }
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+const closeSettings = () => window.electron.windowControl.close()
 
 const router = useRouter()
 const route = useRoute()
@@ -256,21 +271,21 @@ onUnmounted(() => {
     &::before {
       content: '';
       width: 4px;
-      height: 0;
+      height: 100%;
       background: var(--highlightThemeColor);
       position: absolute;
       left: 0;
       border-top-right-radius: 3px;
       border-bottom-right-radius: 3px;
-      transition: height 0.25s ease-in-out;
-      top: 50%;
-      transform: translateY(-50%);
+      transition: transform var(--ui-motion-normal) var(--ui-motion-ease);
+      top: 0;
+      transform: scaleY(0);
     }
     &.active {
       color: var(--sideBarTitleColor);
     }
     &.active::before {
-      height: 100%;
+      transform: scaleY(1);
     }
   }
 }

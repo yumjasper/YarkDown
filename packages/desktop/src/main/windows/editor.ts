@@ -93,8 +93,8 @@ class EditorWindow extends BaseWindow {
     bufferStoreInfo: BufferStoreInfo | null = null
   ): BrowserWindow {
     const { menu: appMenu, env, preferences, editorBufferStore } = this._accessor
-    const addBlankTab =
-      !bufferStoreInfo && !rootDirectory && fileList.length === 0 && markdownList.length === 0
+    const addBlankTab = false
+    this._markdownToOpen?.push(...markdownList)
 
     const mainWindowState = windowStateKeeper({
       defaultWidth: 1200,
@@ -583,9 +583,12 @@ class EditorWindow extends BaseWindow {
       if (!Array.isArray(bufferState.restoreWarnings)) {
         bufferState.restoreWarnings = []
       }
+      const restoreWarnings = bufferState.restoreWarnings
       const rootDirectory = bufferState.project?.rootDirectory
-      if (rootDirectory) {
+      if (rootDirectory && fs.existsSync(rootDirectory)) {
         this.openFolder(rootDirectory)
+      } else if (rootDirectory) {
+        bufferState.project = {}
       }
 
       // We still need to load the files of all opened tabs and check for errors/changed files
@@ -594,6 +597,7 @@ class EditorWindow extends BaseWindow {
         preferences.getAll()
 
       const fileOpenRequests: Promise<void>[] = []
+      const missingCleanTabs = new Set<RestoredTab>()
       for (const tab of bufferState.tabs) {
         if (!tab.pathname) {
           continue
@@ -620,14 +624,27 @@ class EditorWindow extends BaseWindow {
                 appMenu.addRecentlyUsedDocument(tab.pathname)
               }
             })
-            .catch((err: Error) => {
-              const { message, stack } = err
-              tab.isSaved = isPdfFile(tab.filename || '') && !(Array.isArray(tab.pdfAnnotations) && tab.pdfAnnotations.length)
-              log.error(`[ERROR] Cannot open file: ${message}\n\n${stack}`)
-              browserWindow!.webContents.send('mt::show-notification', {
-                title: `Could not find file ${tab.filename} on disk, please save your work.`,
-                type: 'error',
-                message: err.message
+            .catch((err: NodeJS.ErrnoException) => {
+              const missing = err.code === 'ENOENT' || err.code === 'ENOTDIR'
+              const hasPdfDraft = (Array.isArray(tab.pdfAnnotations) && tab.pdfAnnotations.length > 0) || (Array.isArray(tab.pdfFormValues) && tab.pdfFormValues.length > 0)
+              if (missing && tab.isSaved && !hasPdfDraft) {
+                missingCleanTabs.add(tab)
+                return
+              }
+
+              const pathname = tab.pathname
+              // Text buffers can survive independently of a deleted source file.
+              // PDF annotations still need the original PDF to be recovered.
+              if (missing && !isPdfFile(tab.filename || pathname)) tab.pathname = ''
+              tab.isSaved = false
+              restoreWarnings.push({
+                tabId: tab.id,
+                pathname: tab.pathname,
+                msg: missing
+                  ? `原文件已不存在，已保留未保存的内容，请另存为新文件。\n${pathname}`
+                  : `无法读取原文件，已保留编辑内容：${err.message}`,
+                style: 'warn',
+                exclusiveType: 'restore-file-unavailable'
               })
             })
         )
@@ -635,6 +652,7 @@ class EditorWindow extends BaseWindow {
 
       Promise.all(fileOpenRequests)
         .then(() => {
+          bufferState.tabs = bufferState.tabs.filter(tab => !missingCleanTabs.has(tab))
           // After all files are loaded, we can send the state to the renderer and open the tabs
           browserWindow!.webContents.send('mt::load-state', bufferState)
         })

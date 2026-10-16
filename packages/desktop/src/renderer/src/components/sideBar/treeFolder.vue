@@ -1,5 +1,8 @@
 <template>
-  <div class="side-bar-folder">
+  <div
+    v-ui-motion="!isCollapsed"
+    class="side-bar-folder"
+  >
     <div
       ref="folderEl"
       class="folder-name"
@@ -60,6 +63,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue'
+import { vUiMotion } from '@/util/uiMotion'
 import { storeToRefs } from 'pinia'
 import { useProjectStore } from '@/store/project'
 import { showContextMenu } from '../../contextMenu/sideBar'
@@ -159,7 +163,7 @@ onMounted(() => {
       flex-shrink: 0;
       color: var(--sideBarIconColor);
       margin-right: 5px;
-      transition: transform 0.25s ease-out;
+      transition: transform var(--ui-motion-normal) var(--ui-motion-ease);
       transform: rotate(90deg);
     }
     & > .icon-arrow.fold {

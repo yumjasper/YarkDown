@@ -1,7 +1,7 @@
 <template>
   <div
     class="plain-text-editor"
-    :class="{ 'is-active': active }"
+    :class="{ 'is-active': active && focused }"
   >
     <form
       v-if="showGoTo"
@@ -33,7 +33,7 @@
       class="plain-text-content"
       :style="textStyle"
     />
-    <editor-search v-if="active" />
+    <editor-search v-if="active && focused" />
     <div class="plain-text-status">
       <span>{{ t('plainText.type') }}</span>
       <span>{{ t('plainText.total', { count: lines }) }}</span>
@@ -50,11 +50,11 @@ import { computed, markRaw, nextTick, onBeforeUnmount, onMounted, ref, watch } f
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import type CodeMirror from 'codemirror'
-import codeMirror from '@/codeMirror'
+import codeMirror from '@/codeMirror/core'
 import bus from '@/bus'
 import { useEditorStore } from '@/store/editor'
 import { usePreferencesStore } from '@/store/preferences'
-import { wordCount } from '@muyajs/core'
+import { wordCount } from '@muyajs/core/utils/wordCount'
 import {
   findTextMatches,
   isPlainTextFile,
@@ -63,12 +63,15 @@ import {
 } from '@shared/plainText'
 import EditorSearch from '../search/index.vue'
 import { SyntheticHistory } from './syntheticHistory'
+import type { PlainTextDocuments, TextDocumentView } from './plainTextDocuments'
 
-const props = defineProps<{ active: boolean }>()
+const props = defineProps<{ active: boolean; focused: boolean; fileId: string; pool: PlainTextDocuments }>()
+const emit = defineEmits<{ activate: [] }>()
 const { t } = useI18n()
 const store = useEditorStore()
 const preferences = usePreferencesStore()
-const { currentFile, tabs } = storeToRefs(store)
+const { currentFile: globalCurrentFile, tabs } = storeToRefs(store)
+const currentFile = computed(() => tabs.value.find(file => file.id === props.fileId))
 const encodingLabel = computed(() =>
   currentFile.value?.encoding.encoding.toUpperCase().replace(/^UTF(\d)/, 'UTF-$1')
 )
@@ -88,7 +91,8 @@ const showGoTo = ref(false)
 const targetLine = ref(1)
 const position = ref({ line: 0, ch: 0 })
 const lines = ref(1)
-const documents = new Map<string, { doc: CodeMirror.Doc; history: SyntheticHistory }>()
+const documents = new Map<string, TextDocumentView>()
+let resize: ResizeObserver | undefined
 let cm: CodeMirror.Editor | undefined
 let activeId: string | undefined
 let loading = false
@@ -98,18 +102,19 @@ let matches: TextMatch[] = []
 let matchIndex = -1
 let marks: CodeMirror.TextMarker[] = []
 
-const isActive = () => !!currentFile.value && isPlainTextFile(currentFile.value.filename)
+const isActive = () => props.active && props.focused && !!currentFile.value && currentFile.value.id === globalCurrentFile.value?.id && isPlainTextFile(currentFile.value.filename)
 const commit = () => {
   if (loading || !cm || !activeId) return
   const state = documents.get(activeId)
   if (!state) return
   const markdown = state.doc.getValue()
+  if (tabs.value.find(file => file.id === activeId)?.markdown === markdown) return
   const cursor = { anchor: state.doc.getCursor('anchor'), focus: state.doc.getCursor('head') }
   store.LISTEN_FOR_CONTENT_CHANGE({
     id: activeId,
     markdown,
     wordCount: wordCount(markdown),
-    history: state.history.build(markdown),
+    history: state.shared.history.build(markdown),
     cursor,
     muyaIndexCursor: cursor
   })
@@ -198,7 +203,7 @@ const isCursor = (value: unknown): value is IndexCursor => {
 
 const loadFile = (payload?: unknown) => {
   const file = currentFile.value
-  if (!cm || !file || !isPlainTextFile(file.filename)) return
+  if (!props.active || !cm || !file || !isPlainTextFile(file.filename)) return
   const change = payload as
     { id?: string; cursor?: unknown; muyaIndexCursor?: unknown; isReload?: boolean } | undefined
   if (change?.id && change.id !== file.id) return
@@ -208,31 +213,30 @@ const loadFile = (payload?: unknown) => {
   matches = []
   matchIndex = -1
   let state = documents.get(file.id)
+  const switched = activeId !== file.id
+  const reloaded = !!state && state.doc.getValue() !== file.markdown
   if (!state) {
-    state = {
-      doc: markRaw(new codeMirror.Doc(file.markdown, 'text/plain')),
-      history: new SyntheticHistory(file.markdown, true)
-    }
+    state = props.pool.open(file.id, file.markdown)
     documents.set(file.id, state)
   } else if (state.doc.getValue() !== file.markdown) {
     state.doc.setValue(file.markdown)
     state.doc.clearHistory()
-    state.history = new SyntheticHistory(file.markdown, true)
+    state.shared.history = new SyntheticHistory(file.markdown, true)
   }
   activeId = file.id
   if (cm.getDoc() !== state.doc) cm.swapDoc(state.doc)
   const cursor = change?.cursor ?? file.cursor ?? change?.muyaIndexCursor ?? file.muyaIndexCursor
-  if (isCursor(cursor)) cm.setSelection(cursor.anchor, cursor.focus, { scroll: false })
+  if (isCursor(cursor) && (switched || reloaded || (props.focused && !!change?.cursor))) cm.setSelection(cursor.anchor, cursor.focus, { scroll: false })
   loading = false
   position.value = cm.getCursor()
   lines.value = cm.lineCount()
   showGoTo.value = false
-  store.UPDATE_TOC([])
+  if (isActive()) store.UPDATE_TOC([])
   nextTick(() => {
-    if (!cm || activeId !== currentFile.value?.id || !isActive()) return
+    if (!cm || activeId !== currentFile.value?.id || !props.active) return
     cm.refresh()
-    cm.scrollIntoView(cm.getCursor(), 40)
-    if (store.TAKE_OPEN_INTENT(file.pathname) !== false) cm.focus()
+    if (switched || reloaded) cm.scrollIntoView(cm.getCursor(), 40)
+    if (isActive() && store.TAKE_OPEN_INTENT(file.pathname) !== false && !document.activeElement?.closest('.plain-text-group-bar')) cm.focus()
   })
 }
 
@@ -270,8 +274,9 @@ const focus = () => {
   if (isActive()) cm?.focus()
 }
 const flush = () => {
-  if (isActive()) commit()
+  if (props.active) commit()
 }
+defineExpose({ focus, flush })
 
 const contextMenu = async (instance: CodeMirror.Editor, event: Event) => {
   if (!(event instanceof MouseEvent)) return
@@ -307,6 +312,8 @@ const handlers: Record<string, (payload: unknown) => void> = {
 }
 
 watch(wrap, (value) => cm?.setOption('lineWrapping', value))
+watch(() => props.fileId, () => loadFile())
+watch(() => props.focused, value => { if (value) nextTick(cursorActivity) })
 watch(
   () => props.active,
   (value) => {
@@ -319,7 +326,7 @@ watch(textStyle, () => nextTick(() => cm?.refresh()))
 watch(
   () => tabs.value.map((tab) => tab.id),
   (ids) => {
-    for (const id of documents.keys()) if (!ids.includes(id)) documents.delete(id)
+    for (const [id, view] of documents) if (!ids.includes(id)) { props.pool.release(view); documents.delete(id) }
   }
 )
 onMounted(() => {
@@ -349,20 +356,27 @@ onMounted(() => {
     })
   )
   cm!.on('cursorActivity', cursorActivity)
+  cm!.on('focus', () => emit('activate'))
   cm!.on('changes', () => {
-    if (loading || !isActive()) return
+    if (loading || !props.active) return
     commit()
     lines.value = cm!.lineCount()
-    if (query) search({ value: query, opt: searchOptions })
+    if (query && isActive()) search({ value: query, opt: searchOptions })
   })
   cm!.on('contextmenu', contextMenu)
   for (const [event, handler] of Object.entries(handlers)) bus.on(event, handler)
+  if (container.value) {
+    resize = new ResizeObserver(() => { if (container.value?.clientWidth) cm?.refresh() })
+    resize.observe(container.value)
+  }
   loadFile()
 })
 onBeforeUnmount(() => {
   commit()
   for (const [event, handler] of Object.entries(handlers)) bus.off(event, handler)
   clearMarks()
+  resize?.disconnect()
+  for (const view of documents.values()) props.pool.release(view)
   documents.clear()
   cm?.getWrapperElement().remove()
   cm = undefined

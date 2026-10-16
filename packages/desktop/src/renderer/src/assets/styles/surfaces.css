@@ -1,0 +1,123 @@
+:root {
+  --ui-text-size: 14px;
+  --ui-caption-size: 12px;
+  --ui-section-size: 15px;
+  --ui-surface-radius: 12px;
+  --ui-scrollbar-width: 10px;
+  --ui-scrollbar-thumb: color-mix(in srgb, var(--editorColor) 24%, transparent);
+  --ui-scrollbar-hover: color-mix(in srgb, var(--editorColor) 42%, transparent);
+}
+
+.ui-surface {
+  font: 400 var(--ui-text-size)/1.65 var(--uiFontFamily);
+  -webkit-font-smoothing: antialiased;
+}
+.ui-surface button,
+.ui-surface input,
+.ui-surface select,
+.ui-surface textarea,
+.ui-surface .el-select__wrapper,
+.ui-surface .el-table {
+  font-family: var(--uiFontFamily);
+}
+
+/* Settings poppers are teleported outside their owning surface. */
+.pref-control-popper,
+.pref-autocomplete {
+  font: 400 var(--ui-text-size)/1.65 var(--uiFontFamily);
+  border-radius: var(--ui-surface-radius);
+}
+.ui-surface::-webkit-scrollbar,
+.ui-surface ::-webkit-scrollbar,
+.pref-control-popper ::-webkit-scrollbar,
+.pref-autocomplete ::-webkit-scrollbar {
+  width: var(--ui-scrollbar-width);
+  height: var(--ui-scrollbar-width);
+  background: transparent;
+}
+.ui-surface::-webkit-scrollbar-thumb,
+.ui-surface ::-webkit-scrollbar-thumb,
+.pref-control-popper ::-webkit-scrollbar-thumb,
+.pref-autocomplete ::-webkit-scrollbar-thumb {
+  min-height: 32px;
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: var(--ui-scrollbar-thumb);
+  background-clip: padding-box;
+}
+.ui-surface::-webkit-scrollbar-thumb:hover,
+.ui-surface ::-webkit-scrollbar-thumb:hover,
+.pref-control-popper ::-webkit-scrollbar-thumb:hover,
+.pref-autocomplete ::-webkit-scrollbar-thumb:hover {
+  background-color: var(--ui-scrollbar-hover);
+}
+.ui-surface::-webkit-scrollbar-track,
+.ui-surface ::-webkit-scrollbar-track,
+.ui-surface::-webkit-scrollbar-corner,
+.ui-surface ::-webkit-scrollbar-corner { background: transparent; }
+.ui-surface::-webkit-scrollbar-button,
+.ui-surface ::-webkit-scrollbar-button { display: none; }
+.ui-surface .el-scrollbar__bar.is-vertical,
+.pref-control-popper .el-scrollbar__bar.is-vertical,
+.pref-autocomplete .el-scrollbar__bar.is-vertical { width: 4px; right: 3px; }
+.ui-surface .el-scrollbar__bar.is-horizontal,
+.pref-control-popper .el-scrollbar__bar.is-horizontal,
+.pref-autocomplete .el-scrollbar__bar.is-horizontal { height: 4px; bottom: 3px; }
+.ui-surface .el-scrollbar__thumb,
+.pref-control-popper .el-scrollbar__thumb,
+.pref-autocomplete .el-scrollbar__thumb {
+  border-radius: 999px;
+  background: var(--ui-scrollbar-thumb);
+  opacity: 1;
+}
+.ui-surface .el-scrollbar__thumb:hover,
+.pref-control-popper .el-scrollbar__thumb:hover,
+.pref-autocomplete .el-scrollbar__thumb:hover { background: var(--ui-scrollbar-hover); }
+
+.arcade-panel.ui-surface[role] {
+  font: 400 var(--ui-text-size)/1.65 var(--uiFontFamily);
+  width: min(420px, calc(100vw - 68px));
+  padding: 20px;
+  border-color: color-mix(in srgb, var(--editorColor) 12%, transparent);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px #0000001a;
+}
+.arcade-panel.ui-surface[role].arcade-panel-wide { width: min(900px, calc(100vw - 68px)); }
+.arcade-panel.ui-surface[role].arcade-embedded { width: min(100%, 360px); padding: 6px; box-shadow: none; }
+.arcade-panel.ui-surface[role] > header { gap: 12px; margin-bottom: 18px; }
+.arcade-panel.ui-surface[role] > header strong { font-size: 20px; font-weight: 650; letter-spacing: -.3px; }
+.arcade-panel.ui-surface[role] > header > button { width: 28px; height: 28px; padding: 0; border-radius: 8px; font-size: 20px; background: transparent; }
+.arcade-panel.ui-surface[role] > header > button:hover { background: var(--floatHoverColor); }
+.arcade-panel.ui-surface[role] nav { gap: 6px; padding: 8px; border-radius: 12px; background: color-mix(in srgb, var(--editorColor) 4%, transparent); }
+.arcade-panel.ui-surface[role] nav button { flex: 1 0 auto; padding: 7px 10px; border-radius: 8px; background: transparent; font-size: 13px; line-height: 1.5; white-space: nowrap; }
+.arcade-panel.ui-surface[role] nav button.active { border-color: transparent; background: var(--editorBgColor); box-shadow: 0 1px 3px #0000000d; font-weight: 600; }
+.arcade-panel.ui-surface[role] .arcade-muted,
+.arcade-panel.ui-surface[role] footer,
+.arcade-panel.ui-surface[role] .arcade-profile,
+.arcade-panel.ui-surface[role] .arcade-help,
+.arcade-panel.ui-surface[role] .arcade-message { font-size: var(--ui-caption-size); line-height: 1.75; }
+.arcade-panel.ui-surface[role] > h3,
+.arcade-panel.ui-surface[role] .js13k-heading h3 { font-size: var(--ui-section-size); font-weight: 600; margin: 20px 0 12px; }
+.arcade-panel.ui-surface[role] .arcade-player { flex-wrap: wrap; gap: 10px; margin-block: 16px; font-size: 13px; }
+.arcade-panel.ui-surface[role] .arcade-player > .arcade-profile { margin: 0; flex: 1; }
+.arcade-panel.ui-surface[role] .arcade-profile[open] label { display: block; margin-top: 10px; }
+.arcade-panel.ui-surface[role] .classic-game { max-width: 320px; margin-inline: auto; box-sizing: border-box; }
+.arcade-panel.ui-surface[role] .arcade-player input { padding: 6px 10px; border-radius: 8px; background: var(--editorBgColor); }
+.arcade-panel.ui-surface[role] .arcade-owner { margin: 8px 0 16px; }
+.arcade-panel.ui-surface[role] .arcade-stats { gap: 8px; margin: 16px 0; font-size: 13px; }
+.arcade-panel.ui-surface[role] .arcade-stats > span { padding: 10px 8px; border: 1px solid color-mix(in srgb, var(--editorColor) 10%, transparent); border-radius: 10px; background: transparent; }
+.arcade-panel.ui-surface[role] .arcade-ranking { max-height: 180px; padding-left: 28px; margin-bottom: 12px; font-size: 13px; }
+.arcade-panel.ui-surface[role] .arcade-ranking li { padding: 7px 4px; border-bottom: 1px solid color-mix(in srgb, var(--editorColor) 8%, transparent); }
+.arcade-panel.ui-surface[role] footer { margin-top: 18px; padding-top: 12px; }
+.arcade-panel.ui-surface[role] .js13k-card { border: 1px solid color-mix(in srgb, var(--editorColor) 12%, transparent); border-radius: 12px; background: transparent; line-height: 1.65; }
+.arcade-panel.ui-surface[role] .js13k-card:hover { background: var(--floatHoverColor); border-color: var(--editorColor30); }
+.arcade-panel.ui-surface[role] .js13k-card strong { font-size: 16px; font-weight: 600; }
+.arcade-panel.ui-surface[role] .js13k-card small,
+.arcade-panel.ui-surface[role] .js13k-credit { font-size: var(--ui-caption-size); }
+.arcade-panel.ui-surface[role] .classic-eyebrow,
+.arcade-panel.ui-surface[role] .classic-tip,
+.arcade-panel.ui-surface[role] .classic-badge { font-size: var(--ui-caption-size); line-height: 1.6; }
+@media (max-width: 600px) {
+  .arcade-panel.ui-surface[role] { padding: 14px; }
+  .arcade-panel.ui-surface[role] > header { flex-wrap: wrap; gap: 6px; }
+}

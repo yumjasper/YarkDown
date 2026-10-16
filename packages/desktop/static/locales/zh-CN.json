@@ -381,7 +381,12 @@
   },
   "recent": {
     "noTabsOpen": "您没有打开的标签页。",
-    "newFile": "新建文件"
+    "newFile": "新建文件",
+    "openFile": "打开文件",
+    "openFolder": "打开文件夹",
+    "continue": "继续：{name}",
+    "recentFiles": "最近打开",
+    "welcome": "选择文件，开始阅读或编辑。"
   },
   "import": {
     "title": "导入或打开",

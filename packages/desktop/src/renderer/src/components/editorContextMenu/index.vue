@@ -3,6 +3,7 @@
     <div
       v-if="request"
       ref="panel"
+      v-ui-motion.appear="request"
       class="editor-context-menu"
       role="menu"
       :aria-label="t('contextMenu.editorMenu')"
@@ -101,6 +102,7 @@
     <div
       v-if="request && activeItems.length"
       ref="submenu"
+      v-ui-motion.appear="activeId"
       class="editor-context-menu context-submenu"
       role="menu"
       :style="positionStyle(submenuPosition)"
@@ -141,6 +143,7 @@
 </template>
 
 <script setup lang="ts">
+import { vUiMotion } from '@/util/uiMotion'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useEditorStore } from '@/store/editor'
@@ -149,7 +152,7 @@ import bus from '@/bus'
 import ToolbarIcon from '../bottomToolbar/toolbarIcon.vue'
 import type { EditorContextMenuRequest, EditorContextNativeItem } from '@shared/types/menu'
 import { fitContextMenu, fitContextSubmenu } from './position'
-import { tableActions } from '@muyajs/core'
+const tableActions = ref<string[]>([])
 
 interface Item {
   id: string
@@ -315,7 +318,7 @@ const groups = computed(() => [
         {
           id: 'table',
           label: t('commands.paragraph.table'),
-          items: tableActions.map((action) => {
+          items: tableActions.value.map((action) => {
             const { row, column, rows, columns } = tablePosition.value
             return {
               id: `table-${action}`,
@@ -465,6 +468,7 @@ const openMenu = async (payload: EditorContextMenuRequest): Promise<void> => {
   const tableCell = !props.sourceCode ? target?.closest<HTMLTableCellElement>('td,th') : null
   inTable.value = !!tableCell
   if (tableCell) {
+    tableActions.value = [...(await import('@muyajs/core/block/gfm/table/actions')).tableActions]
     const row = tableCell.parentElement as HTMLTableRowElement
     const table = tableCell.closest('table')!
     tablePosition.value = {

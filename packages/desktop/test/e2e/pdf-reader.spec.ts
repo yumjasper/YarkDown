@@ -37,7 +37,7 @@ test('reads PDF offline, searches, switches text tabs and protects the original 
   const filename = path.join(directory, '中文 reader #1.PDF')
   const original = createPdf()
   writeFileSync(filename, original)
-  const { app, page } = await launchWithDoc(filename, { suppressErrorDialog: true })
+  const { app, page } = await launchWithDoc(filename, { suppressErrorDialog: true, preferences: { tabBarVisibility: true } })
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
   try {
@@ -52,13 +52,30 @@ test('reads PDF offline, searches, switches text tabs and protects the original 
     await expect(page.locator('.pdfViewer .page').first()).toHaveAttribute('data-loaded', 'true')
     await page.getByRole('searchbox', { name: '搜索 PDF 文字' }).fill('needle')
     await expect(page.locator('.pdf-matches')).toHaveText('1 / 1')
+    await page.locator('.pdf-find-options summary').click()
+    await page.getByRole('checkbox', { name: '区分大小写', exact: true }).check()
+    await page.getByRole('searchbox', { name: '搜索 PDF 文字' }).fill('NEEDLE')
+    await expect(page.locator('.pdf-matches')).toHaveText('0 / 0')
+    await page.getByRole('checkbox', { name: '区分大小写', exact: true }).uncheck()
+    await expect(page.locator('.pdf-matches')).toHaveText('1 / 1')
+    await page.locator('.pdf-find-options summary').click()
+    await page.getByRole('combobox', { name: '页面布局' }).selectOption('single')
+    await page.getByLabel('PDF 页面', { exact: true }).focus()
+    await page.keyboard.press('Home')
+    await expect(page.getByRole('spinbutton', { name: '页码' })).toHaveValue('1')
+    await page.keyboard.press('PageDown')
+    await expect(page.getByRole('spinbutton', { name: '页码' })).toHaveValue('2')
+    await page.getByRole('combobox', { name: '页面布局' }).selectOption('continuous')
     await sendIpcToRenderer(app, 'mt::editor-ask-file-save')
     await app.evaluate(({ dialog }) => {
       dialog.showSaveDialog = async() => ({ canceled: true, filePath: '' })
     })
     await sendIpcToRenderer(app, 'mt::editor-ask-file-save-as')
     expect(readFileSync(filename)).toEqual(original)
-    await sendIpcToRenderer(app, 'mt::new-untitled-tab', true, '# Markdown alongside PDF')
+    await page.locator('.new-file').click()
+    await expect(page.locator('.editor-component')).toBeVisible()
+    await page.locator('.editor-component').click()
+    await page.keyboard.type('# Markdown alongside PDF')
     await expect(page.locator('.editor-component')).toContainText('Markdown alongside PDF')
     await clickMenuById(app, 'sourceCodeModeMenuItem')
     await page.locator('.source-code .CodeMirror').evaluate(element => {
@@ -104,6 +121,7 @@ test('reads PDF offline, searches, switches text tabs and protects the original 
     expect(errors).toEqual([])
     await expectNoRendererErrors(app)
   } finally {
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().forEach(win => win.destroy()))
     await app.close()
     rmSync(directory, { recursive: true, force: true })
   }

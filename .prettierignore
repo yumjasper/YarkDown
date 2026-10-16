@@ -2,6 +2,8 @@
 # @stylistic: 4-space indent + semicolons), which differs from the root Prettier
 # style (2-space, no semi). Skip it so `pnpm format` doesn't fight muya's own lint.
 packages/muya/
+packages/desktop/vendor/js13k/
+packages/desktop/src/renderer/public/js13k/
 
 # pnpm owns this file's formatting; Prettier reformats it wholesale and pnpm
 # rewrites it back on the next install, so the churn is pure noise.

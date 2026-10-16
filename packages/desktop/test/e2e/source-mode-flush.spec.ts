@@ -34,6 +34,7 @@ test.describe('source mode entry flushes same-frame edits', () => {
   })
 
   test.afterAll(async() => {
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().forEach(win => win.destroy()))
     await app.close()
   })
 

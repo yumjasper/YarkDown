@@ -364,7 +364,12 @@
   },
   "recent": {
     "noTabsOpen": "Vous n'avez aucun onglet ouvert.",
-    "newFile": "Nouveau fichier"
+    "newFile": "Nouveau fichier",
+    "openFile": "Ouvrir un fichier",
+    "openFolder": "Ouvrir un dossier",
+    "continue": "Continuer : {name}",
+    "recentFiles": "Fichiers récents",
+    "welcome": "Choisissez un fichier à lire ou à modifier."
   },
   "import": {
     "title": "Importer ou ouvrir",

@@ -32,7 +32,7 @@ test('anchors native menus at scaled coordinates and restores preferences after 
         const bounds = element.getBoundingClientRect()
         return { x: bounds.left, y: bounds.bottom }
       })
-      await button.dispatchEvent('mousedown', { button: 0 })
+      await page.evaluate(point => window.electron.windowControl.popupTopMenu(0, point), rect)
       await expect.poll(() => app.evaluate(() => (globalThis as typeof globalThis & { __popupPoint?: unknown }).__popupPoint)).toEqual({ x: Math.round(rect.x * zoom), y: Math.round(rect.y * zoom) })
       await page.locator('.tabs-container li.active').evaluate(element => element.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 240, clientY: 72, button: 2 })))
       await expect.poll(() => app.evaluate(() => (globalThis as typeof globalThis & { __popupPoint?: unknown }).__popupPoint)).toEqual({ x: Math.round(240 * zoom), y: Math.round(72 * zoom) })

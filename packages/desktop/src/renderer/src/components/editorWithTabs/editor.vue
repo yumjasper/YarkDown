@@ -64,11 +64,12 @@
         </div>
       </template>
     </el-dialog>
-    <editor-search v-if="!sourceCode" />
+    <editor-search v-if="!sourceCode && !plainText && !pdf" />
     <table-tools
       v-if="!sourceCode"
       :muya="editor"
     />
+    <document-games v-if="!sourceCode && !plainText && !pdf" :root="editor?.domNode ?? null" />
   </div>
 </template>
 
@@ -77,6 +78,7 @@ import { computed, ref, shallowRef, reactive, watch, onMounted, onBeforeUnmount,
 import { isPlainTextFile } from '@shared/plainText'
 import { isPdfFile } from '@shared/pdf'
 import TableTools from '../tableTools/index.vue'
+import DocumentGames from '../arcade/documentGames.vue'
 import log from 'electron-log'
 import {
   Muya,
@@ -179,6 +181,7 @@ const props = defineProps<{
   textDirection: string
   platform?: string
 }>()
+const emit = defineEmits<{ ready: [] }>()
 
 // Get stores
 const preferencesStore = usePreferencesStore()
@@ -482,8 +485,7 @@ watch(focus, (value) => {
 // items) rather than blanket-enabling everything (#3531).
 watch([sourceCode, plainText, pdf], ([isSource, isPlainText, isPdf]) => {
   const windowId = window.marktext?.env?.windowId ?? -1
-  window.electron.ipcRenderer.send('mt::set-editor-format-menus-enabled', windowId, !isSource, isPlainText, isPdf)
-  if (isSource) {
+  if (isSource || isPlainText || isPdf) {
     return
   }
   nextTick(() => {
@@ -1173,20 +1175,20 @@ const toSearchMatches = (result: unknown) => {
 }
 
 const handleSearch = (payload: unknown) => {
-  if (plainText.value || !editor.value) return
+  if (sourceCode.value || plainText.value || !editor.value) return
   const { value, opt } = payload as { value: string; opt?: ISearchOption }
   editorStore.SEARCH(toSearchMatches(editor.value.search(value, opt)))
   scrollToHighlight()
 }
 
 const handReplace = (payload: unknown) => {
-  if (plainText.value || !editor.value) return
+  if (sourceCode.value || plainText.value || !editor.value) return
   const { value, opt } = payload as { value: string; opt?: IReplaceOption }
   editorStore.SEARCH(toSearchMatches(editor.value.replace(value, opt)))
 }
 
 const handleFindAction = (action: unknown) => {
-  if (plainText.value || !editor.value) return
+  if (sourceCode.value || plainText.value || !editor.value) return
   editorStore.SEARCH(toSearchMatches(editor.value.find(action as 'previous' | 'next')))
   scrollToHighlight()
 }
@@ -2149,7 +2151,12 @@ onMounted(() => {
 
   document.addEventListener('keyup', keyup)
 
+  if (!sourceCode.value) {
+    if (props.cursor) applyCursor(muya, props.cursor)
+    else if (isIndexCursor(currentFile.value?.muyaIndexCursor)) muya.setCursorByOffset(currentFile.value.muyaIndexCursor)
+  }
   setEditorWidth(editorLineWidth.value)
+  emit('ready')
 })
 
 onBeforeUnmount(() => {

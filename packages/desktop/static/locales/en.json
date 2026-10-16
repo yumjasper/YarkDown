@@ -381,7 +381,12 @@
   },
   "recent": {
     "noTabsOpen": "You have no tabs open.",
-    "newFile": "New File"
+    "newFile": "New File",
+    "openFile": "Open File",
+    "openFolder": "Open Folder",
+    "continue": "Continue: {name}",
+    "recentFiles": "Recent files",
+    "welcome": "Choose a file to start reading or editing."
   },
   "import": {
     "title": "Import or Open",

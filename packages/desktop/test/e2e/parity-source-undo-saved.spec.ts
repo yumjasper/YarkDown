@@ -66,6 +66,7 @@ test.describe('Parity PG2 — WYSIWYG caret restored after a source-mode edit', 
 
     // Desired: the caret is restored into the "third para here" block.
     expect(enclosingText).toContain('third para')
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().forEach(win => win.destroy()))
     await app.close()
   })
 })
@@ -94,6 +95,7 @@ test.describe('Parity PG14 — first undo after source mode reverts the edit in 
     // Desired: the document reverts to the exact pre-source-mode content in a
     // single undo step.
     expect((await getMarkdownContent(page, app)).trim()).toBe('base')
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().forEach(win => win.destroy()))
     await app.close()
   })
 
@@ -112,6 +114,7 @@ test.describe('Parity PG14 — first undo after source mode reverts the edit in 
     await redo(app)
     await page.waitForTimeout(600)
     expect((await getMarkdownContent(page, app)).trim()).toContain('SOURCE ADDED LINE')
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().forEach(win => win.destroy()))
     await app.close()
   })
 
@@ -129,6 +132,7 @@ test.describe('Parity PG14 — first undo after source mode reverts the edit in 
     await undo(app)
     await page.waitForTimeout(600)
     expect((await getMarkdownContent(page, app)).trim()).toBe('hello')
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().forEach(win => win.destroy()))
     await app.close()
   })
 })
@@ -162,6 +166,7 @@ test.describe('Parity PG15 — undo back to on-disk content restores the saved i
     await expect
       .poll(() => page.evaluate(() => !!document.querySelector('.editor-tabs li.unsaved')))
       .toBe(false)
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().forEach(win => win.destroy()))
     await app.close()
   })
 
@@ -204,6 +209,7 @@ test.describe('Parity PG15 — undo back to on-disk content restores the saved i
       () => !!document.querySelector('.editor-tabs li.unsaved')
     )
     expect(dirty).toBe(true)
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().forEach(win => win.destroy()))
     await app.close()
   })
 })
@@ -286,6 +292,7 @@ test.describe('Item 248 — a real source-mode keystroke dirties the tab dot', (
     await expect
       .poll(() => getMarkdownContent(page, app).then((md) => md.trim()))
       .toContain('saved baseline SRCKEY')
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().forEach(win => win.destroy()))
     await app.close()
   })
 })
@@ -344,6 +351,7 @@ test.describe('Item 256 — save -> clean -> edit -> dirty -> undo-to-saved cycl
     await undo(app)
     await expect.poll(() => wysiwygText(page)).toBe(savedText)
     await expect.poll(() => isTabDirty(page)).toBe(false)
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().forEach(win => win.destroy()))
     await app.close()
   })
 })

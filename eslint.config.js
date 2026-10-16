@@ -14,6 +14,8 @@ export default [
   // 0. Global ignores (must be first)
   {
     ignores: [
+      'packages/desktop/vendor/js13k/**',
+      'packages/desktop/src/renderer/public/js13k/**',
       '.claude/**',
       '**/out/**',
       '**/dist/**',

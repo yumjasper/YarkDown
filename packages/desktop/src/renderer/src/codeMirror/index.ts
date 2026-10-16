@@ -1,9 +1,8 @@
 import { filter } from 'fuzzaldrin'
 import 'codemirror/addon/edit/closebrackets'
 import 'codemirror/addon/edit/closetag'
-import 'codemirror/addon/selection/active-line'
 import 'codemirror/mode/meta'
-import codeMirror from 'codemirror/lib/codemirror'
+import codeMirror from './core'
 import type CodeMirror from 'codemirror'
 
 import loadmode from './loadmode'
@@ -11,9 +10,6 @@ import overlayMode from './overlayMode'
 import multiplexMode from './mltiplexMode'
 import registerMarkdownMathMode from './markdownMathMode'
 import languages from './modes'
-import 'codemirror/lib/codemirror.css'
-import './index.css'
-import 'codemirror/theme/railscasts.css'
 
 // The runtime is imported from `codemirror/lib/codemirror` (an `any` shim), but
 // the public editor surface is typed via `@types/codemirror`.

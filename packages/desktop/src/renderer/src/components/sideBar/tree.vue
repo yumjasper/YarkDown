@@ -47,6 +47,8 @@
       </div>
       <div
         v-show="showOpenedFiles"
+        ref="openedFilesList"
+        v-ui-motion="showOpenedFiles"
         class="opened-files-list"
       >
         <transition-group name="list">
@@ -86,6 +88,7 @@
       <div
         v-show="showDirectories"
         ref="treeWrapper"
+        v-ui-motion="showDirectories"
         class="tree-wrapper"
         tabindex="0"
         @mousedown="handleTreeMouseDown"
@@ -153,6 +156,7 @@
 </template>
 
 <script setup lang="ts">
+import { vUiMotion } from '@/util/uiMotion'
 import { ref, computed, provide, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useProjectStore } from '@/store/project'
@@ -188,7 +192,6 @@ const props = defineProps<{
   // `v-if="projectTree"`. Type the prop nullable to match runtime + the
   // template guard.
   projectTree: TreeNode | null
-  openedFiles?: TabDescriptor[]
   tabs?: TabDescriptor[]
 }>()
 
@@ -204,9 +207,11 @@ const showDirectories = ref(readSectionExpanded(SHOW_DIRECTORIES_KEY))
 const showOpenedFiles = ref(readSectionExpanded(SHOW_OPENED_FILES_KEY))
 const input = ref<HTMLInputElement | null>(null)
 const treeWrapper = ref<HTMLDivElement | null>(null)
+const openedFilesList = ref<HTMLDivElement | null>(null)
 
 const rowRegistry: TreeRowRegistry = new Map()
 provide(TREE_ROW_REGISTRY_KEY, rowRegistry)
+
 
 const projectStore = useProjectStore()
 const editorStore = useEditorStore()
@@ -285,6 +290,29 @@ const scrollRowIntoView = (container: HTMLElement, row: HTMLElement): void => {
   })
   if (scrollTop !== null) container.scrollTop = scrollTop
 }
+
+// The opened list follows tab identity, including unsaved and out-of-project
+// files; project-tree auto-reveal preferences must not hide the active tab.
+watch(
+  () => [
+    editorStore.currentFile?.id,
+    props.tabs?.map((tab) => tab.id),
+    openedFilesInSidebar.value,
+    showOpenedFiles.value,
+    layoutStore.showSideBar,
+    layoutStore.rightColumn
+  ] as const,
+  async () => {
+    await nextTick()
+    const container = openedFilesList.value
+    if (!container || container.offsetParent === null) return
+    const row = Array.from(container.querySelectorAll<HTMLElement>('.opened-file')).find(
+      (element) => element.dataset.tabId === editorStore.currentFile?.id
+    )
+    if (row) scrollRowIntoView(container, row)
+  },
+  { flush: 'post', immediate: true }
+)
 
 // Reveals only: the caret, the tree selection and `activeItem` stay untouched.
 // `force` (the "Show in Side Bar" command) ignores the preference.
@@ -411,8 +439,17 @@ const handleTreeKeydown = (event: KeyboardEvent): void => {
   }
 }
 
-// The row can arrive after the tab does: opening a project delivers its
-// contents incrementally, so every tree change is a new chance to reveal.
+watch(
+  () => editorStore.currentFile?.id,
+  () => {
+    if (activeItem.value?.pathname && editorStore.currentFile?.pathname &&
+      window.fileUtils.isSamePathSync(activeItem.value.pathname, editorStore.currentFile.pathname)) return
+    projectStore.CHANGE_ACTIVE_ITEM({})
+  },
+  { flush: 'sync', immediate: true }
+)
+
+// Project contents arrive incrementally, after the active tab may already exist.
 watch(
   () => [projectStore.treeVersion, editorStore.currentFile?.pathname] as const,
   ([, pathname]) => {
@@ -460,12 +497,11 @@ onUnmounted(() => {
 
 .list-enter-active,
 .list-leave-active {
-  transition: all 0.2s;
+  transition: opacity var(--ui-motion-normal) ease, transform var(--ui-motion-normal) var(--ui-motion-ease);
 }
-.list-enter, .list-leave-to
-  /* .list-leave-active for below version 2.1.8 */ {
+.list-enter-from, .list-leave-to {
   opacity: 0;
-  transform: translateX(-50px);
+  transform: translateX(-6px);
 }
 .tree-view {
   font-size: 14px;
@@ -485,7 +521,7 @@ onUnmounted(() => {
 
 .icon-arrow {
   margin-right: 6px;
-  transition: transform 0.25s ease-out;
+  transition: transform var(--ui-motion-normal) var(--ui-motion-ease);
   transform: rotate(90deg);
   color: var(--sideBarTextColor);
   cursor: pointer;

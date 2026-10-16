@@ -1,5 +1,5 @@
 <template>
-  <div class="pref-container">
+  <div class="pref-container ui-surface">
     <title-bar v-if="showCustomTitleBar" />
     <side-bar />
     <div
@@ -10,13 +10,23 @@
         v-if="!showCustomTitleBar"
         class="title-bar"
       />
-      <router-view class="pref-setting" />
+      <router-view v-slot="{ Component, route }">
+        <div
+          ref="settingsContent"
+          v-ui-motion="route.name"
+          class="pref-setting"
+        >
+          <component :is="Component" />
+        </div>
+      </router-view>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, watch, onMounted, nextTick } from 'vue'
+import { computed, ref, watch, onMounted, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
+import { vUiMotion } from '@/util/uiMotion'
 import { usePreferencesStore } from '@/store/preferences'
 import { storeToRefs } from 'pinia'
 import TitleBar from '@/prefComponents/common/titlebar.vue'
@@ -27,6 +37,9 @@ import { isMac } from '@/util'
 
 // Store
 const preferencesStore = usePreferencesStore()
+const settingsRoute = useRoute()
+const settingsContent = ref<HTMLElement>()
+watch(() => settingsRoute.fullPath, () => nextTick(() => settingsContent.value?.scrollTo(0, 0)))
 
 // Computed properties
 const { theme, titleBarStyle } = storeToRefs(preferencesStore)
@@ -144,3 +157,5 @@ onMounted(() => {
   }
 }
 </style>
+
+<style src="../assets/styles/preferences.css" />

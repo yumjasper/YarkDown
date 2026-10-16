@@ -1,5 +1,5 @@
 import type { IFileState } from '@shared/types/files'
-import { wordCount as getWordCount } from '@muyajs/core'
+import { wordCount as getWordCount } from '@muyajs/core/utils/wordCount'
 import { getUniqueId, deepClone } from '../util'
 
 // Helper module (NOT a Pinia store): defaults and factories for the editor
@@ -70,6 +70,7 @@ export const getOptionsFromState = (
 }
 
 const documentStateKeys = [
+  'pdfFormValues',
   'pdfAnnotations',
   'pdfSourceHash',
   'pdfView',
@@ -123,13 +124,10 @@ export const getBlankFileState = (
     id,
     filename: `${defaultFilenamePrefix}-${untitleId + 1}`,
     markdown,
+    isSaved: markdown.length === 0,
     wordCount: getWordCount(markdown),
-    // The freshly-loaded document IS its on-disk/clean baseline. The engine
-    // clears its undo history on `setContent`, so the baseline undo-stack depth
-    // (the synthetic save-tracking id) is 0. Seeding `lastSavedHistoryId` to 0
-    // (not -1) lets the dirty indicator clear again when an edit is undone back
-    // to this baseline, even before the document has ever been saved.
-    lastSavedHistoryId: 0
+    // Empty new tabs may close silently; imported content has no saved copy.
+    lastSavedHistoryId: markdown.length === 0 ? 0 : -1
   }) as IFileState
 }
 
@@ -156,9 +154,8 @@ export const createDocumentState = (
     // Read `src`: `docState.wordCount` defaults to a zeroed object, not a
     // sentinel, so it cannot say whether the caller supplied one.
     wordCount: src.wordCount ?? getWordCount(docState.markdown),
-    // See `getBlankFileState`: the loaded document is its own clean baseline and
-    // the engine's baseline undo-stack depth (the synthetic id) is 0.
-    lastSavedHistoryId: 0
+    // Recovered drafts have no saved baseline in the new engine history.
+    lastSavedHistoryId: docState.isSaved ? 0 : -1
   }) as IFileState
 }
 

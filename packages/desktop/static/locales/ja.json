@@ -364,7 +364,12 @@
   },
   "recent": {
     "noTabsOpen": "開いているタブがありません。",
-    "newFile": "新しいファイル"
+    "newFile": "新しいファイル",
+    "openFile": "ファイルを開く",
+    "openFolder": "フォルダーを開く",
+    "continue": "続ける：{name}",
+    "recentFiles": "最近使ったファイル",
+    "welcome": "ファイルを選択して閲覧や編集を始めましょう。"
   },
   "import": {
     "title": "インポートまたは開く",

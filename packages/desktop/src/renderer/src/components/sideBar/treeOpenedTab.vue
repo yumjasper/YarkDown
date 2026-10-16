@@ -1,7 +1,8 @@
 <template>
   <div
     class="opened-file"
-    :title="file.pathname"
+    :data-tab-id="file.id"
+    :title="file.isSaved ? file.pathname : `${file.filename} — 未保存，按 Ctrl+S 保存`"
     :class="[{ active: currentFile?.id === file.id, unsaved: !file.isSaved }]"
     @click="selectFile(file)"
   >
@@ -31,18 +32,11 @@ const editorStore = useEditorStore()
 const { currentFile } = storeToRefs(editorStore)
 
 const selectFile = (file: TabDescriptor): void => {
-  if (file.id !== currentFile.value?.id) {
-    editorStore.UPDATE_CURRENT_FILE(file)
-  }
+  editorStore.UPDATE_CURRENT_FILE(file)
 }
 
 const removeFileInTab = (file: TabDescriptor): void => {
-  const { isSaved } = file
-  if (isSaved) {
-    editorStore.FORCE_CLOSE_TAB(file)
-  } else {
-    editorStore.CLOSE_UNSAVED_TAB(file)
-  }
+  void editorStore.CLOSE_TAB(file)
 }
 </script>
 

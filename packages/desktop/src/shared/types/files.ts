@@ -4,7 +4,7 @@
 // commits. Until then, these are intentionally open structures — better an
 // imperfect surface than a placeholder that's wrong.
 
-import type { PdfAnnotation } from '../pdf'
+import type { PdfAnnotation, PdfFormValue } from '../pdf'
 
 export type LineEnding = 'lf' | 'crlf'
 
@@ -68,6 +68,7 @@ export interface FileSearchMatches {
  * `src/renderer/src/store/help.ts`.
  */
 export interface IFileState {
+  pdfFormValues?: PdfFormValue[]
   pdfAnnotations?: PdfAnnotation[]
   pdfSourceHash?: string
   pdfSaving?: boolean

@@ -32,9 +32,18 @@ import type {
   UnsavedFile
 } from './files'
 import type { BufferedState as BufferedStateType } from './bufferedState'
-import type { PdfSaveRequest, PdfSaveResult } from '../pdf'
+import type {
+  PdfSaveRequest,
+  PdfSaveResult,
+  PdfCreateRequest,
+  PdfAdvancedCapabilities,
+  PdfBlockInspection,
+  PdfAdvancedRequest,
+  PdfAdvancedResult
+} from '../pdf'
 import type { MenuTemplate, MenuPopupPosition, MenuBarItem, EditorContextMenuRequest } from './menu'
 import type { PandocCommandInfo } from './pandoc'
+import type { OpenCodeStatus, OpenCodeViewBounds, OpenCodeViewResult, OpenCodeTranslationRequest, OpenCodeTranslationResult } from './opencode'
 
 export interface SaveDialogRequest {
   title?: string
@@ -43,21 +52,32 @@ export interface SaveDialogRequest {
 }
 
 export type PlantumlFetchResult =
-  | { ok: true; mime: string; data: Uint8Array }
-  | { ok: false; error: string }
+  { ok: true; mime: string; data: Uint8Array } | { ok: false; error: string }
 
 // =================================================================
 // Invoke channels (renderer → main, returns Promise<T>)
 // =================================================================
 
 export interface IpcInvokeChannels {
+  'mt::opencode::status': { args: []; ret: OpenCodeStatus }
+  'mt::opencode::open-web': { args: [id: string, bounds: OpenCodeViewBounds]; ret: OpenCodeViewResult }
+  'mt::opencode::web-layout': { args: [id: string, bounds: OpenCodeViewBounds | null]; ret: boolean }
+  'mt::opencode::close-web': { args: [id: string]; ret: void }
+  'mt::opencode::choose-cli': { args: []; ret: OpenCodeStatus | null }
+  'mt::opencode::translate': { args: [id: string, request: OpenCodeTranslationRequest]; ret: OpenCodeTranslationResult }
+  'mt::opencode::cancel-translation': { args: [id: string]; ret: void }
+  'mt::recent-documents': { args: []; ret: string[] }
   'mt::pdf::open': { args: [pathname: string]; ret: { token: string; size: number } }
   'mt::pdf::read-range': { args: [token: string, begin: number, end: number]; ret: Uint8Array }
   'mt::pdf::hash': { args: [token: string]; ret: string }
   'mt::pdf::close': { args: [token: string]; ret: void }
   'mt::pdf::print': { args: [pathname: string]; ret: void }
+  'mt::pdf::create': { args: [request: PdfCreateRequest]; ret: string | null }
   'mt::pdf::save': { args: [request: PdfSaveRequest]; ret: PdfSaveResult }
   'mt::pdf::confirm-close': { args: [filename: string]; ret: 'save' | 'discard' | 'cancel' }
+  'mt::pdf::engine-capabilities': { args: []; ret: PdfAdvancedCapabilities }
+  'mt::pdf::inspect-blocks': { args: [pathname: string, page: number]; ret: PdfBlockInspection }
+  'mt::pdf::advanced': { args: [request: PdfAdvancedRequest]; ret: PdfAdvancedResult }
   'mt::ask-for-image-path': { args: []; ret: string[] }
   'mt::boot-info-async': { args: []; ret: BootInfo }
   'mt::clipboard::guess-file-path': { args: []; ret: string | null }
@@ -109,7 +129,7 @@ export interface IpcInvokeChannels {
   'mt::win::is-fullscreen': { args: []; ret: boolean }
   'mt::win::is-maximized': { args: []; ret: boolean }
   'mt::menu::get-menu-bar': { args: []; ret: MenuBarItem[] }
-  'mt::menu::execute': { args: [topIndex: number, subIndex: number]; ret: void }
+  'mt::menu::execute': { args: [topIndex: number, subIndex: number | number[]]; ret: void }
   // Main derives the BrowserWindow via BrowserWindow.fromWebContents(e.sender);
   // no need to pass windowId. Payload is the editor+project+layout snapshot.
   'update-buffer-state': { args: [payload: unknown]; ret: void }
@@ -163,9 +183,16 @@ export interface IpcSendChannels {
   'mt::open-file-by-window-id': [windowId: number, filePath: string, options?: unknown]
   'mt::open-keybindings-config': []
   'mt::open-setting-window': []
-  'mt::rename': [payload: { id: string; pathname: string; newPathname: string; currentFile?: unknown }]
+  'mt::rename': [
+    payload: { id: string; pathname: string; newPathname: string; currentFile?: unknown }
+  ]
   'mt::request-keybindings': []
-  'mt::set-editor-format-menus-enabled': [windowId: number, enabled: boolean, plainText?: boolean, pdf?: boolean]
+  'mt::set-editor-format-menus-enabled': [
+    windowId: number,
+    enabled: boolean,
+    plainText?: boolean,
+    pdf?: boolean
+  ]
   'mt::response-export': [
     payload: {
       type: ExportType
@@ -299,7 +326,9 @@ export interface IpcMainEventChannels {
   'mt::rg::progress': [payload: unknown]
   'mt::screenshot-captured': [filePath: string]
   'mt::set-line-ending': [lineEnding: LineEnding]
-  'mt::set-pathname': [payload: { id: string; pathname: string; filename: string }]
+  'mt::set-pathname': [
+    payload: { id: string; pathname: string; filename: string; savedMarkdown?: string }
+  ]
   'mt::set-view-layout': [layout: unknown]
   'mt::show-command-palette': []
   'mt::show-export-dialog': [type: ExportType | 'print']
@@ -309,7 +338,8 @@ export interface IpcMainEventChannels {
   'mt::switch-tab-by-file_path': [filePath: string, options?: TabOptions]
   'mt::switch-tab-by-index': [index: number]
   'mt::tab-save-failure': [tabId: string, message: string]
-  'mt::tab-saved': [tabId: string]
+  'mt::tab-saved': [tabId: string, savedMarkdown?: string]
+  'mt::close-confirmed': [discard: boolean]
   'mt::tabs-cycle-left': []
   'mt::tabs-cycle-right': []
   'mt::toggle-view-layout-entry': [entry: string]

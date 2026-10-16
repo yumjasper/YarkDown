@@ -31,7 +31,7 @@ YarkDown 基于 [MarkText](https://github.com/marktext/marktext)（MIT 协议）
 - 支持文件夹内快速搜索，方便在多文档之间切换
 - 默认支持导出 PDF、HTML、无样式 HTML、PNG 长图与 Word 文档
 - 编辑器侧边缩略图（minimap）：点击定位、拖动浏览，支持搜索匹配与光标标记
-- 内置小憩小游戏：右下角 `···` 按钮或 `Ctrl+Alt+G` 呼出独立浮层，包含 2048、迷你数独与轻消消，随时收起继续写作，局面与榜单本机保存（详见 [docs/MINI-GAMES.md](docs/MINI-GAMES.md)）
+- 内置小憩小游戏：侧边栏手柄图标或 `Ctrl+Alt+G` 呼出，包含 2048、迷你数独与闯关消消乐；自由交换、能量爆破和连消奖励，局面与榜单本机保存（详见 [docs/MINI-GAMES.md](docs/MINI-GAMES.md)）
 - 启动与渲染性能优化：延迟加载偏好页、Worker 绘制缩略图、大文件视口渲染
 
 ## 截图
@@ -52,7 +52,7 @@ YarkDown 基于 [MarkText](https://github.com/marktext/marktext)（MIT 协议）
 
 ![小憩小游戏](docs/assets/yarkdown-arcade.png)
 
-写作间隙，点击编辑器右下角 `···` 按钮或按 `Ctrl+Alt+G` 呼出小憩浮层，内置 2048、迷你数独与轻消消三款小游戏；按 `Esc` 或点击外部即可收起继续写作，局面与榜单仅保存在本机，不写入文档。
+写作间隙，点击侧边栏底部的手柄图标或按 `Ctrl+Alt+G` 呼出小憩。轻消消采用闯关制，交换保留、每四步赠送爆破，支持连消和星级奖励；另有 2048、迷你数独。按 `Esc` 或点击外部即可收起继续写作，局面与榜单仅保存在本机，不写入文档。
 
 ## 历史版本功能
 

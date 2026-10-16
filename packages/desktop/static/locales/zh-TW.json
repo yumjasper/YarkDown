@@ -364,7 +364,12 @@
   },
   "recent": {
     "noTabsOpen": "您沒有開啟的標籤頁。",
-    "newFile": "新建檔案"
+    "newFile": "新建檔案",
+    "openFile": "開啟檔案",
+    "openFolder": "開啟資料夾",
+    "continue": "繼續：{name}",
+    "recentFiles": "最近開啟",
+    "welcome": "選擇檔案，開始閱讀或編輯。"
   },
   "import": {
     "title": "匯入或開啟",

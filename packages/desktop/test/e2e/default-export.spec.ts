@@ -64,6 +64,7 @@ test('default exports create HTML, plain HTML, PDF, PNG and editable Word withou
     await expect(page.locator('.print-settings-dialog .el-dialog')).not.toBeVisible()
     await expectNoRendererErrors(app)
   } finally {
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().forEach(win => win.destroy()))
     await app.close()
     await rm(directory, { recursive: true, force: true })
   }

@@ -3,7 +3,9 @@
     ref="sourceCodeContainer"
     class="source-code"
     :class="{ virtualized }"
-  />
+  >
+    <editor-search />
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -16,10 +18,14 @@ import { findMarkdownHeadingLine, scrollSourceEditorToLine } from '@/util/source
 import { storeToRefs } from 'pinia'
 import type CodeMirror from 'codemirror'
 import codeMirror, { setCursorAtFirstLine, setTextDirection } from '../../codeMirror'
-import { wordCount as getWordCount } from '@muyajs/core'
+import { wordCount as getWordCount } from '@muyajs/core/utils/wordCount'
 import { adjustCursor } from '../../util'
 import bus from '../../bus'
 import { oneDarkThemes, railscastsThemes } from '@/config'
+import EditorSearch from '../search/index.vue'
+import { bindSourceSearch } from './sourceSearch'
+import { sourceHeadings } from '@muyajs/core/utils/sourceHeadings'
+import '@/assets/themes/codemirror/one-dark.css'
 
 interface MuyaIndexCursorLike {
   anchor: CodeMirror.Position
@@ -42,6 +48,10 @@ const commitTimer = ref<ReturnType<typeof setTimeout> | null>(null)
 const viewDestroyed = ref(false)
 const tabId = ref<string | null>(null)
 const virtualized = ref((props.markdown?.length || 0) > 160000)
+let disposeSearch: (() => void) | undefined
+const updateSourceToc = (markdown: string) => {
+  if (sourceCode.value && currentTab.value?.id === tabId.value) editorStore.UPDATE_TOC(sourceHeadings(markdown))
+}
 
 const {
   theme,
@@ -193,6 +203,7 @@ const handleFileChange = (payload: unknown) => {
     virtualized.value = newMarkdown.length > 160000
     editor.value.setOption('viewportMargin', virtualized.value ? 30 : Infinity)
     editor.value.setValue(newMarkdown)
+    updateSourceToc(newMarkdown)
   }
 
   // t('editor.sourceCode.cursorNullComment')
@@ -345,6 +356,7 @@ const saveContent = (cm: CodeMirror.Editor) => {
         wordCount,
         muyaIndexCursor: cursor
       })
+      updateSourceToc(newMarkdown)
     } else {
       // This may occur during tab switching but should not occur otherwise.
       console.warn('LISTEN_FOR_CONTENT_CHANGE: Cannot commit changes because not tab id was set!')
@@ -372,7 +384,8 @@ const handleScrollToHeader = (slug: unknown) => {
   if (!editor.value) return
   const index = editorStore.listToc.findIndex(item => item.slug === slug)
   if (index < 0) return
-  const line = findMarkdownHeadingLine(editor.value.getValue(), index)
+  const sourceLine = typeof slug === 'string' ? /^source-line-(\d+)$/.exec(slug) : null
+  const line = sourceLine ? Number(sourceLine[1]) : findMarkdownHeadingLine(editor.value.getValue(), index)
   if (line < 0) return
   // Large sources scroll inside CodeMirror; short sources retain the outer page scroller.
   scrollSourceEditorToLine(editor.value, line, virtualized.value ? editor.value.getScrollerElement() : sourceCodeContainer.value)
@@ -447,12 +460,15 @@ onMounted(() => {
 
   editor.value = codeMirrorInstance
   tabId.value = id
+  updateSourceToc(codeMirrorInstance.getValue())
+  disposeSearch = bindSourceSearch(codeMirrorInstance, editorStore, () => sourceCode.value && currentTab.value?.id === tabId.value)
   updateSelectionWordCount(codeMirrorInstance)
 
   listenChange(codeMirrorInstance)
 })
 
 onBeforeUnmount(() => {
+  disposeSearch?.()
   viewDestroyed.value = true
   if (commitTimer.value) clearTimeout(commitTimer.value)
 
@@ -476,11 +492,14 @@ onBeforeUnmount(() => {
       renderCursor: true
     })
   }
+  editor.value?.getWrapperElement().remove()
+  editor.value = null
 })
 </script>
 
 <style>
 .source-code {
+  position: relative;
   height: 100%;
   box-sizing: border-box;
   overflow: auto;
@@ -507,4 +526,6 @@ onBeforeUnmount(() => {
 .source-code .CodeMirror .cm-formatting-math {
   opacity: 0.65;
 }
+.source-code > .search-bar { z-index: 5; }
+.source-code .source-search-match { background: var(--selection-color, rgb(45 170 219 / 30%)); }
 </style>

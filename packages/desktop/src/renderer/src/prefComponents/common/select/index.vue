@@ -8,7 +8,7 @@
       class="description"
       style="display: flex; align-items: center"
     >
-      <span>{{ description }}:</span>
+      <span>{{ description }}</span>
       <LinkIcon
         v-if="more"
         :size="14"
@@ -18,6 +18,7 @@
     </div>
     <el-select
       v-model="selectValue"
+      popper-class="pref-control-popper"
       :disabled="disable"
       @change="select"
     >

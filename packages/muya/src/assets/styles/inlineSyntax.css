@@ -697,6 +697,22 @@ blockquote .mu-hide.mu-math > .mu-math-render {
     overflow-wrap: anywhere;
 }
 
+.mu-inline-image.mu-image-editing.mu-empty-image,
+.mu-inline-image.mu-image-editing.mu-image-fail {
+    box-sizing: border-box;
+    height: auto;
+    min-height: 50px;
+    padding-bottom: 50px;
+}
+
+.mu-inline-image.mu-image-editing.mu-empty-image::before,
+.mu-inline-image.mu-image-editing.mu-image-fail::before,
+.mu-inline-image.mu-image-editing.mu-empty-image > [class^='mu-image-icon-'],
+.mu-inline-image.mu-image-editing.mu-image-fail > [class^='mu-image-icon-'] {
+    top: auto;
+    bottom: 15px;
+}
+
 /* Reserve room for the 36px toolbar and its 10px floating offset. */
 .mu-inline-image-selected.mu-image-editing .mu-image-container {
     margin-top: 48px;

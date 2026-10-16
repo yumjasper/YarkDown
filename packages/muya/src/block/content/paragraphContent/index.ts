@@ -255,10 +255,16 @@ class ParagraphContent extends Format {
 
     override update(cursor?: IRenderCursor, highlights = []) {
         this.inlineRenderer.patch(this, cursor, highlights);
+        this._updateGamePreview();
         const { label } = this.inlineRenderer.getLabelInfo(this);
 
         if (this.scrollPage && label)
             this.scrollPage.updateRefLinkAndImage(label);
+    }
+
+    private _updateGamePreview() {
+        if (this.parent?.blockName === 'paragraph')
+            (this.parent as Paragraph).updateGamePreview(this.text);
     }
 
     override backspaceHandler(event: Event) {
@@ -296,6 +302,8 @@ class ParagraphContent extends Format {
 
     override inputHandler(event: Event) {
         super.inputHandler(event);
+        if (!this.isComposed)
+            this._updateGamePreview();
         const { eventCenter } = this.muya;
 
         eventCenter.emit('content-change', { block: this });

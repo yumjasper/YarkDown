@@ -334,9 +334,9 @@ img {
   font-size: 12px;
   font-weight: 400;
   text-align: center;
-  transition: all 0.25s ease-in-out;
+  transition: color var(--ui-motion-fast) ease;
   & .filename {
-    transition: all 0.25s ease-in-out;
+    transition: color var(--ui-motion-fast) ease;
   }
 }
 div.title > span {

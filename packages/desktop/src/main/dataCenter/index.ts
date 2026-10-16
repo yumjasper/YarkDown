@@ -1,7 +1,6 @@
 import fs from 'fs'
 import path from 'path'
 import { BrowserWindow, dialog, ipcMain } from 'electron'
-import keytar from 'keytar'
 import schema from './schema.json'
 import Store, { type Schema } from 'electron-store'
 import log from 'electron-log'
@@ -74,7 +73,8 @@ class DataCenter extends TypedEmitter<DataCenterEvents> {
     const data = this.store.store
     try {
       const encryptData = await Promise.all(
-        encryptKeys.map((key) => {
+        encryptKeys.map(async(key) => {
+          const { default: keytar } = await import('keytar')
           return keytar.getPassword(serviceName, key)
         })
       )
@@ -121,7 +121,7 @@ class DataCenter extends TypedEmitter<DataCenterEvents> {
   getItem(key: string): Promise<unknown> {
     const { encryptKeys, serviceName } = this
     if (encryptKeys.includes(key)) {
-      return keytar.getPassword(serviceName, key)
+      return import('keytar').then(({ default: keytar }) => keytar.getPassword(serviceName, key))
     } else {
       const value = this.store.get(key)
       return Promise.resolve(value)
@@ -136,6 +136,7 @@ class DataCenter extends TypedEmitter<DataCenterEvents> {
     ipcMain.emit('broadcast-user-data-changed', { [key]: value })
     if (encryptKeys.includes(key)) {
       try {
+        const { default: keytar } = await import('keytar')
         return await keytar.setPassword(serviceName, key, value as string)
       } catch (err) {
         log.error('Keytar error:', err)

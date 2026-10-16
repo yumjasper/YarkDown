@@ -7,7 +7,7 @@
       class="description"
       style="display: flex; align-items: center"
     >
-      <span>{{ description }}:</span>
+      <span>{{ description }}</span>
       <LinkIcon
         v-if="more"
         :size="14"
@@ -35,6 +35,8 @@
     </div>
     <el-switch
       v-model="status"
+      :disabled="disable"
+      :aria-label="description"
       @change="handleSwitchChange"
     />
   </section>

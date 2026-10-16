@@ -5,6 +5,7 @@ import Prism from 'prismjs';
 import cjkEmStrongExtension from './extensions/cjkEmStrong';
 import emojiExtension from './extensions/emoji';
 import footnoteExtension from './extensions/footnote';
+import gameExtension from './extensions/game';
 import inlineDiffExtension from './extensions/inlineDiff';
 import markExtension from './extensions/mark';
 import mathExtension, { doubleBackslashMathExtension, gfmMathExtension, singleBackslashMathExtension } from './extensions/math';
@@ -48,6 +49,7 @@ export function getHighlightHtml(src: string, options: ILexOption = {}) {
     // cause walkTokens to fire N times after N invocations and corrupt token
     // state (e.g. wiping `lang` on subsequent runs).
     const marked = new Marked(markedHighlight({ highlight }));
+    marked.use(gameExtension());
 
     marked.use({
         walkTokens: walkTokens({ texMathDollars, texMathGfm }),

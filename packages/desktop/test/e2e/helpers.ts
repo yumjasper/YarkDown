@@ -369,7 +369,13 @@ export const launchWithDoc = async(
   options: LaunchOptions = {}
 ): Promise<LaunchResult> => {
   const { app, page } = await launchElectron([relativeFixture], options)
-  await waitForEditor(page)
+  if (/\.(txt|text)$/i.test(relativeFixture)) {
+    await page.locator('.plain-text-editor .CodeMirror').waitFor()
+  } else if (/\.pdf$/i.test(relativeFixture)) {
+    await page.locator('.pdf-reader').waitFor()
+  } else {
+    await waitForEditor(page)
+  }
   await waitForMenuReady(app)
   return { app, page }
 }

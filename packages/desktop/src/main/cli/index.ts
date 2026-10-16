@@ -10,6 +10,11 @@ const writeLine = (s: string): boolean => write(s + '\n')
 
 const cli = (): ParsedArgs => {
   let argv = process.argv.slice(1)
+  if (process.defaultApp) {
+    // Electron may prepend debugger switches before its application entry.
+    const entryIndex = argv.findIndex(value => !value.startsWith('-') && path.resolve(value) === app.getAppPath())
+    if (entryIndex >= 0) argv.splice(entryIndex, 1)
+  }
   if (import.meta.env.DEV) {
     // Don't pass electron development arguments to MarkText and change user data path.
     argv = ['--user-data-dir', path.join(getPath('appData'), 'marktext-dev')]

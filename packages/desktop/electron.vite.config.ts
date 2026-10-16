@@ -12,7 +12,7 @@ import { viteStaticCopy } from 'vite-plugin-static-copy'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
-const releaseBuild = process.env.YARKTEXT_RELEASE === '1'
+const releaseBuild = process.env.YARKTEXT_RELEASE !== '0'
 const pdfjsRoot = dirname(createRequire(import.meta.url).resolve('pdfjs-dist/package.json'))
 
 export default defineConfig({

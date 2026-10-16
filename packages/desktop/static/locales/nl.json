@@ -364,7 +364,12 @@
   },
   "recent": {
     "noTabsOpen": "Je hebt geen tabbladen open.",
-    "newFile": "Nieuw bestand"
+    "newFile": "Nieuw bestand",
+    "openFile": "Bestand openen",
+    "openFolder": "Map openen",
+    "continue": "Doorgaan: {name}",
+    "recentFiles": "Recente bestanden",
+    "welcome": "Kies een bestand om te lezen of te bewerken."
   },
   "import": {
     "title": "Importeren of openen",

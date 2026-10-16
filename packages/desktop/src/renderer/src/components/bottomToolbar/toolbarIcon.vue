@@ -15,6 +15,6 @@
 </template>
 
 <script setup lang="ts">
-import { EDITOR_ICON_PATHS as paths } from '@muyajs/core'
+import { EDITOR_ICON_PATHS as paths } from '@muyajs/core/ui/toolbarIcons'
 defineProps<{ name: string }>()
 </script>

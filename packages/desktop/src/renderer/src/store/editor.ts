@@ -141,6 +141,7 @@ interface ProjectStoreLike {
 // ----------------------------------------------------------------------------
 
 export interface EditorState {
+  editorActivated: boolean
   currentFile: IFileState | null
   tabs: IFileState[]
   tabIdToIndex: Record<string, number>
@@ -160,6 +161,7 @@ const openIntents = new Map<string, boolean>()
 
 export const useEditorStore = defineStore('editor', {
   state: (): EditorState => ({
+    editorActivated: false,
     currentFile: null,
     tabs: [],
     tabIdToIndex: {},
@@ -194,13 +196,21 @@ export const useEditorStore = defineStore('editor', {
       if (!tab || !isPdfFile(tab.filename)) return
       tab.pdfAnnotations = annotations
       if (hash) tab.pdfSourceHash = hash
-      tab.isSaved = annotations.length === 0
+      tab.isSaved = annotations.length === 0 && !tab.pdfFormValues?.length
+      debouncedSendBufferedState()
+    },
+
+    SET_PDF_FORM_VALUES(id: string, values: NonNullable<IFileState['pdfFormValues']>): void {
+      const tab = this.tabs.find(tab => tab.id === id)
+      if (!tab || !isPdfFile(tab.filename) || tab.pdfSaving) return
+      tab.pdfFormValues = values
+      tab.isSaved = !values.length && !tab.pdfAnnotations?.length
       debouncedSendBufferedState()
     },
 
     async SAVE_PDF(file: IFileState, copy = false): Promise<boolean> {
       bus.emit('flush-pdf-annotation', file.id)
-      if (!copy && !file.pdfAnnotations?.length) return true
+      if (!copy && (!file.pdfAnnotations?.length && !file.pdfFormValues?.length)) return true
       const pending = pdfSaveRequests.get(file.id)
       if (pending) return pending
       const request = (async() => {
@@ -209,9 +219,10 @@ export const useEditorStore = defineStore('editor', {
           if (!file.pdfSourceHash) return false
           const result = await window.electron.ipcRenderer.invoke('mt::pdf::save', {
             pathname: file.pathname, sourceHash: file.pdfSourceHash,
-            annotations: deepClone(file.pdfAnnotations || []), copy
+            annotations: deepClone(file.pdfAnnotations || []), formValues: deepClone(file.pdfFormValues || []), copy
           })
           if (!result) return false
+          file.pdfFormValues = []
           this.SET_PDF_ANNOTATIONS(file.id, [], result.pathname !== file.pathname ? undefined : result.hash)
           bus.emit('pdf-saved', { id: file.id })
           if (result.pathname !== file.pathname) window.electron.ipcRenderer.send('mt::open-file', result.pathname, {})
@@ -229,10 +240,11 @@ export const useEditorStore = defineStore('editor', {
       bus.emit('flush-pdf-annotation', file.id)
       const pending = pdfSaveRequests.get(file.id)
       if (pending && !await pending) return false
-      if (!isPdfFile(file.filename) || !file.pdfAnnotations?.length) return true
+      if (!isPdfFile(file.filename) || (!file.pdfAnnotations?.length && !file.pdfFormValues?.length)) return true
       const choice = await window.electron.ipcRenderer.invoke('mt::pdf::confirm-close', file.filename)
       if (choice === 'save') return this.SAVE_PDF(file)
       if (choice === 'cancel') return false
+      this.SET_PDF_FORM_VALUES(file.id, [])
       this.SET_PDF_ANNOTATIONS(file.id, [])
       return true
     },
@@ -277,7 +289,7 @@ export const useEditorStore = defineStore('editor', {
       const currentFileId = bufferedEditorState.currentFileId
         ? oldIdToNewId[bufferedEditorState.currentFileId]
         : undefined
-      const currentFile: IFileState | null = tabs.find((tab) => tab.id === currentFileId) ?? null
+      const currentFile: IFileState | null = tabs.find((tab) => tab.id === currentFileId) ?? tabs[0] ?? null
 
       const projectStore = useProjectStore()
       const layoutStore = useLayoutStore()
@@ -452,7 +464,7 @@ export const useEditorStore = defineStore('editor', {
 
       // Update file content and restore some entries.
       Object.assign(tab, newFileState)
-      if (isPdfFile(filename) && tab.pdfAnnotations?.length) tab.isSaved = false
+      if (isPdfFile(filename) && (tab.pdfAnnotations?.length || tab.pdfFormValues?.length)) tab.isSaved = false
       tab.id = oldId
       tab.notifications = oldNotifications
       tab.scrollTop = oldScrollTop
@@ -683,28 +695,16 @@ export const useEditorStore = defineStore('editor', {
           window.DIRNAME = window.path.dirname(pathname)
         }
         if (tab) {
-          Object.assign(tab, { filename, pathname, isSaved: true })
+          Object.assign(tab, { filename, pathname })
+          if (fileInfo.savedMarkdown !== undefined) {
+            this.MARK_TAB_SAVED(id, fileInfo.savedMarkdown)
+          }
           debouncedSendBufferedState()
         }
       })
 
-      window.electron.ipcRenderer.on('mt::tab-saved', (_, tabId) => {
-        const tab = this.tabs.find((f) => f.id === tabId)
-        if (tab) {
-          const lastEditIndex = tab.history.lastEditIndex
-          if (
-            typeof lastEditIndex === 'number' &&
-            lastEditIndex >= 0 &&
-            lastEditIndex < tab.history.stack.length
-          ) {
-            const entry = tab.history.stack[lastEditIndex]
-            if (entry && typeof entry.id === 'number') {
-              tab.lastSavedHistoryId = entry.id
-            }
-          }
-          tab.isSaved = true
-          debouncedSendBufferedState()
-        }
+      window.electron.ipcRenderer.on('mt::tab-saved', (_, tabId, savedMarkdown) => {
+        this.MARK_TAB_SAVED(tabId, savedMarkdown)
       })
 
       window.electron.ipcRenderer.on('mt::tab-save-failure', (_, tabId, msg) => {
@@ -730,40 +730,76 @@ export const useEditorStore = defineStore('editor', {
       })
     },
 
+    MARK_TAB_SAVED(tabId: string, savedMarkdown?: string): void {
+      const tab = this.tabs.find((f) => f.id === tabId)
+      if (tab) {
+        // A save acknowledgement can arrive after the next keystroke.
+        if (savedMarkdown !== undefined && tab.markdown !== savedMarkdown) return
+        const lastEditIndex = tab.history.lastEditIndex
+        if (
+          typeof lastEditIndex === 'number' &&
+          lastEditIndex >= 0 &&
+          lastEditIndex < tab.history.stack.length
+        ) {
+          const entry = tab.history.stack[lastEditIndex]
+          if (entry && typeof entry.id === 'number') {
+            tab.lastSavedHistoryId = entry.id
+          }
+        }
+        tab.isSaved = true
+        debouncedSendBufferedState()
+      }
+    },
+
     LISTEN_FOR_CLOSE(): void {
       const projectStore = useProjectStore()
-      const preferencesStore = usePreferencesStore()
+      window.electron.ipcRenderer.on('mt::close-confirmed', async(_, discard) => {
+        this.flushActiveEditor()
+        if (discard) {
+          this.tabs = this.tabs.filter(file => file.isSaved || file.pathname)
+          for (const file of this.tabs) file.isSaved = true
+          this.updateTabIdToIndex()
+        } else if (this.tabs.some(file => !file.isSaved)) {
+          return
+        }
+        try {
+          await sendBufferedState()
+          window.electron.ipcRenderer.send('mt::close-window')
+        } catch (err) {
+          console.error('Failed to update buffered state before closing', err)
+        }
+      })
       window.electron.ipcRenderer.on('mt::ask-for-close', async() => {
+        this.flushActiveEditor()
         for (const file of this.tabs.slice()) {
           if (!await this.RESOLVE_PDF_DRAFT(file)) return
         }
-        sendBufferedState()
-          .catch((err) => {
-            console.error('Failed to update buffered state before closing', err)
-          })
-          .then(() => {
-            const unsavedFiles = this.tabs
-              .filter((file) => !file.isSaved)
-              .map((file) => {
-                const { id, filename, pathname, markdown } = file
-                const options = getOptionsFromState(file)
-                return {
-                  id,
-                  filename,
-                  pathname,
-                  markdown,
-                  options,
-                  defaultPath: getRootFolderFromState(projectStore)
-                }
-              })
+        try {
+          await sendBufferedState()
+          const unsavedFiles = this.tabs
+            .filter((file) => !file.isSaved)
+            .map((file) => {
+              const { id, filename, pathname, markdown } = file
+              const options = getOptionsFromState(file)
+              return {
+                id,
+                filename,
+                pathname,
+                markdown,
+                options,
+                defaultPath: getRootFolderFromState(projectStore)
+              }
+            })
 
-            if (unsavedFiles.length && preferencesStore.startUpAction !== 'restoreAll') {
-              // Ignore unsaved files when user has chosen to restore all on startup, as they will be restored anyway.
-              window.electron.ipcRenderer.send('mt::close-window-confirm', deepClone(unsavedFiles))
-            } else {
-              window.electron.ipcRenderer.send('mt::close-window')
-            }
-          })
+          if (unsavedFiles.length) {
+            window.electron.ipcRenderer.send('mt::close-window-confirm', deepClone(unsavedFiles))
+          } else {
+            window.electron.ipcRenderer.send('mt::close-window')
+          }
+        } catch (err) {
+          console.error('Failed to update buffered state before closing', err)
+          notice.notify({ title: t('dialog.saveFailure'), message: String(err), type: 'error' })
+        }
       })
     },
 
@@ -776,14 +812,15 @@ export const useEditorStore = defineStore('editor', {
     },
 
     async ASK_FOR_SAVE_ALL(closeTabs: boolean): Promise<void> {
+      this.flushActiveEditor()
       for (const file of this.tabs.slice()) {
-        if (!isPdfFile(file.filename) || !file.pdfAnnotations?.length) continue
+        if (!isPdfFile(file.filename) || (!file.pdfAnnotations?.length && !file.pdfFormValues?.length)) continue
         if (closeTabs ? !await this.RESOLVE_PDF_DRAFT(file) : !await this.SAVE_PDF(file)) return
       }
       const { tabs } = this
       const projectStore = useProjectStore()
       const unsavedFiles = tabs
-        .filter((file) => !isPdfFile(file.filename) && !(file.isSaved && /[^\n]/.test(file.markdown)))
+        .filter((file) => !isPdfFile(file.filename) && !file.isSaved)
         .map((file) => {
           const { id, filename, pathname, markdown } = file
           const options = getOptionsFromState(file)
@@ -891,27 +928,23 @@ export const useEditorStore = defineStore('editor', {
       }
     },
 
-    /**
-     * Update the pathname/filename of any tab whose pathname matches `src`.
-     * Invoked from the sidebar rename flow (project.ts:RENAME_IN_SIDEBAR).
-     */
     RENAME_IF_NEEDED({ src, dest }: { src: string; dest: string }): void {
       this.tabs.forEach((tab) => {
-        if (tab.pathname === src) {
-          tab.pathname = dest
-          tab.filename = window.path.basename(dest)
+        if (!tab.pathname) return
+        const relative = window.path.relative(src, tab.pathname)
+        if (!relative || (!window.path.isAbsolute(relative) && relative !== '..' && !relative.startsWith(`..${window.path.sep}`))) {
+          tab.pathname = window.path.join(dest, relative)
+          tab.filename = window.path.basename(tab.pathname)
         }
       })
-      // Keep DIRNAME in sync when the active tab is the one being renamed,
-      // so link resolution / dirname-based lookups don't keep using the old
-      // folder until the user switches tabs.
-      if (this.currentFile != null && this.currentFile.pathname === dest) {
-        window.DIRNAME = window.path.dirname(dest)
+      if (this.currentFile?.pathname) {
+        window.DIRNAME = window.path.dirname(this.currentFile.pathname)
       }
       debouncedSendBufferedState()
     },
 
     UPDATE_CURRENT_FILE(currentFile: IFileState): void {
+      this.editorActivated = true
       const oldCurrentFile = this.currentFile
       let didUpdateCurrentFile = false
       if (oldCurrentFile == null || oldCurrentFile.id !== currentFile.id) {
@@ -1490,7 +1523,7 @@ export const useEditorStore = defineStore('editor', {
       let didUpdateSaveStatus = false
       this.tabs.forEach((f) => {
         if (f.pathname === pathname) {
-          f.isSaved = isPdfFile(f.filename) && !f.pdfAnnotations?.length
+          f.isSaved = isPdfFile(f.filename) && (!f.pdfAnnotations?.length && !f.pdfFormValues?.length)
           didUpdateSaveStatus = true
         }
       })
@@ -1778,7 +1811,8 @@ export const useEditorStore = defineStore('editor', {
       if (lineEnding !== oldLineEnding) {
         this.currentFile.lineEnding = lineEnding
         this.currentFile.adjustLineEndingOnSave = lineEnding !== 'lf'
-        this.currentFile.isSaved = true
+        this.currentFile.isSaved = false
+        this.currentFile.lastSavedHistoryId = -1
         this.UPDATE_LINE_ENDING_MENU()
         debouncedSendBufferedState()
       }
@@ -1800,7 +1834,8 @@ export const useEditorStore = defineStore('editor', {
         if (encoding !== encodingName) {
           this.currentFile.encoding.encoding = encodingName as string
           this.currentFile.encoding.isBom = false
-          this.currentFile.isSaved = true
+          this.currentFile.isSaved = false
+          this.currentFile.lastSavedHistoryId = -1
           debouncedSendBufferedState()
         }
       })
@@ -1812,7 +1847,8 @@ export const useEditorStore = defineStore('editor', {
         const { trimTrailingNewline } = this.currentFile
         if (trimTrailingNewline !== value) {
           this.currentFile.trimTrailingNewline = value as number
-          this.currentFile.isSaved = true
+          this.currentFile.isSaved = false
+          this.currentFile.lastSavedHistoryId = -1
           debouncedSendBufferedState()
         }
       })
@@ -1828,7 +1864,7 @@ export const useEditorStore = defineStore('editor', {
           const { id, isSaved, filename } = tab
           switch (type) {
             case 'unlink': {
-              tab.isSaved = isPdfFile(filename) && !tab.pdfAnnotations?.length
+              tab.isSaved = isPdfFile(filename) && (!tab.pdfAnnotations?.length && !tab.pdfFormValues?.length)
               this.pushTabNotification({
                 tabId: id,
                 msg: t('store.editor.fileRemovedOnDisk', { name: filename }),
@@ -2176,6 +2212,7 @@ function toSerializableValue<T>(value: T | null | undefined, fallback: T | null 
 }
 
 interface BufferedTabState {
+  pdfFormValues?: IFileState['pdfFormValues']
   pdfAnnotations?: IFileState['pdfAnnotations']
   pdfSourceHash?: string
   pdfView?: IFileState['pdfView']
@@ -2213,6 +2250,7 @@ const createBufferedTabState = (tab: Partial<IFileState> & { id: string }): Buff
     muyaIndexCursor: toSerializableValue(tab.muyaIndexCursor, defaultFileState.muyaIndexCursor),
     scrollTop: tab.scrollTop ?? defaultFileState.scrollTop,
     pdfView: tab.pdfView ? { ...tab.pdfView } : undefined,
+    pdfFormValues: tab.pdfFormValues ? deepClone(tab.pdfFormValues) : undefined,
     pdfAnnotations: tab.pdfAnnotations ? deepClone(tab.pdfAnnotations) : undefined,
     pdfSourceHash: tab.pdfSourceHash
   }

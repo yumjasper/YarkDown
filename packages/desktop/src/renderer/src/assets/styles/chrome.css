@@ -1,0 +1,24 @@
+.side-bar .rail-icon,
+.side-bar .side-bar-file,
+.side-bar .folder-name,
+.side-bar-toc .el-tree-node__content,
+.editor-tabs .tabs-container li,
+.menu-bar-item { border-radius: 7px; }
+.side-bar { border-right: 1px solid color-mix(in srgb, var(--editorColor) 8%, transparent); }
+.editor-context-menu,
+.bottom-toolbar-popover,
+.command-palette .commands,
+.el-dialog { border-radius: 12px; }
+.recent-files-projects .centered-group { max-width: 560px; }
+.recent-files-projects h1 { font-size: 34px; font-weight: 650; letter-spacing: -.8px; }
+.recent-files-projects p { font-size: 14px; line-height: 1.7; color: var(--editorColor50); opacity: 1; }
+.recent-files-projects .el-button { height: 36px; padding-inline: 16px; font-size: 13px; font-weight: 500; border-radius: 8px; box-shadow: none; }
+.recent-files-projects .home-recents button { border-radius: 8px; }
+.title-bar-stack,
+.side-bar,
+.editor-tabs,
+.bottom-toolbar-host,
+.pref-container { -webkit-font-smoothing: antialiased; }
+@media (prefers-reduced-motion: reduce) {
+  .app-menu-panel, .app-menu-panel * { transition: none !important; animation: none !important; }
+}
