@@ -84,8 +84,12 @@
             :focused="activeGroup === group.id"
             @activate="activate(group.id)"
           />
+          <!-- The workspace itself is kept alive with `v-show`, so the minimap
+               must gate on `active` as well: otherwise it keeps rebuilding tiles
+               for a zero-height container and a second `.editor-minimap` exists
+               in the document while a Markdown tab is showing. -->
           <editor-minimap
-            v-if="group.fileId && preferences.minimapEnabled"
+            v-if="active && group.fileId && preferences.minimapEnabled"
             :plain-text="true"
             :source-code="false"
           />

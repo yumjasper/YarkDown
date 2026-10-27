@@ -80,6 +80,11 @@ test('navigates TXT and Markdown with the minimap, persists options and virtuali
     await sendIpcToRenderer(app, 'mt::new-untitled-tab', true, markdown)
     await expect(page.locator('.editor-component')).toContainText('Paragraph 2399')
     await expect(minimap).toBeVisible()
+    // Guards the reported "minimap never loads on open" bug: mounting before the
+    // async editor exists used to bind nothing and leave a 1px slider forever.
+    await expect(minimap.locator('.minimap-tiles canvas[data-renderer="worker"]').first()).toBeAttached()
+    const sliderHeight = await minimap.locator('.minimap-slider').evaluate(element => (element as HTMLElement).offsetHeight)
+    expect(sliderHeight).toBeGreaterThanOrEqual(12)
     const editor = page.locator('.editor-component')
     const bounds = await editor.boundingBox()
     if (!bounds) throw new Error('Markdown editor is hidden')
@@ -109,6 +114,12 @@ test('navigates TXT and Markdown with the minimap, persists options and virtuali
     await expectNoRendererErrors(app)
     await page.screenshot({ path: path.resolve('../../.tools/minimap-preview.png') })
   } finally {
+    // The final Markdown tab is never saved, so closing the window raises the
+    // native "save changes?" sheet, which blocks `app.close()` until the worker
+    // times out. Answer it the way a user declining to save would.
+    await app.evaluate(({ dialog }) => {
+      dialog.showMessageBox = async() => ({ response: 1, checkboxChecked: false })
+    }).catch(() => undefined)
     await app.close()
     rmSync(folder, { recursive: true, force: true })
   }

@@ -7,7 +7,7 @@
     tabindex="0"
     :aria-label="t('minimap.title')"
     aria-orientation="vertical"
-    :aria-valuenow="Math.round(scrollTop)"
+    :aria-valuenow="announced"
     aria-valuemin="0"
     :aria-valuemax="Math.round(geometry.scrollRange)"
     @pointerdown="pointerDown"
@@ -65,6 +65,12 @@ const host = ref<HTMLElement | null>(null)
 const canvas = ref<HTMLCanvasElement | null>(null)
 const tileLayer = ref<HTMLDivElement | null>(null)
 const scrollTop = ref(0)
+// Screen readers get the position at a human pace. Writing `aria-valuenow` on
+// every wheel event forced an accessibility-tree update per event, the same
+// class of cost that stalled the document while scrolling.
+const announced = ref(0)
+let announcedAt = 0
+let pendingScrollTop = 0
 const height = ref(1)
 const documentHeight = ref(1)
 const viewportHeight = ref(1)
@@ -77,6 +83,7 @@ let cm: CodeMirror.Editor | null = null
 let rows: Array<{ text: string; top: number; height: number; heading?: boolean }> = []
 let resize: ResizeObserver | undefined
 let mutation: MutationObserver | undefined
+let hostObserver: MutationObserver | undefined
 let frame = 0
 let rebuildTimer: ReturnType<typeof setTimeout> | undefined
 let scrollTimer: ReturnType<typeof setTimeout> | undefined
@@ -96,26 +103,59 @@ const pendingJobs = new Map<number, { index: number; tile: CachedTile }>()
 const set = (type: keyof PreferencesState, value: unknown) => {
   preferences.SET_SINGLE_PREFERENCE({ type, value })
 }
+let cachedPalette: { normal: string; accent: string } | undefined
+let cachedWidth = 0
+const palette = () => {
+  if (!cachedPalette && host.value) {
+    const style = getComputedStyle(host.value)
+    const normal = style.color
+    cachedPalette = { normal, accent: style.getPropertyValue('--themeColor').trim() || normal }
+  }
+  return cachedPalette ?? { normal: '#888', accent: '#4c9be8' }
+}
+// `clientWidth` is a layout read; caching it keeps the scroll frame free of one
+// forced reflow. The ResizeObserver below is the invalidation point.
+const hostWidth = () => {
+  if (!cachedWidth && host.value) cachedWidth = host.value.clientWidth
+  return cachedWidth
+}
 const requestPaint = (force = false) => {
   forcePaint ||= force
   if (!frame) frame = requestAnimationFrame(paint)
 }
 const syncScroll = () => {
   if (!scroller) return
+  // `scrollTop` is the only value a scroll tick can change. Reading
+  // `scrollHeight`/`clientHeight` here forced a layout flush on every wheel
+  // event, which is what made scrolling crawl on the long tutorial; `rebuild`
+  // refreshes both whenever the document or the viewport actually resizes.
   scrollTop.value = scroller.scrollTop
-  documentHeight.value = scroller.scrollHeight
-  viewportHeight.value = scroller.clientHeight
   scrolling.value = true
   clearTimeout(scrollTimer)
-  scrollTimer = setTimeout(() => { scrolling.value = false }, 700)
+  scrollTimer = setTimeout(() => {
+    scrolling.value = false
+    announced.value = Math.round(pendingScrollTop)
+  }, 700)
+  // Announcing every tick would rewrite an ARIA attribute per wheel event and
+  // rebuild the accessibility node each time. One announcement per ~1% of the
+  // document is still readable, and the settled value lands last.
+  pendingScrollTop = scroller.scrollTop
+  const step = Math.max(1, geometry.value.scrollRange / 100)
+  if (Math.abs(pendingScrollTop - announcedAt) >= step) {
+    announcedAt = pendingScrollTop
+    announced.value = Math.round(pendingScrollTop)
+  }
   requestPaint()
 }
 const rebuild = () => {
   if (!scroller || !host.value || disconnected) return
+  cachedWidth = 0
   height.value = host.value.clientHeight
   documentHeight.value = scroller.scrollHeight
   viewportHeight.value = scroller.clientHeight
   scrollTop.value = scroller.scrollTop
+  pendingScrollTop = announcedAt = scroller.scrollTop
+  announced.value = Math.round(scroller.scrollTop)
   if (cm) {
     const count = cm.lineCount()
     const step = Math.max(1, Math.ceil(count / 15000))
@@ -175,7 +215,8 @@ const paint = () => {
   if (!forcePaint && Math.abs(lastPaintOffset - layout.offset) < .5) return
   forcePaint = false
   lastPaintOffset = layout.offset
-  const width = host.value.clientWidth
+  const width = hostWidth()
+  if (!width) return
   const ratio = Math.min(3, Math.max(2, Math.ceil(window.devicePixelRatio || 1)))
   if (target.width !== Math.ceil(width * ratio)) target.width = Math.ceil(width * ratio)
   if (target.height !== Math.ceil(height.value * ratio)) target.height = Math.ceil(height.value * ratio)
@@ -183,9 +224,9 @@ const paint = () => {
   if (!context) return
   context.setTransform(ratio, 0, 0, ratio, 0, 0)
   context.clearRect(0, 0, width, height.value)
-  const style = getComputedStyle(host.value)
-  const normal = style.color
-  const accent = style.getPropertyValue('--themeColor').trim() || normal
+  // Reading this every frame forces a style recalc inside the scroll frame; it
+  // only changes with the theme, so it is cached and invalidated on theme edits.
+  const { normal, accent } = palette()
   const scaleY = layout.contentHeight / documentHeight.value
   const firstTile = Math.floor(layout.offset / TILE_HEIGHT)
   const lastTile = Math.floor((layout.offset + height.value) / TILE_HEIGHT)
@@ -228,11 +269,12 @@ const paint = () => {
         tile.ready = true
       }
     }
-    tile.canvas.style.transform = `translateY(${Math.round((index * TILE_HEIGHT - layout.offset) * ratio) / ratio}px)`
+    const translate = `translateY(${Math.round((index * TILE_HEIGHT - layout.offset) * ratio) / ratio}px)`
+    if (tile.canvas.style.transform !== translate) tile.canvas.style.transform = translate
   }
   for (const [index, tile] of tiles) if (index < firstTile - 1 || index > lastTile + 1) { tile.canvas.remove(); tiles.delete(index) }
   context.globalAlpha = .8
-  context.fillStyle = style.getPropertyValue('--themeColor').trim() || '#4c9be8'
+  context.fillStyle = accent
   const search = currentFile.value?.searchMatches
   const contentLength = currentFile.value?.markdown.length || 1
   for (const raw of search?.matches || []) {
@@ -245,12 +287,61 @@ const paint = () => {
   }
 }
 const unbind = () => {
+  stopWaiting()
   scroller?.removeEventListener('scroll', syncScroll)
   resize?.disconnect()
   mutation?.disconnect()
   cm?.off('changes', scheduleRebuild)
   cm?.off('cursorActivity', cursorMoved)
   cm = null
+}
+// Resolves the element that actually scrolls the current view. Every editor mode
+// mounts as an async component, so this legitimately returns null on early calls.
+const resolveScroller = (parent: HTMLElement): HTMLElement | null => {
+  const element = parent.querySelector<HTMLElement & { CodeMirror?: CodeMirror.Editor }>(
+    props.plainText ? '.plain-text-editor .CodeMirror' : '.source-code .CodeMirror'
+  )
+  cm = props.plainText || props.sourceCode ? element?.CodeMirror || null : null
+  const cmScroller = cm?.getScrollerElement()
+  if (cmScroller && (props.plainText || cm?.getOption('viewportMargin') !== Infinity)) return cmScroller
+  return props.sourceCode
+    ? parent.querySelector<HTMLElement>('.source-code')
+    : parent.querySelector<HTMLElement>('.editor-component')
+}
+const stopWaiting = () => {
+  hostObserver?.disconnect()
+  hostObserver = undefined
+}
+// The editor is a lazily loaded component and mounts after this pane, and Muya
+// replaces the `.editor-component` placeholder once it boots. Giving up on the
+// first miss left the minimap permanently blank with a 1px slider, because
+// nothing else re-ran the binding.
+const waitForScroller = (parent: HTMLElement, generation: number) => {
+  stopWaiting()
+  hostObserver = new MutationObserver(() => {
+    if (disconnected || generation !== bindGeneration) { stopWaiting(); return }
+    if (!resolveScroller(parent)) return
+    stopWaiting()
+    void bind()
+  })
+  hostObserver.observe(parent, { childList: true, subtree: true })
+}
+// Each view mode has different chrome above the scrolling area, and a reused
+// minimap keeps its inline offsets. Reset them before resolving the scroller so
+// the pane is already correct while it waits for the editor to mount.
+const positionHost = (parent: HTMLElement) => {
+  const element = host.value
+  if (!element) return
+  if (!props.plainText) {
+    element.style.top = '0'
+    element.style.bottom = '0'
+    return
+  }
+  const content = parent.querySelector('.plain-text-content')?.getBoundingClientRect()
+  const bounds = parent.getBoundingClientRect()
+  if (!content) return
+  element.style.top = `${content.top - bounds.top}px`
+  element.style.bottom = `${bounds.bottom - content.bottom}px`
 }
 const bind = async() => {
   const generation = ++bindGeneration
@@ -259,22 +350,13 @@ const bind = async() => {
   await nextTick()
   if (disconnected || generation !== bindGeneration || !host.value) return
   const parent = host.value.parentElement!
-  const element = parent.querySelector<HTMLElement & { CodeMirror?: CodeMirror.Editor }>(props.plainText ? '.plain-text-editor .CodeMirror' : '.source-code .CodeMirror')
-  cm = props.plainText || props.sourceCode ? element?.CodeMirror || null : null
-  const cmScroller = cm?.getScrollerElement()
-  scroller = cmScroller && (props.plainText || cm?.getOption('viewportMargin') !== Infinity) ? cmScroller : props.sourceCode ? parent.querySelector('.source-code') : parent.querySelector('.editor-component')
-  if (!scroller) return
-  if (props.plainText) {
-    const content = parent.querySelector('.plain-text-content')?.getBoundingClientRect()
-    const bounds = parent.getBoundingClientRect()
-    if (content) {
-      host.value.style.top = `${content.top - bounds.top}px`
-      host.value.style.bottom = `${bounds.bottom - content.bottom}px`
-    }
-  } else {
-    host.value.style.top = '0'
-    host.value.style.bottom = '0'
+  positionHost(parent)
+  const resolved = resolveScroller(parent)
+  if (!resolved) {
+    waitForScroller(parent, generation)
+    return
   }
+  scroller = resolved
   scroller.addEventListener('scroll', syncScroll, { passive: true })
   resize = new ResizeObserver(scheduleRebuild)
   resize.observe(host.value)
@@ -318,7 +400,10 @@ const keydown = (event: KeyboardEvent) => {
   scrollTo(event.key === 'Home' ? 0 : event.key === 'End' ? geometry.value.scrollRange : scrollTop.value + keys[event.key])
 }
 watch(() => [currentFile.value?.id, props.plainText, props.sourceCode], bind, { flush: 'post' })
-watch(() => [preferences.minimapSize, preferences.minimapScale, preferences.minimapRenderCharacters, preferences.minimapMaxColumn, preferences.theme], scheduleRebuild)
+watch(() => [preferences.minimapSize, preferences.minimapScale, preferences.minimapRenderCharacters, preferences.minimapMaxColumn, preferences.theme], () => {
+  cachedPalette = undefined
+  scheduleRebuild()
+})
 watch(() => currentFile.value?.searchMatches, () => requestPaint(true))
 onMounted(() => {
   if (typeof Worker !== 'undefined' && typeof OffscreenCanvas !== 'undefined') {

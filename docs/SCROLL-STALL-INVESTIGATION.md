@@ -201,3 +201,71 @@ pnpm -C packages/desktop exec playwright test markdown-scroll-performance.spec.t
 ```
 
 `LIGHTOPT_PERF_STOP=0` 关闭早停，才能得到可比较的完整样本。
+
+# 缩略图加载失效与「缩略图 + 目录」滚动卡顿（第四轮）
+
+同一份 `lightopt-math-tutorial.md`，窗口 1600 × 1000，连续注入滚轮 12 秒，四种配置对照：
+
+| 配置             |   p95 | 最长帧 | 长任务数 | 最长任务 |
+| ---------------- | ----: | -----: | -------: | -------: |
+| 两者都关         | 50 ms |  98 ms |       13 |    69 ms |
+| 仅目录           | 37 ms |  58 ms |        9 |    60 ms |
+| 仅缩略图         | 54 ms | 121 ms |       21 |   100 ms |
+| 两者同开（修前） | 71 ms | 219 ms |       57 |   110 ms |
+
+目录本身几乎不花钱（长任务 9 个，比两者都关还少，滚动宽度同为 1313），主要增量来自缩略图；两者同开时被放大属于叠加效应，不是目录的问题。
+
+## 缩略图打不开的真实原因
+
+`bind()` 里 `if (!scroller) return` 是一次性放弃。缩略图与编辑器是同级异步组件，挂载顺序不确定：缩略图先挂载时，父容器里还没有 `.editor-component`，于是永久放弃，没有任何代码再跑第二次。表现就是 `tiles: 0`、`renderers: []`、滑块恒为 1px，滚动也不会恢复。再加上 Muya 启动后会用 `replaceWith` 换掉占位节点，即使拿到了节点也可能已经脱离文档。
+
+修复：抽出 `resolveScroller()`，解析失败时用 `MutationObserver` 盯着父容器，等编辑器真正出现后重新绑定；每次绑定带一个 `bindGeneration` 代号，过期的等待会被自己停掉，避免重复绑定。
+
+同时把无障碍播报值与定位样式的重置从 `bind()` 的成功路径里拆出来。`positionHost()` 在解析 scroller 之前执行，`plainText → Markdown` 切换时缩略图会重新挂载，若沿用 TXT 分支写入的 `top`/`bottom`，高度会塌成 0。
+
+## 滚动卡顿的三个来源
+
+1. 滚动帧内读布局。`syncScroll` 原本每次滚轮事件都读 `scrollHeight`/`clientHeight`，强制同步布局。改为只读 `scrollTop`，尺寸由 `ResizeObserver` 驱动的 `rebuild()` 维护。
+2. 滚动帧内读样式。`getComputedStyle(host)` 每帧执行一次强制样式重算，`clientWidth` 同理。两者都加缓存，失效点分别是主题 watch 与 `rebuild()`。
+3. `aria-valuenow` 每帧重写。缩略图是 `role="scrollbar"`，逐事件改写这个属性会让浏览器重建无障碍节点——与第二、三轮的根因同类。改为每滚过文档 1% 播报一次，滚动停止 700ms 后再对齐最终值。
+
+时序也一并修了：`aria` 播报必须在 `scrollRange` 列变化之后才写，否则在 `geometry` 未就绪时会退化成逐事件写入。
+
+## 修复后的数据
+
+同一配置（缩略图 + 目录同开），1600 × 1000，各 15 秒：
+
+| 阶段                    |   p95 | 最长帧 | 长任务数 | 最长任务 | 严重掉帧 |
+| ----------------------- | ----: | -----: | -------: | -------: | -------: |
+| 修复前                  | 71 ms | 219 ms |       57 |   110 ms |        1 |
+| 去掉布局读取 + 缓存样式 | 58 ms | 188 ms |       42 |    84 ms |        0 |
+| 再节流 `aria-valuenow`  | 42 ms | 146 ms |        2 |    54 ms |        0 |
+| 重复采样                | 50 ms | 213 ms |       21 |    66 ms |        0 |
+| 第三次采样              | 46 ms | 163 ms |        6 |    62 ms |        0 |
+
+p95 从 71 ms 降到 42–50 ms，已经优于「两者都关」的 50 ms；长任务从 57 个降到 2–21 个；严重掉帧归零。
+
+用 Long Animation Frame 分解剩余的长帧（181 ms 那一次）：`blocking: 0`，`styleAndLayout: 1 ms`，`render: 1 ms`，`scripts: []`。即脚本、样式、布局、绘制全部接近零，耗时落在浏览器内部合成路径上，已经没有可继续压的脚本面。
+
+## 已知取舍
+
+`syncScroll` 不再每帧读 `scrollHeight`/`clientHeight`，改由 `ResizeObserver` 驱动的 `rebuild()` 维护。若文档在容器尺寸不变的前提下动态增高（例如异步图片加载完成），滑块高度会短暂偏小，直到下一次 `rebuild()` 触发。这是用极罕见的瞬时偏差换掉每帧强制布局。
+
+`aria-valuenow` 改为按 1% 步进播报、停止后再对齐，读屏用户读到的位置会有至多 1% 的滞后。
+
+## 验证
+
+`test/e2e/minimap.spec.ts` 在切到 Markdown 后新增两条硬断言：瓦片必须来自 worker，滑块高度必须 ≥ 12px。修复前这两条都会失败（此前该测试在这一步只做 `toBeVisible()`，而 DOM 里同时存在 TXT 分支遗留的缩略图，strict mode 直接报解析到 2 个元素）。
+
+TXT 工作区本身用 `v-show` 保活，缩略图挂载条件补上 `active`，否则隐藏期间仍会为 0 高度容器持续重建瓦片，并在 Markdown 标签下留下第二个 `.editor-minimap`。
+
+`test/e2e/minimap-scroll-performance.spec.ts` 在采样前断言 `tiles > 0` 且每个瓦片的 `data-renderer` 都是 `worker`，避免在空白缩略图上采到没有意义的数据。
+
+复测命令：
+
+```powershell
+$env:LIGHTOPT_PERF = '1'
+$env:LIGHTOPT_PERF_SCROLL_MS = '15000'
+$env:LIGHTOPT_PERF_MODE = 'minimap-on-toc-on'
+pnpm -C packages/desktop exec playwright test minimap-scroll-performance.spec.ts --workers=1 --reporter=line
+```
