@@ -1,0 +1,115 @@
+/*
+ * Prism.js Typora Cobalt
+ */
+
+code[class*='language-'],
+pre[class*='language-'],
+pre.ag-paragraph {
+  color: #d8e3ea;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+  overflow: visible;
+}
+
+pre.ag-paragraph {
+  padding: 1em;
+  margin: 1em 0;
+  border-radius: 3px;
+}
+
+:not(pre) > code[class*='language-'],
+pre.ag-paragraph {
+  background: #122738;
+}
+
+:not(pre) > code[class*='language-'] {
+  padding: 0.1em;
+  border-radius: 3px;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #0088ff;
+  font-style: italic;
+}
+
+.token.punctuation {
+  color: #d8e3ea;
+}
+
+.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #ff628c;
+}
+
+.token.boolean,
+.token.number {
+  color: #ff9d00;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #3ad900;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  color: #d8e3ea;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #ffd23f;
+}
+
+.token.keyword {
+  color: #ff9d00;
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+  color: #80c7ff;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}

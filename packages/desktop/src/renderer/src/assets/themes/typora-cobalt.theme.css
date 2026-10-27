@@ -1,0 +1,258 @@
+/*
+ * Typora Cobalt
+ * 复刻经典的 Cobalt 深蓝主题：深海蓝底 + 亮黄强调色，
+ * 标题带左侧色条，引用块为块状背景配左侧亮线。
+ */
+
+:root {
+  /*editor*/
+  --themeColor: #ffd23f;
+  --themeColor90: rgba(255, 210, 63, 0.9);
+  --themeColor80: rgba(255, 210, 63, 0.8);
+  --themeColor70: rgba(255, 210, 63, 0.7);
+  --themeColor60: rgba(255, 210, 63, 0.6);
+  --themeColor50: rgba(255, 210, 63, 0.5);
+  --themeColor40: rgba(255, 210, 63, 0.4);
+  --themeColor30: rgba(255, 210, 63, 0.3);
+  --themeColor20: rgba(255, 210, 63, 0.2);
+  --themeColor10: rgba(255, 210, 63, 0.1);
+
+  --highlightColor: rgba(255, 210, 63, 0.35);
+  --selectionColor: rgba(255, 210, 63, 0.22);
+  --editorColor: #d8e3ea;
+  --editorColor80: #eef4f8;
+  --editorColor60: rgba(216, 227, 234, 0.6);
+  --editorColor50: rgba(216, 227, 234, 0.5);
+  --editorColor40: rgba(216, 227, 234, 0.4);
+  --editorColor30: rgba(216, 227, 234, 0.3);
+  --editorColor10: rgba(216, 227, 234, 0.1);
+  --editorColor04: rgba(216, 227, 234, 0.04);
+  --editorBgColor: #193549;
+  --deleteColor: #ff628c;
+  --iconColor: rgba(216, 227, 234, 0.55);
+  --codeBgColor: rgba(0, 0, 0, 0.3);
+  --codeBlockBgColor: #122738;
+  --codeBlockColor: #d8e3ea;
+  --footnoteBgColor: rgba(0, 0, 0, 0.2);
+  --inputBgColor: #152c3d;
+
+  --focusColor: var(--themeColor);
+
+  --buttonFontColor: #d8e3ea;
+  --buttonBgColor: #234a63;
+  --buttonBorder: 1px solid rgba(0, 0, 0, 0.25);
+  --buttonShadow: none;
+  --buttonFontColorHover: var(--buttonFontColor);
+  --buttonBgColorHover: #2b5a78;
+  --buttonBorderHover: 1px solid rgba(0, 0, 0, 0.3);
+  --buttonFontColorActive: var(--buttonFontColor);
+  --buttonBgColorActive: #1c3d53;
+  --buttonBorderActive: var(--buttonBorder);
+
+  --buttonPrimaryFontColor: #193549;
+  --buttonPrimaryBgColor: #ffd23f;
+  --buttonPrimaryBorder: none;
+  --buttonPrimaryShadow: none;
+  --buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
+  --buttonPrimaryBgColorHover: #ffdc63;
+  --buttonPrimaryBorderHover: var(--buttonPrimaryBorder);
+  --buttonPrimaryFontColorActive: var(--buttonPrimaryFontColor);
+  --buttonPrimaryBgColorActive: #f0c426;
+  --buttonPrimaryBorderActive: var(--buttonPrimaryBorder);
+  --buttonPrimaryFocusBorder: none;
+  --buttonPrimaryFocusShadow: 0 0 0 3px rgba(255, 210, 63, 0.3);
+  --tableBorderColor: #2a4a61;
+
+  /* Markdown element colors */
+  --headingColor: #ffd23f;
+  --h1Color: #ffd23f;
+  --h2Color: #ffd23f;
+  --h3Color: #ffd23f;
+  --h4Color: #eef4f8;
+  --h5Color: #eef4f8;
+  --h6Color: #9dbfd4;
+  --blockquoteTextColor: #b8ccd9;
+  --blockquoteBorderColor: #ffd23f;
+  --hrColor: rgba(216, 227, 234, 0.15);
+  --linkColor: #80c7ff;
+  --strongColor: #ffd23f;
+  --emColor: #a6e3ff;
+  --listMarkerColor: #ffd23f;
+
+  /*marktext*/
+  --sideBarColor: rgba(216, 227, 234, 0.6);
+  --sideBarIconColor: var(--iconColor);
+  --sideBarTitleColor: #eef4f8;
+  --sideBarTextColor: rgba(216, 227, 234, 0.4);
+  --sideBarBgColor: #152c3d;
+  --sideBarItemHoverBgColor: rgba(255, 255, 255, 0.05);
+  --itemBgColor: #24485f;
+
+  --floatFontColor: #d8e3ea;
+  --floatBgColor: #234a63;
+  --floatHoverColor: #2b5a78;
+  --floatBorderColor: rgba(0, 0, 0, 0.3);
+  --floatShadow: rgba(0, 0, 0, 0.5);
+  --maskColor: rgba(0, 0, 0, 0.7);
+  --editorAreaWidth: 1000px;
+
+  --theme-color: var(--themeColor);
+  --highlight-color: var(--highlightColor);
+  --selection-color: var(--selectionColor);
+  --editor-color: var(--editorColor);
+  --editor-color-80: var(--editorColor80);
+  --editor-color-50: var(--editorColor50);
+  --editor-color-30: var(--editorColor30);
+  --editor-color-10: var(--editorColor10);
+  --editor-color-04: var(--editorColor04);
+  --editor-bg-color: var(--editorBgColor);
+  --editor-area-width: var(--editorAreaWidth);
+  --delete-color: var(--deleteColor);
+  --icon-color: var(--iconColor);
+  --code-block-bg-color: var(--codeBlockBgColor);
+  --code-block-color: var(--codeBlockColor);
+  --table-border-color: var(--tableBorderColor);
+  --input-bg-color: var(--inputBgColor);
+  --button-font-color: var(--buttonFontColor);
+  --button-bg-color: var(--buttonBgColor);
+  --button-border: var(--buttonBorder);
+  --button-bg-color-hover: var(--buttonBgColorHover);
+  --button-border-hover: var(--buttonBorderHover);
+  --button-bg-color-active: var(--buttonBgColorActive);
+  --button-border-active: var(--buttonBorderActive);
+  --button-border-focus: var(--button-border);
+  --float-bg-color: var(--floatBgColor);
+  --float-hover-color: var(--floatHoverColor);
+  --float-border-color: var(--floatBorderColor);
+  --float-shadow: rgba(0, 0, 0, 0.4) 0 1px 3px, rgba(0, 0, 0, 0.5) 0 8px 24px;
+  --link-color: var(--linkColor);
+  --h1-color: var(--h1Color);
+  --h2-color: var(--h2Color);
+  --h3-color: var(--h3Color);
+  --h4-color: var(--h4Color);
+  --h5-color: var(--h5Color);
+  --h6-color: var(--h6Color);
+  --blockquote-text-color: var(--blockquoteTextColor);
+  --blockquote-border-color: var(--blockquoteBorderColor);
+  --strong-color: var(--strongColor);
+  --em-color: var(--emColor);
+  --list-marker-color: var(--listMarkerColor);
+  --hr-color: var(--hrColor);
+}
+
+::-webkit-scrollbar {
+  background: var(--editorBgColor);
+}
+
+.title-bar .frameless-titlebar-button > div > svg {
+  fill: #d8e3ea;
+}
+
+.side-bar {
+  border-right: 1px solid #10222f !important;
+}
+
+.editor-tabs {
+  box-shadow: none !important;
+}
+
+/* ---------------- Markdown 排版 ---------------- */
+
+.mu-container h1 {
+  margin-top: 1.4em;
+  margin-bottom: 0.7em;
+  padding-left: 12px;
+  font-size: 1.95em;
+  font-weight: 600;
+  line-height: 1.3;
+  border-left: 4px solid var(--themeColor);
+}
+
+.mu-container h2 {
+  margin-top: 1.6em;
+  padding-bottom: 0.3em;
+  font-size: 1.5em;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(255, 210, 63, 0.25);
+}
+
+.mu-container h3 {
+  margin-top: 1.4em;
+  font-size: 1.3em;
+  font-weight: 600;
+}
+
+.mu-container h4 {
+  font-size: 1.1em;
+}
+
+.mu-container h5 {
+  font-size: 1em;
+}
+
+.mu-container h6 {
+  font-size: 0.9em;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.mu-container blockquote {
+  margin: 1em 0;
+  padding: 0.6em 1em;
+  color: var(--blockquoteTextColor);
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 3px;
+}
+
+.mu-container blockquote::before {
+  left: 0;
+  width: 3px;
+  background: var(--themeColor);
+}
+
+.mu-container a {
+  color: var(--linkColor);
+  text-decoration: none;
+}
+
+.mu-container a:hover {
+  text-decoration: underline;
+}
+
+.mu-container strong {
+  color: var(--strongColor);
+}
+
+:not(pre) > code {
+  padding: 0.15em 0.4em;
+  font-size: 85%;
+  color: #ffd23f;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 3px;
+}
+
+.mu-container table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.mu-container table th {
+  padding: 7px 12px;
+  font-weight: 600;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid #2a4a61;
+}
+
+.mu-container table td {
+  padding: 7px 12px;
+  border: 1px solid #2a4a61;
+}
+
+.mu-container table tr:nth-child(2n) {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.mu-thematic-break:not(.mu-active)::before {
+  height: 0;
+  border-top: 1px solid rgba(216, 227, 234, 0.15);
+}

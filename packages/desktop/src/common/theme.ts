@@ -1,30 +1,15 @@
+// Themes painted on a dark background. Used for the dark-mode classification
+// that drives window background and icon variants.
 export const railscastsThemes: readonly string[] = Object.freeze([
   'dark',
-  'material-dark',
-  // New gogh dark themes
-  'dracula',
-  'nord',
-  'catppuccin-mocha',
-  'gruvbox-dark',
-  'tokyo-night',
-  'tokyo-night-storm',
-  'solarized-dark',
-  'ayu-dark',
-  'ayu-mirage',
-  'everforest-dark',
-  'rose-pine',
-  'rose-pine-moon',
-  'monokai-pro',
-  'synthwave-84',
-  'horizon-dark',
-  'palenight',
-  'oxocarbon-dark',
-  'kanagawa',
-  'nightfox',
-  'cyberdream'
+  'typora-github-dark',
+  'typora-notion-dark',
+  'typora-drake-dark',
+  'typora-cobalt',
+  'typora-lapis'
 ])
 
-export const oneDarkThemes: readonly string[] = Object.freeze(['one-dark'])
+export const oneDarkThemes: readonly string[] = Object.freeze([])
 
 export const isDarkThemeId = (theme: unknown): theme is string => {
   return (
@@ -39,38 +24,19 @@ export const isDarkThemeId = (theme: unknown): theme is string => {
 // with this colour before the renderer loads, so a dark theme no longer flashes
 // white on launch (#3957).
 const themeBackgroundColors: ReadonlyMap<string, string> = new Map([
-  ['ayu-dark', '#0a0e14'],
-  ['ayu-light', '#fafafa'],
-  ['ayu-mirage', '#1f2430'],
-  ['catppuccin-latte', '#eff1f5'],
-  ['catppuccin-mocha', '#1e1e2e'],
-  ['cyberdream', '#16181a'],
   ['dark', '#282828'],
-  ['dracula', '#282a36'],
-  ['everforest-dark', '#2d353b'],
-  ['everforest-light', '#fdf6e3'],
-  ['graphite', '#f7f7f7'],
-  ['gruvbox-dark', '#282828'],
-  ['gruvbox-light', '#fbf1c7'],
-  ['horizon-dark', '#1c1e26'],
-  ['kanagawa', '#1f1f28'],
-  ['material-dark', '#34393f'],
-  ['monokai-pro', '#2d2a2e'],
-  ['nightfox', '#192330'],
-  ['nord', '#2e3440'],
-  ['one-dark', '#282c34'],
-  ['oxocarbon-dark', '#161616'],
-  ['palenight', '#292d3e'],
-  ['rose-pine', '#191724'],
-  ['rose-pine-dawn', '#faf4ed'],
-  ['rose-pine-moon', '#232136'],
-  ['solarized-dark', '#002b36'],
-  ['solarized-light', '#fdf6e3'],
-  ['synthwave-84', '#262335'],
-  ['tokyo-night', '#1a1b26'],
-  ['tokyo-night-light', '#d5d6db'],
-  ['tokyo-night-storm', '#24283b'],
-  ['ulysses', '#f3f3f3']
+  ['typora-cobalt', '#193549'],
+  ['typora-drake', '#ffffff'],
+  ['typora-drake-dark', '#2b2b2b'],
+  ['typora-github', '#ffffff'],
+  ['typora-github-dark', '#0d1117'],
+  ['typora-lapis', '#1f2433'],
+  ['typora-newsprint', '#f9f7f1'],
+  ['typora-notion', '#ffffff'],
+  ['typora-notion-dark', '#191919'],
+  ['typora-orange-heart', '#fffefb'],
+  ['typora-solarized-light', '#fdf6e3'],
+  ['typora-vue', '#ffffff']
 ])
 
 const DARK_FALLBACK_BACKGROUND = '#282828'

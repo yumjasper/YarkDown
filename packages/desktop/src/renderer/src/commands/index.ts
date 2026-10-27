@@ -5,6 +5,25 @@ import { isUpdatable } from './utils'
 import getCommandDescriptionById from './descriptions'
 import { t } from '../i18n'
 
+// Theme id -> `menu.theme.<labelKey>` suffix. Keeps the palette commands in the
+// command center wired to the same translated names as the application menu.
+const THEME_LABEL_KEYS: Record<string, string> = {
+  light: 'cadmiumLight',
+  dark: 'dark',
+  'typora-github': 'typoraGithub',
+  'typora-notion': 'typoraNotion',
+  'typora-drake': 'typoraDrake',
+  'typora-vue': 'typoraVue',
+  'typora-orange-heart': 'typoraOrangeHeart',
+  'typora-solarized-light': 'typoraSolarizedLight',
+  'typora-newsprint': 'typoraNewsprint',
+  'typora-github-dark': 'typoraGithubDark',
+  'typora-notion-dark': 'typoraNotionDark',
+  'typora-drake-dark': 'typoraDrakeDark',
+  'typora-cobalt': 'typoraCobalt',
+  'typora-lapis': 'typoraLapis'
+}
+
 export { default as FileEncodingCommand } from './fileEncoding'
 export { default as LineEndingCommand } from './lineEnding'
 export { default as QuickOpenCommand } from './quickOpen'
@@ -560,24 +579,64 @@ const commands: CommandDescriptor[] = [
         value: 'dark'
       },
       {
-        id: 'window.change-theme-graphite',
-        description: 'Graphite',
-        value: 'graphite'
+        id: 'window.change-theme-typora-github',
+        description: 'GitHub',
+        value: 'typora-github'
       },
       {
-        id: 'window.change-theme-material-dark',
-        description: 'Material Dark',
-        value: 'material-dark'
+        id: 'window.change-theme-typora-notion',
+        description: 'Notion',
+        value: 'typora-notion'
       },
       {
-        id: 'window.change-theme-one-dark',
-        description: 'One Dark',
-        value: 'one-dark'
+        id: 'window.change-theme-typora-drake',
+        description: 'Drake',
+        value: 'typora-drake'
       },
       {
-        id: 'window.change-theme-ulysses',
-        description: 'Ulysses',
-        value: 'ulysses'
+        id: 'window.change-theme-typora-vue',
+        description: 'Vue',
+        value: 'typora-vue'
+      },
+      {
+        id: 'window.change-theme-typora-orange-heart',
+        description: 'Orange Heart',
+        value: 'typora-orange-heart'
+      },
+      {
+        id: 'window.change-theme-typora-solarized-light',
+        description: 'Solarized Light',
+        value: 'typora-solarized-light'
+      },
+      {
+        id: 'window.change-theme-typora-newsprint',
+        description: 'Newsprint',
+        value: 'typora-newsprint'
+      },
+      {
+        id: 'window.change-theme-typora-github-dark',
+        description: 'GitHub Dark',
+        value: 'typora-github-dark'
+      },
+      {
+        id: 'window.change-theme-typora-notion-dark',
+        description: 'Notion Dark',
+        value: 'typora-notion-dark'
+      },
+      {
+        id: 'window.change-theme-typora-drake-dark',
+        description: 'Drake Dark',
+        value: 'typora-drake-dark'
+      },
+      {
+        id: 'window.change-theme-typora-cobalt',
+        description: 'Cobalt',
+        value: 'typora-cobalt'
+      },
+      {
+        id: 'window.change-theme-typora-lapis',
+        description: 'Lapis',
+        value: 'typora-lapis'
       }
     ],
     executeSubcommand: async(_, theme) => {
@@ -724,19 +783,9 @@ export const getCommandsWithDescriptions = async(): Promise<CommandDescriptor[]>
       // Special handling for theme subcommands
       if (id === 'window.change-theme' && subcommands && Array.isArray(subcommands)) {
         for (const subcommand of subcommands) {
-          const { value } = subcommand
-          if (value === 'light') {
-            subcommand.description = t('menu.theme.cadmiumLight')
-          } else if (value === 'dark') {
-            subcommand.description = t('menu.theme.dark')
-          } else if (value === 'graphite') {
-            subcommand.description = t('menu.theme.graphiteLight')
-          } else if (value === 'material-dark') {
-            subcommand.description = t('menu.theme.materialDark')
-          } else if (value === 'one-dark') {
-            subcommand.description = t('menu.theme.oneDark')
-          } else if (value === 'ulysses') {
-            subcommand.description = t('menu.theme.ulyssesLight')
+          const labelKey = THEME_LABEL_KEYS[subcommand.value as string]
+          if (labelKey) {
+            subcommand.description = t(`menu.theme.${labelKey}`)
           }
         }
       }

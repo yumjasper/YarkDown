@@ -1,3 +1,6 @@
+/*
+ * Typora 主题（参考 https://theme.typora.io 复刻）
+ */
 import { type MenuItemConstructorOptions } from 'electron'
 import * as actions from '../actions/theme'
 import { t } from '../../i18n'
@@ -5,45 +8,26 @@ import type Preference from '../../preferences'
 
 // [i18nLabelKey, themeId] for each selectable theme. The menu label is
 // `menu.theme.<labelKey>`; `themeId` is both the menu item id and the value
-// passed to `selectTheme` / compared against the saved theme. (A few light
-// themes keep historical ids, e.g. cadmiumLight -> 'light'.)
+// passed to `selectTheme` / compared against the saved theme. (`cadmiumLight`
+// and `cadmiumDark` are historical keys that map to the default light/dark.)
 const LIGHT_THEMES: ReadonlyArray<readonly [string, string]> = [
-  ['ayuLight', 'ayu-light'],
   ['cadmiumLight', 'light'],
-  ['catppuccinLatte', 'catppuccin-latte'],
-  ['everforestLight', 'everforest-light'],
-  ['graphiteLight', 'graphite'],
-  ['gruvboxLight', 'gruvbox-light'],
-  ['rosePineDawn', 'rose-pine-dawn'],
-  ['solarizedLight', 'solarized-light'],
-  ['tokyoNightLight', 'tokyo-night-light'],
-  ['ulyssesLight', 'ulysses']
+  ['typoraGithub', 'typora-github'],
+  ['typoraNotion', 'typora-notion'],
+  ['typoraDrake', 'typora-drake'],
+  ['typoraVue', 'typora-vue'],
+  ['typoraOrangeHeart', 'typora-orange-heart'],
+  ['typoraSolarizedLight', 'typora-solarized-light'],
+  ['typoraNewsprint', 'typora-newsprint']
 ]
 
 const DARK_THEMES: ReadonlyArray<readonly [string, string]> = [
-  ['ayuDark', 'ayu-dark'],
-  ['ayuMirage', 'ayu-mirage'],
   ['cadmiumDark', 'dark'],
-  ['catppuccinMocha', 'catppuccin-mocha'],
-  ['cyberdream', 'cyberdream'],
-  ['dracula', 'dracula'],
-  ['everforestDark', 'everforest-dark'],
-  ['gruvboxDark', 'gruvbox-dark'],
-  ['horizonDark', 'horizon-dark'],
-  ['kanagawa', 'kanagawa'],
-  ['materialDark', 'material-dark'],
-  ['monokaiPro', 'monokai-pro'],
-  ['nightfox', 'nightfox'],
-  ['nord', 'nord'],
-  ['oneDark', 'one-dark'],
-  ['oxocarbonDark', 'oxocarbon-dark'],
-  ['palenight', 'palenight'],
-  ['rosePine', 'rose-pine'],
-  ['rosePineMoon', 'rose-pine-moon'],
-  ['solarizedDark', 'solarized-dark'],
-  ['synthwave84', 'synthwave-84'],
-  ['tokyoNight', 'tokyo-night'],
-  ['tokyoNightStorm', 'tokyo-night-storm']
+  ['typoraGithubDark', 'typora-github-dark'],
+  ['typoraNotionDark', 'typora-notion-dark'],
+  ['typoraDrakeDark', 'typora-drake-dark'],
+  ['typoraCobalt', 'typora-cobalt'],
+  ['typoraLapis', 'typora-lapis']
 ]
 
 export default function(userPreference: Preference): MenuItemConstructorOptions {

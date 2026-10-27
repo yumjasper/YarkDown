@@ -203,196 +203,122 @@ const onSelectChange = (type: keyof PreferencesState, value: unknown): void => {
       }
     }
 
-    /* New gogh themes - Dark */
-    &.dracula {
-      color: #f8f8f2;
-      background: #282a36;
+    /* Typora 风格主题 —— Light */
+    &.typora-github {
+      color: #24292f;
+      background: #ffffff;
       & a {
-        color: #bd93f9;
+        color: #0969da;
       }
     }
-    &.nord {
-      color: #d8dee9;
-      background: #2e3440;
+    &.typora-notion {
+      color: #37352f;
+      background: #ffffff;
+      & h3 {
+        font-weight: 600;
+      }
       & a {
-        color: #81a1c1;
+        color: #2383e2;
       }
     }
-    &.catppuccin-mocha {
-      color: #cdd6f4;
-      background: #1e1e2e;
+    &.typora-drake {
+      color: #333333;
+      background: #ffffff;
+      & h3 {
+        padding-left: 8px;
+        border-left: 4px solid #e95f59;
+      }
       & a {
-        color: #89b4fa;
+        color: #4183c4;
       }
     }
-    &.gruvbox-dark {
-      color: #ebdbb2;
-      background: #282828;
+    &.typora-vue {
+      color: #34495e;
+      background: #ffffff;
+      & h3 {
+        padding: 0.05em 0.35em;
+        background: rgba(65, 184, 131, 0.12);
+        border-radius: 4px;
+      }
       & a {
-        color: #83a598;
+        color: #41b883;
       }
     }
-    &.tokyo-night {
-      color: #c0caf5;
-      background: #1a1b26;
+    &.typora-orange-heart {
+      color: #494949;
+      background: #fffefb;
+      & h3 {
+        color: #ef7060;
+      }
       & a {
-        color: #7aa2f7;
+        color: #e05a48;
       }
     }
-    &.tokyo-night-storm {
-      color: #c0caf5;
-      background: #24283b;
-      & a {
-        color: #7aa2f7;
-      }
-    }
-    &.solarized-dark {
-      color: #839496;
-      background: #002b36;
-      & a {
-        color: #268bd2;
-      }
-    }
-    &.ayu-dark {
-      color: #b3b1ad;
-      background: #0a0e14;
-      & a {
-        color: #39bae6;
-      }
-    }
-    &.ayu-mirage {
-      color: #cbccc6;
-      background: #1f2430;
-      & a {
-        color: #ffcc66;
-      }
-    }
-    &.everforest-dark {
-      color: #d3c6aa;
-      background: #2d353b;
-      & a {
-        color: #a7c080;
-      }
-    }
-    &.rose-pine {
-      color: #e0def4;
-      background: #191724;
-      & a {
-        color: #c4a7e7;
-      }
-    }
-    &.rose-pine-moon {
-      color: #e0def4;
-      background: #232136;
-      & a {
-        color: #c4a7e7;
-      }
-    }
-    &.monokai-pro {
-      color: #fcfcfa;
-      background: #2d2a2e;
-      & a {
-        color: #ffd866;
-      }
-    }
-    &.synthwave-84 {
-      color: #ffffff;
-      background: #262335;
-      & a {
-        color: #ff7edb;
-      }
-    }
-    &.horizon-dark {
-      color: #d5d8da;
-      background: #1c1e26;
-      & a {
-        color: #e95678;
-      }
-    }
-    &.palenight {
-      color: #a6accd;
-      background: #292d3e;
-      & a {
-        color: #82aaff;
-      }
-    }
-    &.oxocarbon-dark {
-      color: #f2f4f8;
-      background: #161616;
-      & a {
-        color: #78a9ff;
-      }
-    }
-    &.kanagawa {
-      color: #dcd7ba;
-      background: #1f1f28;
-      & a {
-        color: #7e9cd8;
-      }
-    }
-    &.nightfox {
-      color: #cdcecf;
-      background: #192330;
-      & a {
-        color: #719cd6;
-      }
-    }
-    &.cyberdream {
-      color: #ffffff;
-      background: #16181a;
-      & a {
-        color: #5ea1ff;
-      }
-    }
-
-    /* New gogh themes - Light */
-    &.catppuccin-latte {
-      color: #4c4f69;
-      background: #eff1f5;
-      & a {
-        color: #1e66f5;
-      }
-    }
-    &.gruvbox-light {
-      color: #3c3836;
-      background: #fbf1c7;
-      & a {
-        color: #458588;
-      }
-    }
-    &.tokyo-night-light {
-      color: #343b58;
-      background: #d5d6db;
-      & a {
-        color: #34548a;
-      }
-    }
-    &.solarized-light {
+    &.typora-solarized-light {
       color: #657b83;
       background: #fdf6e3;
       & a {
         color: #268bd2;
       }
     }
-    &.ayu-light {
-      color: #575f66;
-      background: #fafafa;
+    &.typora-newsprint {
+      color: #2b2b2b;
+      background: #f9f7f1;
+      & h3 {
+        font-style: italic;
+      }
       & a {
-        color: #399ee6;
+        color: #8b2f2f;
       }
     }
-    &.everforest-light {
-      color: #5c6a72;
-      background: #fdf6e3;
+
+    /* Typora 风格主题 —— Dark */
+    &.typora-github-dark {
+      color: #e6edf3;
+      background: #0d1117;
       & a {
-        color: #8da101;
+        color: #2f81f7;
       }
     }
-    &.rose-pine-dawn {
-      color: #575279;
-      background: #faf4ed;
+    &.typora-notion-dark {
+      color: rgba(255, 255, 255, 0.81);
+      background: #191919;
+      & h3 {
+        font-weight: 600;
+      }
       & a {
-        color: #907aa9;
+        color: #529cca;
+      }
+    }
+    &.typora-drake-dark {
+      color: #acb7c4;
+      background: #2b2b2b;
+      & h3 {
+        padding-left: 8px;
+        border-left: 4px solid #3473b0;
+      }
+      & a {
+        color: #58a1d6;
+      }
+    }
+    &.typora-cobalt {
+      color: #d8e3ea;
+      background: #193549;
+      & h3 {
+        color: #ffd23f;
+      }
+      & a {
+        color: #80c7ff;
+      }
+    }
+    &.typora-lapis {
+      color: #c5cee0;
+      background: #1f2433;
+      & h3 {
+        color: #93b4ff;
+      }
+      & a {
+        color: #7aa2ff;
       }
     }
 

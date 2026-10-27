@@ -2,42 +2,24 @@ export interface ThemeDescriptor {
   name: string
 }
 
+// 除默认 light 外的可选主题。名称与 assets/themes/<name>.theme.css 一一对应，
+// 并统一带 `typora-` 前缀以标明设计来源（https://theme.typora.io）。
 export const themes: ReadonlyArray<ThemeDescriptor> = [
-  // Light Themes (alphabetical)
-  { name: 'ayu-light' },
-  { name: 'light' },
-  { name: 'catppuccin-latte' },
-  { name: 'everforest-light' },
-  { name: 'graphite' },
-  { name: 'gruvbox-light' },
-  { name: 'rose-pine-dawn' },
-  { name: 'solarized-light' },
-  { name: 'tokyo-night-light' },
-  { name: 'ulysses' },
-  // Dark Themes (alphabetical)
-  { name: 'ayu-dark' },
-  { name: 'ayu-mirage' },
+  // Light themes
+  { name: 'typora-github' },
+  { name: 'typora-notion' },
+  { name: 'typora-drake' },
+  { name: 'typora-vue' },
+  { name: 'typora-orange-heart' },
+  { name: 'typora-solarized-light' },
+  { name: 'typora-newsprint' },
+  // Dark themes
   { name: 'dark' },
-  { name: 'catppuccin-mocha' },
-  { name: 'cyberdream' },
-  { name: 'dracula' },
-  { name: 'everforest-dark' },
-  { name: 'gruvbox-dark' },
-  { name: 'horizon-dark' },
-  { name: 'kanagawa' },
-  { name: 'material-dark' },
-  { name: 'monokai-pro' },
-  { name: 'nightfox' },
-  { name: 'nord' },
-  { name: 'one-dark' },
-  { name: 'oxocarbon-dark' },
-  { name: 'palenight' },
-  { name: 'rose-pine' },
-  { name: 'rose-pine-moon' },
-  { name: 'solarized-dark' },
-  { name: 'synthwave-84' },
-  { name: 'tokyo-night' },
-  { name: 'tokyo-night-storm' }
+  { name: 'typora-github-dark' },
+  { name: 'typora-notion-dark' },
+  { name: 'typora-drake-dark' },
+  { name: 'typora-cobalt' },
+  { name: 'typora-lapis' }
 ]
 
 // getAutoSwitchThemeOptions removed - no longer needed

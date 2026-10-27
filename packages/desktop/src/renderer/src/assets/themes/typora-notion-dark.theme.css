@@ -1,0 +1,257 @@
+/*
+ * Typora Notion Dark
+ * Notion 深色模式配色，排版与 Notion (Light) 一致。
+ */
+
+:root {
+  /*editor*/
+  --themeColor: #529cca;
+  --themeColor90: rgba(82, 156, 202, 0.9);
+  --themeColor80: rgba(82, 156, 202, 0.8);
+  --themeColor70: rgba(82, 156, 202, 0.7);
+  --themeColor60: rgba(82, 156, 202, 0.6);
+  --themeColor50: rgba(82, 156, 202, 0.5);
+  --themeColor40: rgba(82, 156, 202, 0.4);
+  --themeColor30: rgba(82, 156, 202, 0.3);
+  --themeColor20: rgba(82, 156, 202, 0.2);
+  --themeColor10: rgba(82, 156, 202, 0.1);
+
+  --highlightColor: rgba(255, 212, 0, 0.25);
+  --selectionColor: rgba(82, 156, 202, 0.35);
+  --editorColor: rgba(255, 255, 255, 0.81);
+  --editorColor80: rgba(255, 255, 255, 0.92);
+  --editorColor60: rgba(255, 255, 255, 0.6);
+  --editorColor50: rgba(255, 255, 255, 0.5);
+  --editorColor40: rgba(255, 255, 255, 0.4);
+  --editorColor30: rgba(255, 255, 255, 0.3);
+  --editorColor10: rgba(255, 255, 255, 0.1);
+  --editorColor04: rgba(255, 255, 255, 0.04);
+  --editorBgColor: #191919;
+  --deleteColor: #ff7369;
+  --iconColor: rgba(255, 255, 255, 0.5);
+  --codeBgColor: rgba(135, 131, 120, 0.2);
+  --codeBlockBgColor: #252525;
+  --codeBlockColor: rgba(255, 255, 255, 0.81);
+  --footnoteBgColor: rgba(135, 131, 120, 0.2);
+  --inputBgColor: #252525;
+
+  --focusColor: var(--themeColor);
+
+  --buttonFontColor: rgba(255, 255, 255, 0.81);
+  --buttonBgColor: #252525;
+  --buttonBorder: 1px solid rgba(255, 255, 255, 0.08);
+  --buttonShadow: none;
+  --buttonFontColorHover: var(--buttonFontColor);
+  --buttonBgColorHover: #2f2f2f;
+  --buttonBorderHover: 1px solid rgba(255, 255, 255, 0.12);
+  --buttonFontColorActive: var(--buttonFontColor);
+  --buttonBgColorActive: #1f1f1f;
+  --buttonBorderActive: var(--buttonBorder);
+
+  --buttonPrimaryFontColor: #ffffff;
+  --buttonPrimaryBgColor: #2383e2;
+  --buttonPrimaryBorder: none;
+  --buttonPrimaryShadow: none;
+  --buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
+  --buttonPrimaryBgColorHover: #2f8fe8;
+  --buttonPrimaryBorderHover: var(--buttonPrimaryBorder);
+  --buttonPrimaryFontColorActive: var(--buttonPrimaryFontColor);
+  --buttonPrimaryBgColorActive: #1a6fca;
+  --buttonPrimaryBorderActive: var(--buttonPrimaryBorder);
+  --buttonPrimaryFocusBorder: none;
+  --buttonPrimaryFocusShadow: 0 0 0 2px rgba(82, 156, 202, 0.5);
+  --tableBorderColor: rgba(255, 255, 255, 0.09);
+
+  /* Markdown element colors */
+  --headingColor: rgba(255, 255, 255, 0.92);
+  --h1Color: rgba(255, 255, 255, 0.92);
+  --h2Color: rgba(255, 255, 255, 0.92);
+  --h3Color: rgba(255, 255, 255, 0.92);
+  --h4Color: rgba(255, 255, 255, 0.92);
+  --h5Color: rgba(255, 255, 255, 0.92);
+  --h6Color: rgba(255, 255, 255, 0.55);
+  --blockquoteTextColor: rgba(255, 255, 255, 0.75);
+  --blockquoteBorderColor: rgba(255, 255, 255, 0.8);
+  --hrColor: rgba(255, 255, 255, 0.13);
+  --linkColor: #529cca;
+  --strongColor: rgba(255, 255, 255, 0.92);
+  --emColor: rgba(255, 255, 255, 0.81);
+  --listMarkerColor: rgba(255, 255, 255, 0.5);
+
+  /*marktext*/
+  --sideBarColor: rgba(255, 255, 255, 0.6);
+  --sideBarIconColor: var(--iconColor);
+  --sideBarTitleColor: rgba(255, 255, 255, 0.92);
+  --sideBarTextColor: rgba(255, 255, 255, 0.4);
+  --sideBarBgColor: #202020;
+  --sideBarItemHoverBgColor: rgba(255, 255, 255, 0.055);
+  --itemBgColor: #2c2c2c;
+
+  --floatFontColor: rgba(255, 255, 255, 0.81);
+  --floatBgColor: #252525;
+  --floatHoverColor: #2f2f2f;
+  --floatBorderColor: rgba(255, 255, 255, 0.08);
+  --floatShadow: rgba(0, 0, 0, 0.5);
+  --maskColor: rgba(0, 0, 0, 0.75);
+  --editorAreaWidth: 900px;
+
+  --theme-color: var(--themeColor);
+  --highlight-color: var(--highlightColor);
+  --selection-color: var(--selectionColor);
+  --editor-color: var(--editorColor);
+  --editor-color-80: var(--editorColor80);
+  --editor-color-50: var(--editorColor50);
+  --editor-color-30: var(--editorColor30);
+  --editor-color-10: var(--editorColor10);
+  --editor-color-04: var(--editorColor04);
+  --editor-bg-color: var(--editorBgColor);
+  --editor-area-width: var(--editorAreaWidth);
+  --delete-color: var(--deleteColor);
+  --icon-color: var(--iconColor);
+  --code-block-bg-color: var(--codeBlockBgColor);
+  --code-block-color: var(--codeBlockColor);
+  --table-border-color: var(--tableBorderColor);
+  --input-bg-color: var(--inputBgColor);
+  --button-font-color: var(--buttonFontColor);
+  --button-bg-color: var(--buttonBgColor);
+  --button-border: var(--buttonBorder);
+  --button-bg-color-hover: var(--buttonBgColorHover);
+  --button-border-hover: var(--buttonBorderHover);
+  --button-bg-color-active: var(--buttonBgColorActive);
+  --button-border-active: var(--buttonBorderActive);
+  --button-border-focus: var(--button-border);
+  --float-bg-color: var(--floatBgColor);
+  --float-hover-color: var(--floatHoverColor);
+  --float-border-color: var(--floatBorderColor);
+  --float-shadow: rgba(0, 0, 0, 0.4) 0 1px 2px, rgba(0, 0, 0, 0.5) 0 4px 12px;
+  --link-color: var(--linkColor);
+  --h1-color: var(--h1Color);
+  --h2-color: var(--h2Color);
+  --h3-color: var(--h3Color);
+  --h4-color: var(--h4Color);
+  --h5-color: var(--h5Color);
+  --h6-color: var(--h6Color);
+  --blockquote-text-color: var(--blockquoteTextColor);
+  --blockquote-border-color: var(--blockquoteBorderColor);
+  --strong-color: var(--strongColor);
+  --em-color: var(--emColor);
+  --list-marker-color: var(--listMarkerColor);
+  --hr-color: var(--hrColor);
+}
+
+::-webkit-scrollbar {
+  background: var(--editorBgColor);
+}
+
+.title-bar .frameless-titlebar-button > div > svg {
+  fill: rgba(255, 255, 255, 0.7);
+}
+
+.side-bar {
+  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.editor-tabs {
+  box-shadow: none !important;
+}
+
+/* ---------------- Markdown 排版 ---------------- */
+
+.mu-container h1 {
+  margin-top: 1.9em;
+  margin-bottom: 0.5em;
+  font-size: 1.875em;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.mu-container h2 {
+  margin-top: 1.7em;
+  margin-bottom: 0.45em;
+  font-size: 1.5em;
+  font-weight: 600;
+}
+
+.mu-container h3 {
+  margin-top: 1.5em;
+  margin-bottom: 0.4em;
+  font-size: 1.25em;
+  font-weight: 600;
+}
+
+.mu-container h4 {
+  font-size: 1.05em;
+  font-weight: 600;
+}
+
+.mu-container h5 {
+  font-size: 1em;
+  font-weight: 600;
+}
+
+.mu-container h6 {
+  font-size: 0.95em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mu-container blockquote {
+  margin: 1em 0;
+  padding: 0.6em 1em;
+  color: var(--blockquoteTextColor);
+  background: rgba(255, 255, 255, 0.055);
+  border-radius: 4px;
+}
+
+.mu-container blockquote::before {
+  left: 0;
+  width: 3px;
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 2px;
+}
+
+.mu-container a {
+  color: var(--linkColor);
+  text-decoration: underline;
+  text-decoration-color: rgba(82, 156, 202, 0.45);
+  text-underline-offset: 2px;
+}
+
+.mu-container a:hover {
+  text-decoration-color: var(--linkColor);
+}
+
+:not(pre) > code {
+  padding: 0.15em 0.35em;
+  font-size: 85%;
+  color: #ff7369;
+  background: rgba(135, 131, 120, 0.2);
+  border-radius: 3px;
+}
+
+.mu-container strong {
+  font-weight: 600;
+}
+
+.mu-container table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.mu-container table th {
+  padding: 7px 10px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.mu-container table td {
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.mu-thematic-break:not(.mu-active)::before {
+  height: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.13);
+}
