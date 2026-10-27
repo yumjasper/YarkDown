@@ -2,7 +2,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Muya } from '../muya';
-import { injectSentinels, resolveSentinelCursor } from '../selection/offsetCursor';
+import { injectSentinels, resolveSentinelPaths } from '../selection/offsetCursor';
 
 // PARITY (gap PG2): the source-code -> WYSIWYG handoff carries only a
 // CodeMirror `{ line, ch }` index cursor. `setCursorByOffset` reproduces the
@@ -87,8 +87,8 @@ describe('muya.setCursorByOffset() (PG2)', () => {
             focus: { line: 0, ch: 5 },
         });
         expect(sentinelMarkdown).not.toBeNull();
-        muya.editor.setContent(sentinelMarkdown!);
-        const cursor = resolveSentinelCursor(muya.editor.scrollPage!);
+        const state = muya.editor.jsonState.markdownToState(sentinelMarkdown!);
+        const cursor = resolveSentinelPaths(state);
         expect(cursor).not.toBeNull();
         expect(cursor!.anchor!.offset).toBe(0);
         expect(cursor!.focus!.offset).toBe(5);
@@ -111,7 +111,7 @@ describe('muya.setCursorByOffset() (PG2)', () => {
         expect(muya.setCursorByOffset({ anchor: null, focus: null })).toBe(false);
     });
 
-    it('PG2: preserves the undo history across the internal setContent rebuild', async () => {
+    it('PG2: leaves the undo history untouched when restoring the caret', async () => {
         const muya = bootMuya('alpha\n');
         // Seed a non-empty undo stack so we can detect a clobber. The text-setter
         // op flushes to the history on the next frame (JSONState._emitStateChange).
@@ -130,9 +130,49 @@ describe('muya.setCursorByOffset() (PG2)', () => {
         });
         expect(restored).toBe(true);
 
-        // The undo stack survives the caret-restore (setContent would otherwise
-        // have cleared it).
+        // The undo stack survives the caret-restore.
         const after = muya.getHistory();
         expect(after.stack.undo.length).toBe(before.stack.undo.length);
+    });
+
+    it('PG2: restores the caret inside a list item without rebuilding the tree', async () => {
+        const muya = bootMuya('# Title\n\n- alpha\n- beta item\n\nend\n');
+        const blockBefore = muya.editor.scrollPage!.firstContentInDescendant();
+        // Line 3 is "- beta item" (0 heading, 1 blank, 2 first item, 3 second).
+        // The list marker is not part of the item's content text, so ch=4 in the
+        // source line is offset 2 inside "beta item".
+        const restored = muya.setCursorByOffset({
+            anchor: { line: 3, ch: 4 },
+            focus: { line: 3, ch: 4 },
+        });
+        expect(restored).toBe(true);
+
+        await vi.waitFor(() => {
+            const sel = muya.editor.selection.getSelection();
+            expect(sel).not.toBeNull();
+            expect(sel!.anchor.block.text).toBe('beta item');
+            expect(sel!.anchor.offset).toBe(2);
+        });
+        // Restoring the caret must not swap the document out from under the
+        // renderer: the first content block instance is still the live one.
+        expect(muya.editor.scrollPage!.firstContentInDescendant()).toBe(blockBefore);
+    });
+
+    it('PG2: resolves a cursor inside a nested block to a queryable path', () => {
+        const muya = bootMuya('> quoted line\n');
+        const cursor = resolveSentinelPaths(
+            muya.editor.jsonState.markdownToState(
+                injectSentinels(muya.getMarkdown(), {
+                    anchor: { line: 0, ch: 3 },
+                    focus: { line: 0, ch: 3 },
+                })!,
+            ),
+        );
+        expect(cursor).not.toBeNull();
+        // The block tree must resolve the same path back to a content block,
+        // which is what makes `setCursor` land in the right place.
+        const block = muya.editor.scrollPage!.queryBlock([...cursor!.anchorPath!]);
+        expect(block).toBeTruthy();
+        expect((block as { isContent: () => boolean }).isContent()).toBe(true);
     });
 });

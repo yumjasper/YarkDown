@@ -47,7 +47,17 @@ const editor = shallowRef<CodeMirror.Editor | null>(null)
 const commitTimer = ref<ReturnType<typeof setTimeout> | null>(null)
 const viewDestroyed = ref(false)
 const tabId = ref<string | null>(null)
-const virtualized = ref((props.markdown?.length || 0) > 160000)
+/** CodeMirror builds one DOM node per rendered line. Unvirtualized it renders the
+ *  whole document, which for a formula-dense page means thousands of line
+ *  elements plus the markdown-math mode's per-token spans: the 59 KB / 1407-line
+ *  math tutorial produced 2062 line nodes and 44521 nodes overall, and entering
+ *  source mode measured an 890 ms task. Virtualizing it took that to 304 ms.
+ *  The threshold is on characters because that is cheap to measure, but the cost
+ *  tracks line count, hence the small value: any document big enough to be worth
+ *  reading virtualizes, which only means CodeMirror keeps a window of lines
+ *  around the viewport instead of all of them. */
+const VIRTUALIZE_ABOVE_CHARS = 20000
+const virtualized = ref((props.markdown?.length || 0) > VIRTUALIZE_ABOVE_CHARS)
 let disposeSearch: (() => void) | undefined
 const updateSourceToc = (markdown: string) => {
   if (sourceCode.value && currentTab.value?.id === tabId.value) editorStore.UPDATE_TOC(sourceHeadings(markdown))
@@ -200,7 +210,7 @@ const handleFileChange = (payload: unknown) => {
   }
 
   if (typeof newMarkdown === 'string') {
-    virtualized.value = newMarkdown.length > 160000
+    virtualized.value = newMarkdown.length > VIRTUALIZE_ABOVE_CHARS
     editor.value.setOption('viewportMargin', virtualized.value ? 30 : Infinity)
     editor.value.setValue(newMarkdown)
     updateSourceToc(newMarkdown)

@@ -34,6 +34,19 @@ import type {
   TabOptions
 } from '@shared/types/files'
 
+/**
+ * Live scroll offsets, keyed by tab id.
+ *
+ * The offset changes on every frame of a wheel gesture. Writing it straight onto
+ * `tab.scrollTop` made Vue re-render the tab bar and re-serialise the whole
+ * document state on each of those frames, which was the remaining per-frame
+ * commit during scrolling. The latched value is therefore kept out of the
+ * reactive tree and only promoted into `tab.scrollTop` once the gesture settles;
+ * every reader goes through `readScrollTop` so a tab switch, a save or a crash
+ * snapshot still sees the offset the user is actually at.
+ */
+const scrollLatches = new Map<string, number>()
+
 // ----------------------------------------------------------------------------
 // Local helper types
 // ----------------------------------------------------------------------------
@@ -353,6 +366,7 @@ export const useEditorStore = defineStore('editor', {
      * Update scroll position for the currentFile
      */
     updateScrollPosition(id: string, scrollTop: number): void {
+      scrollLatches.set(id, scrollTop)
       if (!(id in this.tabIdToIndex)) {
         console.warn('updateScrollPosition: Cannot find tab index for id:', id)
         return
@@ -363,6 +377,27 @@ export const useEditorStore = defineStore('editor', {
         tab.scrollTop = scrollTop
       }
       debouncedSendBufferedState()
+    },
+
+    /**
+     * Latches the live scroll offset without touching reactive state.
+     *
+     * Called once per frame while the user scrolls, so it must stay allocation-
+     * and reactivity-free.
+     */
+    REMEMBER_SCROLL_POSITION(scrollTop: number): void {
+      const id = this.currentFile?.id
+      if (id) scrollLatches.set(id, scrollTop)
+    },
+
+    /**
+     * Reads a tab's offset, preferring the live latch over the last published
+     * value so callers never act on a stale position mid-gesture.
+     */
+    READ_SCROLL_POSITION(id: string): number {
+      const latched = scrollLatches.get(id)
+      if (latched !== undefined) return latched
+      return this.tabs[this.tabIdToIndex[id]]?.scrollTop ?? 0
     },
 
     /**
@@ -444,7 +479,7 @@ export const useEditorStore = defineStore('editor', {
       const oldId = tab.id
       const oldNotifications = tab.notifications
       // Preserve scroll across external reload so the editor stays put.
-      const oldScrollTop = tab.scrollTop
+      const oldScrollTop = this.READ_SCROLL_POSITION(tab.id)
       let oldHistory: IFileState['history'] | null = null
       const histIndex = tab.history.index
       if (histIndex >= 0 && tab.history.stack.length >= 1) {
@@ -468,6 +503,7 @@ export const useEditorStore = defineStore('editor', {
       tab.id = oldId
       tab.notifications = oldNotifications
       tab.scrollTop = oldScrollTop
+      scrollLatches.set(oldId, oldScrollTop)
       if (oldHistory) {
         tab.history = oldHistory
       }
@@ -948,8 +984,11 @@ export const useEditorStore = defineStore('editor', {
       const oldCurrentFile = this.currentFile
       let didUpdateCurrentFile = false
       if (oldCurrentFile == null || oldCurrentFile.id !== currentFile.id) {
-        const { id, markdown, cursor, history, pathname, scrollTop, blocks, muyaIndexCursor } =
-          currentFile
+        const { id, markdown, cursor, history, pathname, blocks, muyaIndexCursor } = currentFile
+        // The tab bar is about to hand the window to another document; promote the
+        // latched offset of the outgoing tab so its position is not lost when the
+        // user leaves mid-gesture.
+        const scrollTop = this.READ_SCROLL_POSITION(currentFile.id)
         // Must run while `currentFile` still points at the outgoing tab, so its
         // flushed edit is attributed to that tab and not lost on switch (#2938).
         if (oldCurrentFile) {
@@ -1156,8 +1195,8 @@ export const useEditorStore = defineStore('editor', {
         this.currentFile = fileState
         this.selectionWordCount = null
         if (fileState && typeof fileState.markdown === 'string') {
-          const { id, markdown, cursor, history, pathname, scrollTop, blocks, muyaIndexCursor } =
-            fileState
+          const { id, markdown, cursor, history, pathname, blocks, muyaIndexCursor } = fileState
+          const scrollTop = this.READ_SCROLL_POSITION(id)
           window.DIRNAME = pathname ? window.path.dirname(pathname) : ''
           bus.emit('file-changed', {
             id,

@@ -1,10 +1,9 @@
 // Index-cursor → block-key cursor conversion for the source-code → WYSIWYG
 // handoff. The desktop app hands back only a CodeMirror `{ line, ch }` offset
 // pair when switching a tab from source mode to WYSIWYG; this resolves those
-// offsets against the live block tree to recover the caret's block-key cursor.
+// offsets against the document's STATE tree to recover the caret's block-key
+// cursor, without touching the rendered tree.
 
-import type Content from '../block/base/content';
-import type { ScrollPage } from '../block/scrollPage';
 import type { TState } from '../state/types';
 import type { IPathCursor, ISelection } from './types';
 
@@ -84,51 +83,70 @@ export function injectSentinels(
     return lines.join('\n');
 }
 
-interface ISentinelHit {
-    block: Content;
-    offset: number;
-}
+/** Container state names whose children live under a `children` key. */
+const CONTAINER_NAMES = new Set<string>([
+    'block-quote',
+    'order-list',
+    'bullet-list',
+    'task-list',
+    'list-item',
+    'task-list-item',
+    'table',
+    'table.row',
+    'footnote',
+]);
 
 /**
- * Walk the live content blocks of `scrollPage` and, for each sentinel found in
- * a block's text, record the owning block and the offset the sentinel sits at
- * (with the sentinel removed from the offset accounting). The block's text is
- * left untouched — the tree carrying the sentinels is transient and replaced by
- * the caller immediately after.
- */
-function _findSentinel(scrollPage: ScrollPage, sentinel: string): ISentinelHit | null {
-    let hit: ISentinelHit | null = null;
-
-    scrollPage.depthFirstTraverse((node) => {
-        if (hit || !node.isContent())
-            return;
-
-        const idx = node.text.indexOf(sentinel);
-        if (idx > -1)
-            hit = { block: node, offset: idx };
-    });
-
-    return hit;
-}
-
-/**
- * Resolve the index cursor against the live (sentinel-bearing) block tree into
- * a PATH-ONLY `IPathCursor` (json paths + offsets), or `null` when neither sentinel
- * resolved to a content block.
+ * Resolve the index cursor against a sentinel-bearing STATE tree instead of the
+ * rendered block tree, returning the same `IPathCursor` shape the block-tree
+ * resolver produces.
  *
- * Only the plain `anchorPath`/`focusPath` arrays are captured (snapshotted from
- * the live blocks here) — NOT the live block references. The caller rebuilds
- * the clean document immediately after, detaching these block instances, so
- * `setCursor` must re-resolve fresh blocks from those paths against the new
- * tree. The structure is identical between the sentinel tree and the clean tree
- * (the sentinels only change text), so the paths stay valid.
+ * A content block's path is exactly the json path of its `text` field (see
+ * `Content.path`: the parent path plus `'text'`, and container paths insert a
+ * `'children'` segment), so walking the state array with that same layout yields
+ * paths `queryBlock` can resolve. Doing it here avoids the two whole-document
+ * `setContent` rebuilds the block-tree route required: on the 653-block math
+ * tutorial those rebuilds cost a 959 ms frozen frame when leaving source mode,
+ * while this walk is a plain array traversal.
  *
- * The returned offsets are sentinel-free: the focus offset is decremented when
- * the anchor sentinel precedes it in the same block.
+ * Returns `null` when neither sentinel survives parsing.
  */
-export function resolveSentinelCursor(scrollPage: ScrollPage): IPathCursor | null {
-    const anchorHit = _findSentinel(scrollPage, ANCHOR_SENTINEL);
-    const focusHit = _findSentinel(scrollPage, FOCUS_SENTINEL);
+export function resolveSentinelPaths(
+    states: TState[],
+): IPathCursor | null {
+    const hits = new Map<string, { path: (string | number)[]; offset: number }>();
+
+    const visit = (nodes: TState[], prefix: (string | number)[]) => {
+        nodes.forEach((node, index) => {
+            const nodePath = [...prefix, index];
+
+            if (node.name === 'table.cell') {
+                // Mirrors `Cell.path`: parent path + 'children' + offset.
+                _recordSentinel(hits, node.text, [...nodePath], 'text');
+                return;
+            }
+
+            if (CONTAINER_NAMES.has(node.name)) {
+                // Mirrors every container's `get path`: own path + 'children'.
+                const children = (node as { children?: TState[] }).children;
+
+                if (children)
+                    visit(children, [...nodePath, 'children']);
+
+                return;
+            }
+
+            const text = (node as { text?: string }).text;
+
+            if (typeof text === 'string')
+                _recordSentinel(hits, text, nodePath, 'text');
+        });
+    };
+
+    visit(states, []);
+
+    const anchorHit = hits.get(ANCHOR_SENTINEL);
+    const focusHit = hits.get(FOCUS_SENTINEL);
 
     if (!anchorHit && !focusHit)
         return null;
@@ -138,24 +156,43 @@ export function resolveSentinelCursor(scrollPage: ScrollPage): IPathCursor | nul
 
     let anchorOffset = anchor.offset;
     let focusOffset = focus.offset;
+    const sameBlock
+        = anchor.path.length === focus.path.length
+            && anchor.path.every((segment, index) => segment === focus.path[index]);
 
     // When both sentinels live in the same block, the second one's recorded
-    // offset is shifted by the first sentinel's length. Normalize so both
-    // offsets are expressed against the sentinel-free text.
-    if (anchor.block === focus.block) {
+    // offset is shifted by the first sentinel's length.
+    if (sameBlock) {
         if (anchorOffset <= focusOffset)
             focusOffset = Math.max(focusOffset - ANCHOR_SENTINEL.length, anchorOffset);
         else
             anchorOffset = Math.max(anchorOffset - FOCUS_SENTINEL.length, focusOffset);
     }
 
-    // Snapshot the paths now, while the blocks are still attached.
     return {
         anchor: { offset: anchorOffset },
-        anchorPath: [...anchor.block.path],
+        anchorPath: anchor.path,
         focus: { offset: focusOffset },
-        focusPath: [...focus.block.path],
+        focusPath: focus.path,
     };
+}
+
+/** Record a sentinel found in one block's text, keyed by the sentinel itself. */
+function _recordSentinel(
+    hits: Map<string, { path: (string | number)[]; offset: number }>,
+    text: string,
+    path: (string | number)[],
+    leafKey: string,
+) {
+    for (const sentinel of [ANCHOR_SENTINEL, FOCUS_SENTINEL]) {
+        if (hits.has(sentinel))
+            continue;
+
+        const offset = text.indexOf(sentinel);
+
+        if (offset > -1)
+            hits.set(sentinel, { path: [...path, leafKey], offset });
+    }
 }
 
 // INVERSE direction: WYSIWYG block-key selection -> source `{ line, ch }` index

@@ -472,3 +472,93 @@ pnpm -C packages/desktop exec playwright test test/e2e/markdown-scroll-performan
 回归：`minimap.spec.ts`、`plain-text.spec.ts`、`toc-scroll.spec.ts`、`source-toc-scroll.spec.ts`、`anchor-link-scroll.spec.ts`、`editor-layout.spec.ts`；桌面端 1300 项单测；muya 2490 项单测；`pnpm run typecheck`；`pnpm run lint`。
 
 `toc-active-heading.spec.ts` 的「the highlight stays on the section being typed into」在 `afterAll` 关闭应用时超时。已用 HEAD 版裁剪器做对照，同样超时，属既有问题（该用例灌入 14 行文本后立即关闭窗口）。
+
+# 第七轮：源码模式切换的 1 秒冻结
+
+前六轮把滚轮滚动的 AX 峰值从 207 ms 压到 60 ms 之后，多场景基线暴露出唯一还没处理的大头：源码模式切换。进入约 890 ms，退出约 2000 ms，每次都伴随着整帧冻结。
+
+## 多场景基线（1600×1000，缩略图 + 目录同开）
+
+| 场景                  | p50 | p95 |          max |                长任务 |
+| --------------------- | --: | --: | -----------: | --------------------: |
+| 窗口连续缩放（60 步） | 4.2 | 8.3 | 92（索引 0） |                    无 |
+| 侧栏开关 ×4           | 4.2 | 4.4 | 92（索引 0） |                    无 |
+| 首尾跳转 ×3           | 4.2 | 4.6 | 95（索引 0） |                    无 |
+| 源码模式切换 ×2       | 4.2 | 4.4 |         1091 | 972 / 948 / 435 / 364 |
+
+缩放、侧栏、首尾跳转的最大值全部落在索引 0，即开档瞬间，滚动期间没有长任务。唯一的问题是源码模式切换。
+
+## 进入方向：`viewportMargin: Infinity`
+
+CodeMirror 默认按 `height: auto` + `viewportMargin: Infinity` 渲染全文每一行。55 KB / 1407 行的公式密集文档产生 2062 个 line 节点、44521 个节点总计，进入源码模式实测 890 ms 单任务。
+
+虚拟化后（`height: calc(100% - 40px)` + `viewportMargin: 30`）降到 304 ms。落地方式是 `VIRTUALIZE_ABOVE_CHARS = 20000`：阈值按字符数取，因为字符数测量便宜，但成本实际跟行数走，所以取值很小——值得阅读的文档一律虚拟化，含义只是 CodeMirror 保留视口附近的窗口而不是全部行。
+
+顺带证伪了一个方向：只把 `viewportMargin` 限制成 40、仍保留 `height: auto` 时，进入仍是 1070 ms。真正生效的是整套虚拟化路径，不是「渲染多少行」这一个变量。
+
+## 退出方向：真正的根因不是重建，是光标定位
+
+退出方向一开始测得 2022 ms，`TaskDuration` 1334 ms 而 Layout 128 + Style 115 + Script 34 只占 277 ms，约 1050 ms 无法归因。先后否决了三个猜测：
+
+- 关闭无障碍树：1404 ms，无变化。
+- 跳过 `replaceContent`：1334 ms，无变化，说明不是块树重建。
+- 关闭 `content-visibility`：1591 ms，更差。
+
+后来用 LoAF（long animation frame）拿到决定性数据：那一帧 1024 ms 里脚本 0、样式与布局 58 ms，剩下 966 ms 是原生渲染。再用 Chromium trace 拆分 `RunTask`，看到 `FrameSelection::SetSelection` 230 ms（内部含 220 ms 强制布局）、`RunAccessibilitySteps` 239 ms、`Commit` 249 ms。
+
+最后用一次干净的对照实验定性：把 `editor.vue` 里的 `setCursorByOffset` 调用临时跳过，退出时最差单帧从 959 ms 直接降到 71 ms，长任务从 863 ms 降到 54 ms。之前的「跳过 `replaceContent`」实验之所以无效，是因为它只去掉了三处重建中的一处，而真正的大头在别处。
+
+`setCursorByOffset` 原来的实现是：给 markdown 注入哨兵 → `setContent` 重建整篇 → 遍历块树找哨兵 → `setContent` 把干净文档再重建一遍。为了把行列偏移换算成块路径，它把 653 块、381 个公式的文档完整重建了两次。
+
+## 修复：在状态树上做同一件事
+
+块的 `path` 本来就是它 `text` 字段的 json 路径（`Content.path` = 父路径 + `'text'`，容器路径插入 `'children'`）。所以行列到块路径的换算完全可以在状态数组上做：
+
+- `injectSentinels`：不变，仍按行列注入哨兵文本。
+- 新增 `resolveSentinelPaths(states)`：遍历状态树，按块树的同一套路径规则定位哨兵，返回 `{ anchor, anchorPath, focus, focusPath }`。
+- `setCursorByOffset`：`markdownToState(sentinelMarkdown)` → `resolveSentinelPaths` → `setCursor`。不再 `setContent`，不再碰 DOM，不再需要快照/恢复撤销历史。
+
+顺带删掉了只服务于旧路径的 `resolveSentinelCursor` 和 `_findSentinel`。
+
+## 修复后的数据
+
+| 指标           |  修复前 |     修复后 |
+| -------------- | ------: | ---------: |
+| 退出最差单帧   |  959 ms |   63–83 ms |
+| 退出最长单任务 |  863 ms |    0–75 ms |
+| 退出耗时       | 2022 ms | 154–207 ms |
+| 进入耗时       |  890 ms | 210–311 ms |
+| 进入最差单帧   | 1091 ms |  83–167 ms |
+
+进入方向残余的 83–167 ms 是 CodeMirror 挂载自身的解析与首次视口构建，每次切换只发生一次，不再随文档规模线性恶化。
+
+## 被否决的方向（本轮新增）
+
+- 把隐藏中的编辑器固定为与可见时相同的盒子（`right/bottom/width/height`）：1033 ms，无改善。
+- `content-visibility: hidden` 作用于隐藏编辑器：1092 ms，无改善。
+- 给编辑器或滚动容器加 `will-change: transform` 单独合成层：935–1008 ms，无改善。
+- `visibility: hidden` / `display: none` / `opacity: 0` 保尺寸：821–1013 ms，均无改善。
+- 关闭 `v-ui-motion` 的进场动画（stub `Element.prototype.animate`）：995 ms，无改善。
+- 块级 `content-visibility: auto`：累计任务 1334 → 805 ms、Layout 128 → 5 ms，但最差单帧仍有 684 ms，不足以达标。
+
+## 测量陷阱（本轮新增三个）
+
+- `Performance.getMetrics` 差量是窗口累计值，分不清「一帧冻 800 ms」和「800 ms 摊到 100 帧」。必须额外采集帧间隔与 `longtask`，否则会把「总量下降但仍有单帧冻结」误判为修好。
+- CPU profile 里 `removeAllRanges` 显示 253 ms，看着像 Selection API 自身很慢，实际是它触发的强制布局把整篇文档算进去了。自耗时归属要结合 trace 的原生阶段一起看。
+- 判断某个改动是否有效，必须先确认对照实验覆盖了全部同类别调用点。只去掉三处重建中的一处，会得出「重建不是原因」的错误结论。
+
+## 验证
+
+```powershell
+# 光标换算契约（含「恢复光标不重建 DOM」）
+pnpm -C packages/muya exec vitest run src/__tests__/setCursorByOffset.spec.ts
+
+# 多场景帧率（必须先 pnpm run build:unpack，spec 跑的是 out/ 里的产物）
+$env:LIGHTOPT_PERF = '1'
+$env:LIGHTOPT_PERF_ACK_SYSTEM_STALL = '1'
+pnpm -C packages/desktop exec playwright test test/e2e/interaction-pacing-probe.spec.ts --reporter=line
+```
+
+回归：`parity-source-undo-saved.spec.ts`（PG2 光标落点、PG14 单步撤销）、`source-toc-scroll.spec.ts`、`toc-scroll.spec.ts`、`minimap.spec.ts`、`view-modes.spec.ts`、`editor-layout.spec.ts`、`plain-text.spec.ts`；`pnpm run test:quick` 291 文件 2492 项全通过；`pnpm run typecheck` 通过；本次改动的 muya 文件 ESLint 零问题。
+
+`parity-cursor-lang.spec.ts` 的 G8（语言切换刷新 quick-insert 提示）失败，已用 stash 回到基线复现同样失败，属既有问题，与本轮改动无关。

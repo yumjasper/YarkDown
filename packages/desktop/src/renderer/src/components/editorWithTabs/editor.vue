@@ -304,6 +304,13 @@ let spellchecker: SpellChecker | null = null
 let switchLanguageCommand: SpellcheckerLanguageCommand | null = null
 // The engine has no `scroll` event; we listen on the scroll container directly.
 let scrollHandler: ((e: Event) => void) | null = null
+// How long after the last scroll event the gesture counts as settled. Publishing
+// the offset to the store earlier re-renders the tab bar and re-snapshots the
+// document state, which is exactly what a wheel gesture cannot afford.
+const SCROLL_SETTLE_MS = 180
+// Owned at component scope, not inside `onMounted`: the teardown path in
+// `onUnmounted` must cancel a timer that may still be pending.
+let scrollSettleTimer: ReturnType<typeof setTimeout> | undefined
 let loadedDocument: { id: string | undefined; markdown: string } | null = null
 
 // The engine's undo/redo history (`getHistory()`) has a different shape than
@@ -1700,13 +1707,25 @@ const handleFileChange = (payload: unknown) => {
       isIndexCursor(muyaIndexCursor) && !newCursor && payloadHistory == null
 
     if (isSourceModeHandoff) {
-      // Record the bulk source-mode edit as a single undo boundary. When the
-      // document is unchanged this is a no-op (returns false) and the existing
-      // history/content already match — either way the caret still needs
-      // remapping below.
-      editor.value.replaceContent(newMarkdown, preSourceModeSelection)
+      // Record the bulk source-mode edit as a single undo boundary (PG14
+      // parity): the first Ctrl+Z after the handoff reverts the entire
+      // source-mode change in one step, matching legacy muyajs' full-state
+      // snapshot history.
+      //
+      // Skip the rebuild when the document did not actually change. The
+      // comparison has to normalize line endings first: CodeMirror stores what
+      // it was given, so the text comes back with the file's CRLF while
+      // `getMarkdown()` emits LF. Comparing raw strings made a CRLF document look
+      // edited on every toggle (33487 vs 35548 characters, every difference a
+      // line break). `getMarkdown()` is the engine's own serialization, so
+      // comparing against it rather than the raw payload is what makes the check
+      // meaningful at all.
+      const withoutLineEndingNoise = (text: string) => text.replace(/\r\n/g, '\n')
+      if (withoutLineEndingNoise(editor.value.getMarkdown()) !== withoutLineEndingNoise(newMarkdown)) {
+        editor.value.replaceContent(newMarkdown, preSourceModeSelection)
+        editorStore.UPDATE_TOC(editor.value.getTOC())
+      }
       preSourceModeSelection = null
-      editorStore.UPDATE_TOC(editor.value.getTOC())
       // Map the CodeMirror `{ line, ch }` cursor onto a block-key cursor so the
       // WYSIWYG caret lands where the source-mode cursor was (PG2).
       editor.value.setCursorByOffset(muyaIndexCursor)
@@ -2068,11 +2087,36 @@ onMounted(() => {
   })
 
   // The engine does not emit `scroll`; listen on the scroll container directly
-  // so the desktop can persist each tab's scroll position.
-  scrollHandler = () => {
-    if (currentFile.value) {
-      editorStore.updateScrollPosition(currentFile.value.id, container.scrollTop)
+  // so the desktop can persist each tab's scroll position. A wheel stream fires
+  // far more often than the position is consumed, and every write invalidates the
+  // whole `tabs` array, so coalesce to one write per frame. The offset is read
+  // here, inside the scroll event, where the scroller's layout is already
+  // committed - reading it from the frame callback instead forced a layout flush
+  // on every frame.
+  let latestScrollTop = 0
+  // The tab that produced `latestScrollTop`. Captured at scroll time: by the time
+  // the settle timer fires the user may already have switched tabs, and publishing
+  // then would write the old offset onto the new tab.
+  let scrollTabId: string | undefined
+  const flushScrollPosition = () => {
+    if (scrollTabId) {
+      editorStore.updateScrollPosition(scrollTabId, latestScrollTop)
+      scrollTabId = undefined
     }
+  }
+  scrollHandler = () => {
+    latestScrollTop = container.scrollTop
+    scrollTabId = currentFile.value?.id
+    // Latching the live offset here keeps tab switches exact while staying off the
+    // reactive path: writing `tab.scrollTop` per frame re-rendered the tab bar and
+    // re-snapshotted the whole document state, which was the remaining per-frame
+    // commit during a wheel gesture.
+    editorStore.REMEMBER_SCROLL_POSITION(latestScrollTop)
+    clearTimeout(scrollSettleTimer)
+    scrollSettleTimer = setTimeout(() => {
+      scrollSettleTimer = undefined
+      flushScrollPosition()
+    }, SCROLL_SETTLE_MS)
   }
   container.addEventListener('scroll', scrollHandler, { passive: true })
 
@@ -2241,6 +2285,7 @@ onBeforeUnmount(() => {
     container?.removeEventListener('scroll', scrollHandler)
   }
   scrollHandler = null
+  clearTimeout(scrollSettleTimer)
 
   stopNativeResize?.()
   stopMathPreviewVisibility?.()
