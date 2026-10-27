@@ -3,16 +3,16 @@ import { editorBackdropOptions } from 'main_renderer/windows/backdrop'
 import { shellHeaderHeights } from '@/util/shellLayout'
 
 describe('Windows system backdrop', () => {
-  it('uses DWM Acrylic without a layered transparent window on Windows 11 22H2', () => {
+  it('uses an opaque editor window without a composited wallpaper material on Windows 11 22H2', () => {
     expect(editorBackdropOptions('win32', '10.0.22621', 'custom')).toEqual({
-      backgroundMaterial: 'acrylic',
-      backgroundColor: '#00000000',
+      backgroundMaterial: 'none',
       transparent: false
     })
   })
   it('keeps the opaque editor canvas for native title bars', () => {
     expect(editorBackdropOptions('win32', '10.0.26100', 'native')).toEqual({
-      backgroundMaterial: 'acrylic'
+      backgroundMaterial: 'none',
+      transparent: false
     })
   })
   it.each(['10.0.19045', '10.0.22000', 'invalid', 'invalid.0.26100'])(

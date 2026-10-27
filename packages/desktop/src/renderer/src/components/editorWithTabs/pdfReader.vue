@@ -269,7 +269,10 @@
             @appearance="(number, rect, image, text, content) => annotationWorkspace?.addPageAppearance(number, rect, image, text, content)"
           />
         </template>
-        <div class="pdf-viewport">
+        <div
+          ref="viewport"
+          class="pdf-viewport"
+        >
           <div
             ref="container"
             class="pdf-scroll"
@@ -294,6 +297,7 @@
 </template>
 
 <script setup lang="ts">
+import { observeSettledViewport, type SettledViewport } from '@/util/settledViewport'
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import * as pdfjs from 'pdfjs-dist'
@@ -379,6 +383,7 @@ const labels = computed(() =>
       }
 )
 const container = ref<HTMLDivElement>()
+const viewport = ref<HTMLDivElement>()
 const searchInput = ref<HTMLInputElement>()
 const page = ref(1)
 const pageInput = ref<number | string>(1)
@@ -434,6 +439,8 @@ const error = ref('')
 const passwordRequired = ref(false)
 const password = ref('')
 let updatePassword: ((value: string) => void) | undefined
+// Clearing a PDF document does not disconnect the viewer-owned observers and scroll listener.
+const viewerLifetime = new AbortController()
 let viewer: PDFViewer | undefined
 let links: PDFLinkService | undefined
 let events: EventBus | undefined
@@ -441,8 +448,8 @@ let task: pdfjs.PDFDocumentLoadingTask | undefined
 let teardown = Promise.resolve()
 let disposed = false
 let generation = 0
-let resizeObserver: ResizeObserver | undefined
-let resizeFrame = 0
+let resizeViewport: SettledViewport | undefined
+let stopNativeResize: (() => void) | undefined
 let cacheTimer: ReturnType<typeof setTimeout> | undefined
 const scheduleCacheTrim = () => {
   clearTimeout(cacheTimer)
@@ -712,19 +719,22 @@ onMounted(async () => {
     // The component bundle reads globalThis.pdfjsLib, initialized by the core import.
     const { PDFViewer, PDFLinkService, PDFFindController, EventBus } =
       await import('pdfjs-dist/web/pdf_viewer.mjs')
-    if (disposed || !container.value) return
+    if (disposed || !container.value || !viewport.value) return
     events = new EventBus()
     links = new PDFLinkService({ eventBus: events })
     const find = new PDFFindController({ eventBus: events, linkService: links })
-    viewer = new PDFViewer({
+    // PDF.js 6.4 accepts abortSignal at runtime but omits it from its published option type.
+    const viewerOptions: ConstructorParameters<typeof PDFViewer>[0] & { abortSignal: AbortSignal } = {
       container: container.value,
+      abortSignal: viewerLifetime.signal,
       eventBus: events,
       linkService: links,
       findController: find,
       annotationMode: pdfjs.AnnotationMode.ENABLE_STORAGE,
       imageResourcesPath: new URL('./pdfjs/images/', document.baseURI).href,
       maxCanvasPixels: PDF_MAX_CANVAS_PIXELS
-    })
+    }
+    viewer = new PDFViewer(viewerOptions)
     links.setViewer(viewer)
     events.on('pagesinit', () => {
       if (disposed) return
@@ -760,14 +770,15 @@ onMounted(async () => {
     events.on('updatefindcontrolstate', ({ state }: { state: number }) => {
       if (state === 1) matches.value = '0 / 0'
     })
-    resizeObserver = new ResizeObserver(() => {
-      cancelAnimationFrame(resizeFrame)
-      resizeFrame = requestAnimationFrame(() => {
-        if (!disposed && ready.value && ['page-width', 'page-fit'].includes(scale.value))
-          viewer!.currentScaleValue = scale.value
-      })
+    resizeViewport = observeSettledViewport(viewport.value, container.value, () => {
+      if (disposed || !ready.value) return
+      if (['page-width', 'page-fit'].includes(scale.value)) viewer!.currentScaleValue = scale.value
+      viewer!.update()
+      scheduleCacheTrim()
     })
-    resizeObserver.observe(container.value)
+    stopNativeResize = window.electron.ipcRenderer.on('mt::window-resize-state', (_event, active) => {
+      resizeViewport?.setInteractive(active)
+    })
     bus.on('find', focusSearch)
     bus.on('selectAll', selectAll)
     bus.on('file-changed', reloadChangedFile)
@@ -783,8 +794,8 @@ onBeforeUnmount(() => {
   saveView()
   disposed = true
   generation++
-  resizeObserver?.disconnect()
-  cancelAnimationFrame(resizeFrame)
+  stopNativeResize?.()
+  resizeViewport?.dispose()
   clearTimeout(cacheTimer)
   bus.off('find', focusSearch)
   bus.off('selectAll', selectAll)
@@ -792,7 +803,11 @@ onBeforeUnmount(() => {
   bus.off('pdf-saved', savedFile)
   bus.off('pdf-search-selection', searchSelectedText)
   viewer?.setDocument(null)
+  viewerLifetime.abort()
+  // Localization observes the detached page tree independently of the document and worker.
+  void viewer?.l10n?.destroy().catch(() => {})
   links?.setDocument(null)
+  activeDocument.value = undefined
   const previousTask = task
   task = undefined
   if (previousTask) teardown = teardown.catch(() => {}).then(() => previousTask.destroy())
@@ -872,6 +887,7 @@ onBeforeUnmount(() => {
   position: absolute;
   inset: 0;
   overflow: auto;
+  contain: strict;
   background: #525659;
 }
 .pdf-message progress {
@@ -887,6 +903,7 @@ onBeforeUnmount(() => {
 }
 .pdf-viewport {
   position: relative;
+  overflow: hidden;
   flex: 1;
   min-height: 0;
   min-width: 0;

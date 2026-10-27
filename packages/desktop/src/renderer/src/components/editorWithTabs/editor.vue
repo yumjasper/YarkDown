@@ -5,9 +5,14 @@
     :dir="textDirection"
   >
     <div
-      ref="editorRef"
-      class="editor-component"
-    />
+      ref="viewportRef"
+      class="markdown-viewport"
+    >
+      <div
+        ref="editorRef"
+        class="editor-component"
+      />
+    </div>
     <media-viewer
       ref="mediaViewer"
       @open-change="viewerOpen = $event"
@@ -69,12 +74,17 @@
       v-if="!sourceCode"
       :muya="editor"
     />
-    <document-games v-if="!sourceCode && !plainText && !pdf" :root="editor?.domNode ?? null" />
+    <document-games
+      v-if="!sourceCode && !plainText && !pdf"
+      :root="editor?.domNode ?? null"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, shallowRef, reactive, watch, onMounted, onBeforeUnmount, nextTick, markRaw } from 'vue'
+import { observeSettledViewport, type SettledViewport } from '@/util/settledViewport'
+import { observeMathPreviewVisibility } from '@/util/mathPreviewVisibility'
 import { isPlainTextFile } from '@shared/plainText'
 import { isPdfFile } from '@shared/pdf'
 import TableTools from '../tableTools/index.vue'
@@ -277,6 +287,10 @@ const tableChecker = reactive({
 })
 
 // Template refs
+const viewportRef = ref<HTMLElement | null>(null)
+let resizeViewport: SettledViewport | undefined
+let stopNativeResize: (() => void) | undefined
+let stopMathPreviewVisibility: (() => void) | undefined
 const editorRef = ref<HTMLDivElement | null>(null)
 const mediaViewer = ref<InstanceType<typeof MediaViewer> | null>(null)
 const viewerOpen = ref(false)
@@ -2156,6 +2170,18 @@ onMounted(() => {
     else if (isIndexCursor(currentFile.value?.muyaIndexCursor)) muya.setCursorByOffset(currentFile.value.muyaIndexCursor)
   }
   setEditorWidth(editorLineWidth.value)
+  stopMathPreviewVisibility = observeMathPreviewVisibility(muya.domNode)
+  if (viewportRef.value) {
+    // Muya replaces the Vue placeholder; only its live DOM node owns the document geometry.
+    const updateViewportSpacing = () => {
+      muya.domNode.style.setProperty('--markdown-window-height', `${window.innerHeight}px`)
+    }
+    updateViewportSpacing()
+    resizeViewport = observeSettledViewport(viewportRef.value, muya.domNode, updateViewportSpacing)
+    stopNativeResize = window.electron.ipcRenderer.on('mt::window-resize-state', (_event, active) => {
+      resizeViewport?.setInteractive(active)
+    })
+  }
   emit('ready')
 })
 
@@ -2207,6 +2233,9 @@ onBeforeUnmount(() => {
   }
   scrollHandler = null
 
+  stopNativeResize?.()
+  stopMathPreviewVisibility?.()
+  resizeViewport?.dispose()
   resizeObserverForEditor.disconnect()
 
   if (editor.value) {
@@ -2271,6 +2300,13 @@ onBeforeUnmount(() => {
   pointer-events: none;
 }
 
+.markdown-viewport {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
 .editor-component {
   height: 100%;
   overflow: auto;
@@ -2281,12 +2317,18 @@ onBeforeUnmount(() => {
 
 .editor-component .mu-container {
   padding-top: 20px;
-  padding-bottom: 100vh;
+  padding-bottom: var(--markdown-window-height, 100vh);
+}
+
+/* Only the non-editable preview is skipped; source inputs and block geometry remain available. */
+.editor-component .mu-math-preview.measured-math-preview {
+  content-visibility: auto;
+  contain-intrinsic-block-size: auto var(--math-preview-height);
 }
 
 .typewriter .editor-component {
-  padding-top: calc(50vh - 136px);
-  padding-bottom: calc(50vh - 54px);
+  padding-top: calc(var(--markdown-window-height, 100vh) / 2 - 136px);
+  padding-bottom: calc(var(--markdown-window-height, 100vh) / 2 - 54px);
 }
 
 </style>

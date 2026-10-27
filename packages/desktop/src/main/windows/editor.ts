@@ -147,6 +147,15 @@ class EditorWindow extends BaseWindow {
 
     let win: BrowserWindow | null = (this.browserWindow = new BrowserWindow(winOptions))
     win.once('ready-to-show', () => this.bringToFront())
+    if (isWindows) {
+      // Native border drags run a modal loop; a timer alone cannot identify when the gesture ends.
+      for (const [message, active] of [[0x0231, true], [0x0232, false]] as const) {
+        win.hookWindowMessage(message, () => {
+          if (win && !win.webContents.isDestroyed())
+            win.webContents.send('mt::window-resize-state', active)
+        })
+      }
+    }
 
     // Give every editor window a stable id for session buffer persistence.
     // We cant use win.id as it might collide with same IDs from closed windows

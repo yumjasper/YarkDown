@@ -15,6 +15,12 @@ import { t } from './i18n'
 import { registerSandboxIpcHandlers } from './ipc'
 import { setMenuProvider } from './ipc/window'
 import { setPlantumlServerSource } from './ipc/diagram'
+import { useAccessibilityPerformanceMode } from './windows/accessibility'
+
+// This must precede app readiness; native clients can immediately re-enable runtime AX modes.
+if (useAccessibilityPerformanceMode(process.platform, process.env.YARKTEXT_ACCESSIBILITY_MODE)) {
+  app.commandLine.appendSwitch('disable-renderer-accessibility')
+}
 
 // Set version strings into global and process.versions
 process.env.MARKTEXT_VERSION = MARKTEXT_VERSION

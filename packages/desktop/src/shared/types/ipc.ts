@@ -352,6 +352,7 @@ export interface IpcMainEventChannels {
   'mt::window-leave-full-screen': []
   'mt::window-maximize': []
   'mt::window-unmaximize': []
+  'mt::window-resize-state': [active: boolean]
   'mt::window-zoom': [zoomLevel: number]
   'settings::change-tab': [tab: string]
 }

@@ -53,6 +53,7 @@ import type CodeMirror from 'codemirror'
 import { usePreferencesStore, type PreferencesState } from '@/store/preferences'
 import { useEditorStore } from '@/store/editor'
 import { minimapLayout, minimapScrollTarget } from './layout'
+import { minimapText } from './text'
 import type { MinimapTileRequest } from './worker'
 
 const props = defineProps<{ plainText: boolean; sourceCode: boolean }>()
@@ -84,6 +85,7 @@ let lastPaintOffset = NaN
 let forcePaint = true
 let disconnected = false
 let bindGeneration = 0
+let textCache = new WeakMap<Element, string>()
 interface CachedTile { canvas: HTMLCanvasElement; job: number; ready: boolean }
 const tiles = new Map<number, CachedTile>()
 const TILE_HEIGHT = 768
@@ -130,7 +132,11 @@ const rebuild = () => {
     const origin = scroller.getBoundingClientRect().top - scroller.scrollTop
     rows = Array.from(root?.children || []).flatMap(element => {
       const rect = element.getBoundingClientRect()
-      const text = ((element.tagName === 'PRE' ? element.querySelector('code')?.textContent : element.textContent) || (element.querySelector('img') ? '▧' : ''))
+      let text = textCache.get(element)
+      if (text === undefined) {
+        text = minimapText(element)
+        textCache.set(element, text)
+      }
       const lines = text.split('\n').flatMap(line => {
         if (!line) return ['']
         const parts: string[] = []
@@ -143,6 +149,7 @@ const rebuild = () => {
     rowCount.value = rows.reduce((count, row) => count + Math.max(1, Math.ceil(row.text.length / preferences.minimapMaxColumn)), 0)
   }
   tiles.clear()
+  pendingJobs.clear()
   tileLayer.value?.replaceChildren()
   requestPaint(true)
 }
@@ -247,6 +254,7 @@ const unbind = () => {
 }
 const bind = async() => {
   const generation = ++bindGeneration
+  textCache = new WeakMap()
   unbind()
   await nextTick()
   if (disconnected || generation !== bindGeneration || !host.value) return
@@ -273,7 +281,10 @@ const bind = async() => {
   resize.observe(scroller.firstElementChild || scroller)
   if (cm) { cm.on('changes', scheduleRebuild); cm.on('cursorActivity', cursorMoved) }
   else {
-    mutation = new MutationObserver(scheduleRebuild)
+    mutation = new MutationObserver(() => {
+      textCache = new WeakMap()
+      scheduleRebuild()
+    })
     mutation.observe(scroller, { childList: true, subtree: true, characterData: true })
   }
   rebuild()

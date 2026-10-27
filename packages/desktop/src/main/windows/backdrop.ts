@@ -3,7 +3,7 @@ import type { BrowserWindowConstructorOptions } from 'electron'
 export const editorBackdropOptions = (
   platform: string,
   release: string,
-  titleBarStyle: string
+  _titleBarStyle: string
 ): Partial<BrowserWindowConstructorOptions> => {
   const [major, minor, build] = release.split('.').map(Number)
   if (
@@ -13,7 +13,7 @@ export const editorBackdropOptions = (
     (major === 10 && build < 22621)
   )
     return {}
-  if (titleBarStyle === 'native') return { backgroundMaterial: 'acrylic' }
-  // DWM supplies the backdrop; a layered transparent window would lose native resize behavior.
-  return { backgroundMaterial: 'acrylic', backgroundColor: '#00000000', transparent: false }
+  // Compositing Mica with a large KaTeX document can stall the whole desktop on resize.
+  // Keep the window opaque and retain the theme background set by the caller.
+  return { backgroundMaterial: 'none', transparent: false }
 }

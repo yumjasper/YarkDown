@@ -52,6 +52,7 @@ import { useI18n } from 'vue-i18n'
 import type CodeMirror from 'codemirror'
 import codeMirror from '@/codeMirror/core'
 import bus from '@/bus'
+import { observeSettledResize } from '@/util/settledResize'
 import { useEditorStore } from '@/store/editor'
 import { usePreferencesStore } from '@/store/preferences'
 import { wordCount } from '@muyajs/core/utils/wordCount'
@@ -92,7 +93,7 @@ const targetLine = ref(1)
 const position = ref({ line: 0, ch: 0 })
 const lines = ref(1)
 const documents = new Map<string, TextDocumentView>()
-let resize: ResizeObserver | undefined
+let stopResize: (() => void) | undefined
 let cm: CodeMirror.Editor | undefined
 let activeId: string | undefined
 let loading = false
@@ -366,8 +367,7 @@ onMounted(() => {
   cm!.on('contextmenu', contextMenu)
   for (const [event, handler] of Object.entries(handlers)) bus.on(event, handler)
   if (container.value) {
-    resize = new ResizeObserver(() => { if (container.value?.clientWidth) cm?.refresh() })
-    resize.observe(container.value)
+    stopResize = observeSettledResize(container.value, () => cm?.refresh())
   }
   loadFile()
 })
@@ -375,7 +375,7 @@ onBeforeUnmount(() => {
   commit()
   for (const [event, handler] of Object.entries(handlers)) bus.off(event, handler)
   clearMarks()
-  resize?.disconnect()
+  stopResize?.()
   for (const view of documents.values()) props.pool.release(view)
   documents.clear()
   cm?.getWrapperElement().remove()
