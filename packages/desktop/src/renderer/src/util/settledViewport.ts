@@ -55,7 +55,11 @@ export const observeSettledViewport = (
       interactive = active
       clearTimeout(timer)
       if (!active) {
-        // WM_EXITSIZEMOVE may precede the final ResizeObserver delivery.
+        // WM_EXITSIZEMOVE may precede the final ResizeObserver delivery, so the
+        // settled size has to be read here. Reading is deliberately kept: the
+        // layout this forces is the one relayout the pinning design defers from
+        // the whole gesture to this single moment, and skipping the read measured
+        // no faster (48-54 ms of `Layout` either way on the 653-block tutorial).
         width = viewport.clientWidth
         height = viewport.clientHeight
         timer = setTimeout(apply, 0)

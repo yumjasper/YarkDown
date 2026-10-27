@@ -47,6 +47,8 @@ const editor = shallowRef<CodeMirror.Editor | null>(null)
 const commitTimer = ref<ReturnType<typeof setTimeout> | null>(null)
 const viewDestroyed = ref(false)
 const tabId = ref<string | null>(null)
+/** Pending "build CodeMirror" frame chain. See `mountCodeMirror`. */
+let mountFrame = 0
 /** CodeMirror builds one DOM node per rendered line. Unvirtualized it renders the
  *  whole document, which for a formula-dense page means thousands of line
  *  elements plus the markdown-math mode's per-token spans: the 59 KB / 1407-line
@@ -412,7 +414,6 @@ onMounted(() => {
   currentTab.value.cursor = undefined
 
   const { markdown, muyaIndexCursor, textDirection } = props
-  const container = sourceCodeContainer.value
   const codeMirrorConfig: Record<string, unknown> = {
     value: markdown,
     lineNumbers: sourceCodeLineNumbers.value,
@@ -443,6 +444,41 @@ onMounted(() => {
   bus.on('scroll-to-header', handleScrollToHeader)
   bus.on('flush-active-editor', flushSource)
 
+  mountCodeMirror(id, codeMirrorConfig, muyaIndexCursor)
+})
+
+/**
+ * Build CodeMirror one frame after entering source mode.
+ *
+ * The class swap to `.editor-wrapper.source` relayouts the whole muya subtree, and
+ * the CodeMirror constructor builds every rendered line; together they measured a
+ * 150 ms frame on the 33k-character math tutorial. A single `requestAnimationFrame`
+ * does not separate them - frame callbacks run BEFORE style recalc and layout, so
+ * the mount would still land in the frame that owes the relayout. Two frames do:
+ * the first paints the hidden editor, the second builds the source pane.
+ */
+const mountCodeMirror = (
+  id: string,
+  codeMirrorConfig: Record<string, unknown>,
+  muyaIndexCursor: unknown
+) => {
+  const container = sourceCodeContainer.value
+  if (!container) return
+  mountFrame = requestAnimationFrame(() => {
+    mountFrame = requestAnimationFrame(() => {
+      mountFrame = 0
+      if (viewDestroyed.value) return
+      buildCodeMirror(id, container, codeMirrorConfig, muyaIndexCursor)
+    })
+  })
+}
+
+const buildCodeMirror = (
+  id: string,
+  container: HTMLElement,
+  codeMirrorConfig: Record<string, unknown>,
+  muyaIndexCursor: unknown
+) => {
   // CodeMirror's line tree relies on object identity and must not be proxied by Vue.
   const codeMirrorInstance = markRaw(codeMirror(container, codeMirrorConfig))
 
@@ -479,9 +515,11 @@ onMounted(() => {
   updateSelectionWordCount(codeMirrorInstance)
 
   listenChange(codeMirrorInstance)
-})
+}
 
 onBeforeUnmount(() => {
+  if (mountFrame) cancelAnimationFrame(mountFrame)
+  mountFrame = 0
   disposeSearch?.()
   viewDestroyed.value = true
   if (commitTimer.value) clearTimeout(commitTimer.value)

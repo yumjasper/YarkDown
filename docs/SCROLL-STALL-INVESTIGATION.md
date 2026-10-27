@@ -715,3 +715,70 @@ $env:LIGHTOPT_PERF_ACCESSIBILITY = 'performance'
 ```
 
 回归：`view-modes.spec.ts`、`source-toc-scroll.spec.ts`、`parity-source-undo-saved.spec.ts`（16 passed / 1 skipped）、`toc-scroll.spec.ts`、`minimap.spec.ts`（4 passed）；`pnpm run test:quick` 291 文件 2492 项全通过；`pnpm run typecheck` 通过；本轮改动文件 ESLint 零问题。
+
+## 第九轮：源码模式那一帧拆成两帧，并系统否证其余方向
+
+第八轮结束时四个滚动/布局场景的长任务已清零，只剩源码模式切换一帧 150 ms。本轮只做两件事：把这一帧拆开，并把"看起来能省"的方向逐个测掉。
+
+### 改动一：双 rAF 分帧（有效）
+
+进入源码模式的工作是两段：`.editor-wrapper` 加上 `.source` 后，整棵 28k 节点子树重算样式并重新布局（约 57 ms），随后 CodeMirror 构造函数构建所有可见行（约 80 ms）。这段代码原本串行在同一个任务里。
+
+上一轮试过用单个 `requestAnimationFrame` 把构建推到下一帧，结果独立帧反而变成 144 ms。原因在时序：**rAF 回调在样式重算与布局之前执行**，所以挂载仍然落在同一个欠了布局的帧里，只是把任务边界改了一下。
+
+改成双 rAF 才真正分开：第一帧画完隐藏的编辑器，第二帧才构建源码面板。
+
+```ts
+mountFrame = requestAnimationFrame(() => {
+  mountFrame = requestAnimationFrame(() => {
+    mountFrame = 0
+    if (viewDestroyed.value) return
+    buildCodeMirror(id, container, codeMirrorConfig, muyaIndexCursor)
+  })
+})
+```
+
+| 指标      | 单任务        | 双 rAF       |
+| --------- | ------------- | ------------ |
+| 最大帧    | 150.1 ms      | 116.7 ms     |
+| longTasks | 128 / 85 / 62 | 93 / 72 / 51 |
+| over100   | 2             | 1            |
+
+代价是源码面板在进入后最多空一帧，被面板的渐入动画盖住。
+
+### 改动二：`settledViewport` 注释（无逻辑变更）
+
+拖拽边界松手瞬间有一个 91–97 ms 任务，trace 里 `Document::UpdateStyleAndLayout` 占 51.7 ms、`Layout` 占 49.4 ms，来源是 `setInteractive(false)` 里那次 `clientWidth` 读取——此时上一轮 resize 消息留下的布局还是脏的，读取强制同步重排。
+
+试了三种绕法，全部无效，已回退并在注释里写明：
+
+- 把读取放进 `requestAnimationFrame`：仍是 48.7 ms 的强制布局（rAF 在布局前）。
+- 先 rAF 再 `setTimeout(0)` 读：46 ms，没有改善。
+- 完全不读，改用 `ResizeObserver` 已送达的 `contentRect`：48.5 ms，说明这次重排是"拖拽期间不重排、松手补一次"的既定设计本身，不是读取时机的产物。
+
+关键前提是拖拽过程中每一帧都干净：2001 帧里 p95 8 ms、只有手势首帧 63 ms 与松手瞬间 62 ms 两处超过 40 ms，`over100` 为 0。松手补的那一次重排是设计取舍，不动。
+
+### 本轮否证的方向
+
+- `pointer-events: none` 的继承代价：样式覆盖成 `auto` 后切换耗时 160–171 ms，基线 161–175 ms，差异在噪声内。此前"30.5 ms 样式重算"的微基准只在孤立写入成立，放进真实切换里被更贵的布局掩盖。
+- 用 `transform: translateX(-200vw)` 替代：同样 160–171 ms，`elementsFromPoint` 命中隔离仍然成立（三条采样点 muya 节点数都是 0），说明这条路技术上可行但没有收益。
+- 把 `.editor-wrapper` 永久绝对定位、切换时只改 `z-index`：几何完全一致，退出从 143 → 128 ms 有小幅改善，但进入没有变化（153–181 ms）。进入的瓶颈是 CodeMirror 构建，不是布局。未采用。
+- 预热样本从 40 行扩到 400 行：无收益，且增加空闲开销，回退。
+- 空文档创建后立即 `setValue`：133 ms，比直接带值创建（117 ms）更差，回退。
+
+### 用户最初三个抱怨的验收
+
+| 场景                  | 指标                                                                           | 结论            |
+| --------------------- | ------------------------------------------------------------------------------ | --------------- |
+| 缩略图 + 目录滚轮     | p95 17 ms，maxFrame 150 ms（首帧），longTasks 0，severeFrames 0，每秒 77–91 帧 | 达标            |
+| 斜向拖拽上下左右边界  | p95 8.4 ms，over100 0，over250 0，拖拽全程无 >40 ms 帧                         | 达标            |
+| 目录跳转后首尾跳转    | max 66.1 ms，longTasks 0                                                       | 达标            |
+| 源码 ↔ 所见即所得切换 | 最大帧 116.7 ms，over100 1                                                     | 单帧仍超 100 ms |
+
+源码模式的剩余成本是「隐藏编辑器重排 57 ms + CodeMirror 构建 80 ms」两段真实工作，两段都已被证明无法通过改属性、挪帧、预热、改配置消除。要再往下压只能改编辑器本体（例如让 muya 在源码模式下真正卸载而不是隐藏），那是另一个量级的改动。
+
+### 方法论补充
+
+- 单 `requestAnimationFrame` 不等于"下一帧"。rAF 回调在样式重算和布局之前跑，想把重活从欠布局的帧里挪走，需要双 rAF。
+- 微基准的结论不能直接外推：`pointer-events` 单独写入测出 30.5 ms，放进真实切换里被布局完全掩盖。任何优化都要在真实路径上复测。
+- 判断"某次同步布局该不该省"，先看它是不是设计本身（这里是"拖拽时不重排、松手补一次"），否则只是在移动成本。
