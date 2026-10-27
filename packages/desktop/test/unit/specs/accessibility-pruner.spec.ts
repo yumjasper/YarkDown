@@ -1,8 +1,72 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createAccessibilityPruner } from '@/util/accessibilityPruner'
 
-/** Builds a scroller whose children sit at the given vertical offsets. */
-const mount = (offsets: Array<{ top: number; height: number }>) => {
+type Callback = (entries: IntersectionObserverEntry[]) => void
+
+interface FakeObserver {
+  callback: Callback
+  targets: Element[]
+}
+
+/** jsdom implements neither IntersectionObserver's callback loop nor layout. */
+const observers: FakeObserver[] = []
+const resizeCallbacks: FakeReadiness[] = []
+const mutationCallbacks: FakeReadiness[] = []
+
+interface FakeReadiness {
+  callback: () => void
+  active: boolean
+}
+
+/** Mirrors the real observers: a disconnected one never fires again. */
+const readinessStub = (sink: FakeReadiness[]) =>
+  class {
+    private readonly record: FakeReadiness
+
+    constructor(callback: () => void) {
+      this.record = { callback, active: true }
+      sink.push(this.record)
+    }
+
+    observe() {}
+
+    disconnect() {
+      this.record.active = false
+    }
+  }
+
+class MockIntersectionObserver {
+  private readonly record: FakeObserver
+
+  constructor(callback: Callback) {
+    this.record = { callback, targets: [] }
+    observers.push(this.record)
+  }
+
+  observe(target: Element) {
+    this.record.targets.push(target)
+  }
+
+  unobserve() {}
+
+  disconnect() {
+    this.record.targets = []
+  }
+
+  takeRecords() {
+    return []
+  }
+}
+
+const triggerResize = () => {
+  for (const item of [...resizeCallbacks]) if (item.active) item.callback()
+}
+
+const triggerMutation = () => {
+  for (const item of [...mutationCallbacks]) if (item.active) item.callback()
+}
+
+const mount = (blockCount: number, portSize = 900) => {
   const scroller = document.createElement('div')
   const surface = document.createElement('div')
   const container = document.createElement('div')
@@ -10,133 +74,204 @@ const mount = (offsets: Array<{ top: number; height: number }>) => {
   scroller.appendChild(surface)
   surface.appendChild(container)
   document.body.append(scroller)
-  // 600px tall viewport starting at the top of the document.
-  scroller.getBoundingClientRect = () =>
-    ({ top: 0, bottom: 600, left: 0, right: 800, width: 800, height: 600 }) as DOMRect
-  const blocks = offsets.map(({ top, height }) => {
+  const blocks: HTMLElement[] = []
+  for (let index = 0; index < blockCount; index++) {
     const block = document.createElement('p')
-    block.getBoundingClientRect = () =>
-      ({ top, bottom: top + height, left: 0, right: 800, width: 800, height }) as DOMRect
+    block.textContent = `block ${index}`
     container.appendChild(block)
-    return block
-  })
+    blocks.push(block)
+  }
+  Object.defineProperty(scroller, 'clientHeight', { value: portSize, configurable: true })
+  Object.defineProperty(scroller, 'clientWidth', { value: 1200, configurable: true })
   return { scroller, surface, container, blocks }
 }
 
-describe('accessibilityPruner', () => {
-  it('prunes only blocks outside the viewport and its overscan', () => {
-    const { scroller, surface, blocks } = mount([
-      { top: 0, height: 100 },
-      { top: 100, height: 500 },
-      { top: 1500, height: 100 }
-    ])
-    const pruner = createAccessibilityPruner(scroller, surface)
-    pruner.setActive(true)
-    expect(blocks[0].hasAttribute('aria-hidden')).toBe(false)
-    expect(blocks[1].hasAttribute('aria-hidden')).toBe(false)
-    // Inside the 400px overscan below the 600px viewport: still announced.
-    expect(blocks[2].hasAttribute('aria-hidden')).toBe(true)
-    pruner.dispose()
-  })
-
-  it('keeps layout geometry untouched while pruning', () => {
-    const { scroller, surface, blocks } = mount([
-      { top: 0, height: 100 },
-      { top: 5000, height: 100 }
-    ])
-    const pruner = createAccessibilityPruner(scroller, surface)
-    const before = blocks.map((block) => block.getBoundingClientRect().top)
-    pruner.setActive(true)
-    expect(blocks.map((block) => block.getBoundingClientRect().top)).toEqual(before)
-    pruner.dispose()
-  })
-
-  it('restores every block after the gesture ends', async() => {
-    const frames: FrameRequestCallback[] = []
-    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
-      frames.push(callback)
-      return frames.length
-    })
-    vi.stubGlobal('cancelAnimationFrame', () => {})
-    const { scroller, surface, blocks } = mount(
-      Array.from({ length: 120 }, (_, index) => ({ top: index * 1000, height: 100 }))
+/** Reports the given blocks as either visible or offscreen. */
+const report = (blocks: HTMLElement[], isIntersecting: boolean) => {
+  const observer = observers[observers.length - 1]
+  observer.callback(
+    blocks.map(
+      (target) => ({ target, isIntersecting }) as unknown as IntersectionObserverEntry
     )
+  )
+}
+
+describe('accessibilityPruner', () => {
+  beforeEach(() => {
+    observers.length = 0
+    resizeCallbacks.length = 0
+    mutationCallbacks.length = 0
+    document.body.innerHTML = ''
+    vi.stubGlobal('IntersectionObserver', MockIntersectionObserver)
+    vi.stubGlobal('ResizeObserver', readinessStub(resizeCallbacks))
+    vi.stubGlobal('MutationObserver', readinessStub(mutationCallbacks))
+  })
+
+  it('observes every top-level block for a long document', () => {
+    const { scroller, surface, blocks } = mount(200)
     const pruner = createAccessibilityPruner(scroller, surface)
-    pruner.setActive(true)
-    const prunedCount = blocks.filter((block) => block.hasAttribute('aria-hidden')).length
-    // Only the blocks inside the viewport plus 400px overscan stay announced.
-    expect(prunedCount).toBeGreaterThan(100)
-    expect(prunedCount).toBeLessThan(120)
-    pruner.setActive(false)
-    // Each frame restores a bounded batch so no single turn walks the whole doc.
-    while (frames.length > 0) {
-      const next = frames.shift()
-      if (next) next(0)
-    }
-    expect(blocks.filter((block) => block.hasAttribute('aria-hidden')).length).toBe(0)
+    pruner.refresh()
+    expect(observers).toHaveLength(1)
+    expect(observers[0].targets).toEqual(blocks)
     pruner.dispose()
-    vi.unstubAllGlobals()
+  })
+
+  it('leaves short documents alone', () => {
+    const { scroller, surface, blocks } = mount(20)
+    const pruner = createAccessibilityPruner(scroller, surface)
+    pruner.refresh()
+    expect(observers).toHaveLength(0)
+    // Nothing was hidden even though the port is laid out.
+    expect(blocks.filter((block) => block.hasAttribute('aria-hidden'))).toHaveLength(0)
+    pruner.dispose()
+  })
+
+  it('waits for the document and a laid-out port before observing', () => {
+    const { scroller, surface, container } = mount(0, 0)
+    const pruner = createAccessibilityPruner(scroller, surface)
+    pruner.refresh()
+    // Nothing to observe yet: observing a 0x0 port would report every block as
+    // not intersecting and hide the whole document.
+    expect(observers).toHaveLength(0)
+    triggerResize()
+    expect(observers).toHaveLength(0)
+    // Muya renders the blocks and the window gets laid out.
+    const rendered: HTMLElement[] = []
+    for (let index = 0; index < 200; index++) {
+      const block = document.createElement('p')
+      container.appendChild(block)
+      rendered.push(block)
+    }
+    Object.defineProperty(scroller, 'clientHeight', { value: 900, configurable: true })
+    Object.defineProperty(scroller, 'clientWidth', { value: 1200, configurable: true })
+    triggerMutation()
+    expect(observers).toHaveLength(1)
+    expect(observers[0].targets).toEqual(rendered)
+    pruner.dispose()
+  })
+
+  it('does not observe when the port never gets laid out', () => {
+    const { scroller, surface, container } = mount(0, 0)
+    const pruner = createAccessibilityPruner(scroller, surface)
+    pruner.refresh()
+    for (let index = 0; index < 200; index++) container.appendChild(document.createElement('p'))
+    // Blocks exist but the port is still 0x0: observing now would hide them all.
+    triggerResize()
+    expect(observers).toHaveLength(0)
+    pruner.dispose()
+  })
+
+  it('stops watching for readiness once the blocks are observed', () => {
+    const { scroller, surface } = mount(0, 0)
+    const pruner = createAccessibilityPruner(scroller, surface)
+    pruner.refresh()
+    Object.defineProperty(scroller, 'clientHeight', { value: 900, configurable: true })
+    Object.defineProperty(scroller, 'clientWidth', { value: 1200, configurable: true })
+    // Lazily render just enough blocks to cross the threshold.
+    const container = surface.querySelector<HTMLElement>('.mu-container') as HTMLElement
+    for (let index = 0; index < 200; index++) container.appendChild(document.createElement('p'))
+    triggerResize()
+    expect(observers).toHaveLength(1)
+    triggerMutation()
+    expect(observers).toHaveLength(1)
+    pruner.dispose()
+  })
+
+  it('picks up the block container created after the first refresh', () => {
+    const scroller = document.createElement('div')
+    const surface = document.createElement('div')
+    scroller.appendChild(surface)
+    document.body.append(scroller)
+    Object.defineProperty(scroller, 'clientHeight', { value: 900, configurable: true })
+    Object.defineProperty(scroller, 'clientWidth', { value: 1200, configurable: true })
+    const pruner = createAccessibilityPruner(scroller, surface)
+    pruner.refresh()
+    // The editor mounts before Muya renders its column.
+    expect(observers).toHaveLength(0)
+    const container = document.createElement('div')
+    container.className = 'mu-container'
+    surface.appendChild(container)
+    const blocks: HTMLElement[] = []
+    for (let index = 0; index < 200; index++) {
+      const block = document.createElement('p')
+      container.appendChild(block)
+      blocks.push(block)
+    }
+    triggerMutation()
+    expect(observers).toHaveLength(1)
+    expect(observers[0].targets).toEqual(blocks)
+    pruner.dispose()
+  })
+
+  it('observes blocks appended by later edits', () => {
+    const { scroller, surface, container, blocks } = mount(200)
+    const pruner = createAccessibilityPruner(scroller, surface)
+    pruner.refresh()
+    expect(observers[0].targets).toHaveLength(200)
+    const appended = document.createElement('p')
+    container.appendChild(appended)
+    triggerMutation()
+    expect(observers[0].targets).toHaveLength(201)
+    expect(observers[0].targets).toContain(appended)
+    // Existing blocks are not re-observed, which would reset their state.
+    expect(observers[0].targets.filter((target) => target === blocks[0])).toHaveLength(1)
+    pruner.dispose()
+  })
+
+  it('hides offscreen blocks and re-announces them when they scroll in', () => {
+    const { scroller, surface, blocks } = mount(200)
+    const pruner = createAccessibilityPruner(scroller, surface)
+    pruner.refresh()
+    report([blocks[150]], false)
+    expect(blocks[150].getAttribute('aria-hidden')).toBe('true')
+    report([blocks[150]], true)
+    expect(blocks[150].hasAttribute('aria-hidden')).toBe(false)
+    pruner.dispose()
+  })
+
+  it('keeps the layout untouched while pruning', () => {
+    const { scroller, surface, blocks } = mount(200)
+    const pruner = createAccessibilityPruner(scroller, surface)
+    pruner.refresh()
+    const textBefore = blocks.map((block) => block.textContent)
+    report(blocks.slice(100), false)
+    // Attribute-only pruning: content and structure stay identical.
+    expect(blocks.map((block) => block.textContent)).toEqual(textBefore)
+    expect(blocks.filter((block) => block.hasAttribute('aria-hidden'))).toHaveLength(100)
+    pruner.dispose()
   })
 
   it('never hides the block that contains the focused element', () => {
-    const { scroller, surface, blocks } = mount([
-      { top: 0, height: 100 },
-      { top: 9000, height: 100 }
-    ])
+    const { scroller, surface, blocks } = mount(200)
     const editable = document.createElement('span')
     editable.tabIndex = 0
-    blocks[1].appendChild(editable)
+    blocks[150].appendChild(editable)
     editable.focus()
     const pruner = createAccessibilityPruner(scroller, surface)
-    pruner.setActive(true)
-    expect(blocks[0].hasAttribute('aria-hidden')).toBe(false)
-    expect(blocks[1].hasAttribute('aria-hidden')).toBe(false)
+    pruner.refresh()
+    report([blocks[150]], false)
+    expect(blocks[150].hasAttribute('aria-hidden')).toBe(false)
     pruner.dispose()
   })
 
-  it('keeps pruning while resize events continue past the idle delay', () => {
-    vi.useFakeTimers()
-    const { scroller, surface, blocks } = mount([
-      { top: 0, height: 100 },
-      { top: 9000, height: 100 }
-    ])
+  it('restores everything when the content is refreshed', () => {
+    const { scroller, surface, blocks } = mount(200)
     const pruner = createAccessibilityPruner(scroller, surface)
-    pruner.setActive(true)
-    // Simulate a long drag: resize events keep the state alive.
-    for (let index = 0; index < 6; index++) {
-      vi.advanceTimersByTime(1000)
-      window.dispatchEvent(new Event('resize'))
-    }
-    expect(blocks[1].hasAttribute('aria-hidden')).toBe(true)
-    // Resizing goes quiet: the tree comes back on its own.
-    vi.advanceTimersByTime(2500)
-    expect(blocks[1].hasAttribute('aria-hidden')).toBe(false)
+    pruner.refresh()
+    report(blocks.slice(100), false)
+    expect(blocks.filter((block) => block.hasAttribute('aria-hidden'))).toHaveLength(100)
+    pruner.refresh()
+    expect(blocks.filter((block) => block.hasAttribute('aria-hidden'))).toHaveLength(0)
     pruner.dispose()
-    vi.useRealTimers()
   })
 
-  it('cancels a pending restore when a new gesture starts', () => {
-    vi.stubGlobal('requestAnimationFrame', () => 1)
-    vi.stubGlobal('cancelAnimationFrame', () => {})
-    const { scroller, surface, blocks } = mount([
-      { top: 0, height: 100 },
-      { top: 9000, height: 100 }
-    ])
+  it('restores everything on disposal and stops observing', () => {
+    const { scroller, surface, blocks } = mount(200)
     const pruner = createAccessibilityPruner(scroller, surface)
-    pruner.setActive(true)
-    pruner.setActive(false)
-    pruner.setActive(true)
-    expect(blocks[1].hasAttribute('aria-hidden')).toBe(true)
+    pruner.refresh()
+    report(blocks.slice(100), false)
     pruner.dispose()
-    expect(blocks[1].hasAttribute('aria-hidden')).toBe(false)
-    vi.unstubAllGlobals()
-  })
-
-  it('does nothing after disposal', () => {
-    const { scroller, surface, blocks } = mount([{ top: 9000, height: 100 }])
-    const pruner = createAccessibilityPruner(scroller, surface)
-    pruner.dispose()
-    pruner.setActive(true)
-    expect(blocks[0].hasAttribute('aria-hidden')).toBe(false)
+    expect(blocks.filter((block) => block.hasAttribute('aria-hidden'))).toHaveLength(0)
+    expect(observers[0].targets).toHaveLength(0)
   })
 })

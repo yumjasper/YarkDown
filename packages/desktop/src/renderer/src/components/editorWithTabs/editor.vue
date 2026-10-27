@@ -1639,6 +1639,8 @@ const setMarkdownToEditor = (payload: unknown) => {
     // `json-change`, so seed the TOC explicitly (otherwise it stays empty until
     // the first edit, and a file switch keeps the previous file's TOC).
     editorStore.UPDATE_TOC(editor.value.getTOC())
+    // The previous block elements are gone; re-observe the new ones.
+    accessibilityPruner?.refresh()
     // A freshly created/opened tab should be ready to type into.
     if (editorStore.TAKE_OPEN_INTENT(currentFile.value?.pathname) !== false) focusFreshEditor()
   }
@@ -2180,10 +2182,13 @@ onMounted(() => {
     }
     updateViewportSpacing()
     resizeViewport = observeSettledViewport(viewportRef.value, muya.domNode, updateViewportSpacing)
-    accessibilityPruner = createAccessibilityPruner(editorRef.value!, muya.domNode)
+    // `muya.domNode` replaced the `.editor-component` placeholder and is the live
+    // scrolling element, so it is the observer root. `editorRef` still points at
+    // the detached placeholder (height 0 forever), which would never lay out.
+    accessibilityPruner = createAccessibilityPruner(muya.domNode, muya.domNode)
+    accessibilityPruner.refresh()
     stopNativeResize = window.electron.ipcRenderer.on('mt::window-resize-state', (_event, active) => {
       resizeViewport?.setInteractive(active)
-      accessibilityPruner?.setActive(active)
     })
   }
   emit('ready')

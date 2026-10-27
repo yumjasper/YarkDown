@@ -48,15 +48,25 @@ test('profiles sustained wheel scrolling of the real math tutorial', async() => 
     args?: { src_func?: string }
   }> = []
   const batches: Array<{ wheels: number; scrollTop: number; max: number }> = []
+  const slowEvents: Array<{ name: string; dur: number; thread?: string }> = []
+  if (process.env.LIGHTOPT_PERF_CONSOLE === '1') {
+    page.on('console', (message) => {
+      const text = message.text()
+      if (text.includes('[pruner]')) console.log('[renderer]', text)
+    })
+  }
   let traceFile: number | undefined
   try {
     await expect(page.locator('.editor-component .katex').first()).toBeVisible()
     await expect(page.locator('.tabs-container li')).toHaveCount(1)
     await expect(page.locator('.pdf-reader')).toHaveCount(0)
     const fixedWindow = await app.browserWindow(page)
-    await fixedWindow.evaluate((win) => {
+    await fixedWindow.evaluate((win, size) => {
       win.unmaximize()
-      win.setBounds({ width: 1200, height: 800 })
+      win.setBounds({ width: size.width, height: size.height })
+    }, {
+      width: Number(process.env.LIGHTOPT_PERF_WINDOW_W || 1200),
+      height: Number(process.env.LIGHTOPT_PERF_WINDOW_H || 800)
     })
     await page.waitForTimeout(2000)
     if (process.env.LIGHTOPT_PERF_CONTAINMENT === '0') {
@@ -66,9 +76,85 @@ test('profiles sustained wheel scrolling of the real math tutorial', async() => 
       })
       await page.waitForTimeout(1000)
     }
+    if (process.env.LIGHTOPT_PERF_PRUNE === 'visual') {
+      const count = await page.evaluate(() => {
+        // KaTeX emits two parallel renderings: MathML for assistive tech and an
+        // HTML box tree for pixels. Hiding only the box tree keeps semantics.
+        const nodes = [...document.querySelectorAll<HTMLElement>('.katex-html')]
+        for (const node of nodes) node.setAttribute('aria-hidden', 'true')
+        return nodes.length
+      })
+      console.log('[visual-only]', JSON.stringify({ count }))
+      await page.waitForTimeout(1500)
+    }
+    if (process.env.LIGHTOPT_PERF_PRUNE === 'decorative') {
+      const count = await page.evaluate(() => {
+        const previews = [...document.querySelectorAll<HTMLElement>('.mu-math-preview')]
+        for (const node of previews) {
+          node.setAttribute('aria-hidden', 'true')
+          // Keep the accessible name on the editable TeX source that owns it.
+          const parent = node.closest<HTMLElement>('.mu-math-block')
+          parent?.setAttribute('aria-label', 'Math formula')
+        }
+        return previews.length
+      })
+      console.log('[decorative math]', JSON.stringify({ count }))
+      await page.waitForTimeout(1500)
+    }
+    if (process.env.LIGHTOPT_PERF_PRUNE === 'sticky') {
+      const pruned = await page.evaluate(() => {
+        const scroller = document.querySelector<HTMLElement>('.editor-component')
+        const container = document.querySelector<HTMLElement>('.mu-container')
+        if (!scroller || !container) throw new Error('Editor container missing')
+        const observer = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              const block = entry.target as HTMLElement
+              if (entry.isIntersecting) block.removeAttribute('aria-hidden')
+              else block.setAttribute('aria-hidden', 'true')
+            }
+          },
+          { root: scroller, rootMargin: '400px 0px' }
+        )
+        for (const block of Array.from(container.children)) observer.observe(block)
+        Object.assign(window, { __stickyPruneObserver: observer })
+        return container.children.length
+      })
+      console.log('[sticky prune]', JSON.stringify({ blocks: pruned }))
+      await page.waitForTimeout(1500)
+    }
     const accessibilityModes = await app.evaluate(({ app }) =>
       app.getAccessibilitySupportFeatures()
     )
+    const prunedByApp = await page.evaluate(() => {
+      const scroller = document.querySelector<HTMLElement>('.editor-component')
+      const container = document.querySelector<HTMLElement>('.mu-container')
+      const blocks = [...(container?.children ?? [])] as HTMLElement[]
+      const scrollerRect = scroller?.getBoundingClientRect()
+      const hidden = (block: HTMLElement) => block.getAttribute('aria-hidden') === 'true'
+      const onScreen = blocks.filter((block) => {
+        const rect = block.getBoundingClientRect()
+        if (!scrollerRect) return false
+        return !(rect.bottom < scrollerRect.top || rect.top > scrollerRect.bottom)
+      })
+      return {
+        pruned: blocks.filter(hidden).length,
+        total: blocks.length,
+        intersecting: onScreen.length,
+        // Must stay 0: hiding a block the user can see would drop real content
+        // from the accessibility tree.
+        prunedOnScreen: onScreen.filter(hidden).length,
+        scrollerHeight: scroller?.clientHeight ?? 0,
+        scrollerWidth: scroller?.clientWidth ?? 0,
+        scrollHeight: scroller?.scrollHeight ?? 0
+      }
+    })
+    console.log('[app pruning]', JSON.stringify({ prunedByApp }))
+    // Guards the failure mode this investigation hit twice: the pruner ran, found
+    // no blocks and left the entire document in the accessibility tree, which is
+    // exactly the stall it exists to prevent.
+    expect(prunedByApp.pruned, 'Offscreen blocks must leave the AX tree').toBeGreaterThan(0)
+    expect(prunedByApp.prunedOnScreen, 'Visible blocks must stay in the AX tree').toBe(0)
     const cdp = await page.context().newCDPSession(page)
     traceFile = openSync(path.join(output, `${mode}.trace.json`), 'w')
     writeSync(traceFile, '{"traceEvents":[')
@@ -80,8 +166,17 @@ test('profiles sustained wheel scrolling of the real math tutorial', async() => 
         traceFirst = false
       }
       for (const raw of value) {
-        const event = raw as (typeof traceEvents)[number]
+        const event = raw as (typeof traceEvents)[number] & {
+          tid?: number
+          cat?: string
+        }
         if (event.ph === 'X' && event.args?.src_func === 'HandleAXEvents') traceEvents.push(event)
+        else if (event.ph === 'X' && (event.dur || 0) > 40000 && event.name)
+          slowEvents.push({
+            name: event.name,
+            dur: Math.round((event.dur || 0) / 1000),
+            thread: `${event.cat ?? ''}#${event.tid ?? 0}`
+          })
       }
     })
     await cdp.send('Profiler.enable')
@@ -177,11 +272,12 @@ test('profiles sustained wheel scrolling of the real math tutorial', async() => 
       batches.push({ ...main, ...batch })
       console.log('[scroll batch]', JSON.stringify({ ...main, ...batch }))
       stopped =
-        batch.max > 1500 ||
-        batch.severeFrames >= 3 ||
-        main.mainMax > 1500 ||
-        main.mainSevere >= 3 ||
-        batch.longTasks.some((task) => task.duration > 1000)
+        process.env.LIGHTOPT_PERF_STOP !== '0' &&
+        (batch.max > 1500 ||
+          batch.severeFrames >= 3 ||
+          main.mainMax > 1500 ||
+          main.mainSevere >= 3 ||
+          batch.longTasks.some((task) => task.duration > 1000))
       writeFileSync(
         path.join(output, `${mode}.progress.json`),
         JSON.stringify({ accessibilityModes, stopped, batches }, null, 2)
@@ -227,6 +323,7 @@ test('profiles sustained wheel scrolling of the real math tutorial', async() => 
       accessibilityModes,
       maxAXTask: Math.max(0, ...ax),
       totalAXTaskMs: ax.reduce((sum, ms) => sum + ms, 0),
+      slowEvents: slowEvents.sort((a, b) => b.dur - a.dur).slice(0, 30),
       ...metrics,
       batches
     }

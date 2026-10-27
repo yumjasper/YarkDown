@@ -138,3 +138,64 @@ pnpm -C packages/desktop exec playwright test corner-resize-performance.spec.ts 
 ```
 
 `LIGHTOPT_PERF_SIMULATE_GESTURE=1` 会通过主进程发送真实的手势开始与结束消息，从而覆盖生产代码里的裁剪器；不设置该项则测量未裁剪的基线。
+
+---
+
+# 滚轮滚动卡顿排查（第三轮）
+
+日期：2026-10-27。版本基线：1.0.14。用户反馈斜向拖动已缓解，卡顿集中在上下滚动滚轮。
+
+## 缩放手势方案为何不覆盖滚动
+
+第二轮把裁剪挂到 `mt::window-resize-state` 上，只在 Windows 原生缩放模态循环内生效。滚轮滚动不进入该循环，因此裁剪器全程不工作，滚动仍逐帧触发全量无障碍树序列化。
+
+## 复现窗口越大越明显
+
+同一文档在 1200 × 800 窗口连续滚动 60 秒，AX 任务仅 116 毫秒；在 1920 × 1120 窗口下 40 秒内累计 12280 毫秒、单次最长 615 毫秒。窗口越大视口内可见区块越多，参与序列化的子树越大，与第二轮"节点总量决定开销"的结论一致。小窗口采样会系统性低估问题，后续必须用大窗口复现。
+
+## 失效两次的真实原因
+
+改为持续裁剪后，生产环境实测 `aria-hidden` 区块数始终为 0。两次都出在"裁剪器拿不到正确的 DOM 引用"，不是阈值或概率问题：
+
+1. 容器查找早于渲染。`surface.querySelector('.mu-container')` 在挂载回调里执行，此时 Muya 尚未渲染出该列，代码回退到引擎根节点本身，该节点永远没有 120 个直接子元素，`attempt()` 恒失败且无人重试。修复为每次尝试时重新解析容器。
+2. 滚动根用错节点。`editorRef.value` 指向 `.editor-component` 占位节点，而 Muya 用 `originContainer.replaceWith(newContainer)` 替换了它，`domNode` 才是真正的滚动容器。该占位节点已脱离文档、高度恒为 0，`ResizeObserver` 因此永不触发，裁剪器一直停在"端口未就绪"。修复为直接用 `muya.domNode` 作为滚动根与引擎根。
+
+这两处都只能通过在生产构建里读取真实状态发现，单元测试用的合成 DOM 无法暴露。
+
+## 修复后的数据
+
+1920 × 1120，连续注入滚轮 40 秒，653 个区块中裁剪 632 个，视口内 11 个区块全部保留，`scrollHeight` 保持 47575：
+
+| 指标             | 裁剪失效（基线） |                裁剪生效 |
+| ---------------- | ---------------: | ----------------------: |
+| 单次最长 AX 任务 |         615.2 ms |                 72.0 ms |
+| 累计 AX 任务耗时 |         12280 ms |                 7296 ms |
+| 最长渲染帧       |         287.5 ms |                 83.4 ms |
+| 主进程最长阻塞   |         854.5 ms | 未出现 250 毫秒以上停顿 |
+
+单次 AX 任务降到原来的约八分之一，长帧消失。累计 AX 仍有余量，因为 600 像素外扩带内的区块自身也很大（单块含大量 KaTeX 节点），滚动时不断换入换出。
+
+## 已知取舍
+
+持续裁剪而非仅手势期间裁剪，读屏用户需要把虚拟光标移到某区块上（该区块随之滚入视口并自动恢复）才能读到它，而不是一次遍历全文。600 像素外扩带与焦点保护降低了误判概率，但这确实是行为变化，不是纯性能优化。
+
+## 验证
+
+`test/unit/specs/accessibility-pruner.spec.ts` 扩到 12 项，新增"容器晚于首次刷新创建""后续编辑新增区块被跟踪"两项，对应上面两个失效原因。
+
+`markdown-scroll-performance.spec.ts` 增加两条硬断言：离屏区块必须至少裁剪一个，视口内区块必须一个都没被裁剪。此前该测试能通过而裁剪完全没生效。
+
+复测命令（必须在仓库根目录，且先 `pnpm run build:unpack`）：
+
+```powershell
+$env:LIGHTOPT_PERF = '1'
+$env:LIGHTOPT_PERF_ACK_SYSTEM_STALL = '1'
+$env:LIGHTOPT_PERF_WINDOW_W = '1920'
+$env:LIGHTOPT_PERF_WINDOW_H = '1120'
+$env:LIGHTOPT_PERF_SCROLL_MS = '40000'
+$env:LIGHTOPT_PERF_STOP = '0'
+$env:LIGHTOPT_PERF_MODE = 'scroll-pruned-final-1920'
+pnpm -C packages/desktop exec playwright test markdown-scroll-performance.spec.ts --workers=1 --reporter=line
+```
+
+`LIGHTOPT_PERF_STOP=0` 关闭早停，才能得到可比较的完整样本。

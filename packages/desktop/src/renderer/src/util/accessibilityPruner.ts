@@ -1,122 +1,156 @@
 /**
- * Keeps offscreen blocks out of the Chromium accessibility tree while a native
- * window resize gesture is running. Chromium serializes every AX node of the
- * renderer on `CrBrowserMain` for each frame of the gesture, which on a
- * formula-dense document blocks the whole UI thread (measured 3.6 s for a
- * single task). Because the pruning is `aria-hidden` only, layout, scroll
- * height and text metrics stay byte-identical; nothing is re-measured when the
- * gesture ends.
+ * Keeps offscreen blocks out of the Chromium accessibility tree.
  *
- * The state is deliberately gesture-scoped: offscreen content is removed from
- * the tree only while the user drags a window edge and restored immediately
- * afterwards, so assistive technology sees the full document at rest.
+ * Chromium serializes the renderer's AX nodes on the browser process main
+ * thread. With the native accessibility flags this app runs with, a long
+ * formula-dense document pays that cost on every scroll and resize frame:
+ * measured 615 ms for one AX task while wheel-scrolling a 1920x1120 window and
+ * 3665 ms per resize gesture. That work lands on the UI thread, so the window and
+ * the rest of the desktop stutter while it runs.
+ *
+ * Pruning offscreen blocks with `aria-hidden` removes essentially all of it. It
+ * is attribute-only, so layout, scroll height and text metrics stay identical and
+ * nothing needs re-measuring. Visibility is tracked by an `IntersectionObserver`,
+ * which avoids a forced layout read on every scroll event.
+ *
+ * Assistive technology still reaches the whole document: the overscan band keeps
+ * about-to-enter blocks announced, and bringing the caret or the virtual cursor
+ * into a pruned block scrolls it into view, which makes the observer drop its
+ * `aria-hidden` before it is read.
  */
 
-/** Blocks further than this from the viewport are pruned; small overscan keeps
- *  blocks that are about to scroll in from contributing to the tree. */
-const OVERSCAN_PX = 400
+/** Blocks further than this from the viewport stay out of the tree. Generous
+ *  enough that a fast wheel flick does not outrun the re-announcement. */
+const OVERSCAN_PX = 600
 
-/** Auto-restores when resizing stops without a gesture-end message, so a lost
- *  notification can never leave content permanently hidden from the tree. */
-const IDLE_RESTORE_MS = 2000
+/** Below this the subtree is cheap to serialize; pruning would only add observer
+ *  bookkeeping without a measurable win. */
+const MIN_BLOCKS = 120
 
 export interface AccessibilityPruner {
-  setActive: (active: boolean) => void
+  /** Rebuilds the observed block list; call after the document content changes. */
+  refresh: () => void
   dispose: () => void
 }
 
-/** Restore budget per frame. Removing `aria-hidden` makes Chromium walk and
- *  insert each block's whole subtree, so restoring all 600+ blocks in one turn
- *  produced a ~700 ms main-process stall right as the drag ended. */
-const RESTORE_BATCH = 40
+const isElement = (node: Element): node is HTMLElement => node instanceof HTMLElement
 
 export const createAccessibilityPruner = (
   scroller: HTMLElement,
   surface: HTMLElement
 ): AccessibilityPruner => {
-  const hidden = new Set<HTMLElement>()
-  let watchdog: ReturnType<typeof setTimeout> | undefined
-  let restoreFrame = 0
+  const pruned = new Set<HTMLElement>()
+  // Replaced on every teardown: the observer is recreated, so the "already
+  // observed" marks must not survive it.
+  let observed = new WeakSet<HTMLElement>()
+  let observer: IntersectionObserver | undefined
+  let follow: MutationObserver | undefined
+  let pending: (ResizeObserver | MutationObserver)[] = []
   let disposed = false
-  // `surface` is the engine root (`.mu-editor`); the top-level blocks are the
-  // children of the centered column inside it.
-  const container = surface.querySelector<HTMLElement>('.mu-container') ?? surface
 
-  const cancelRestore = () => {
-    if (restoreFrame) cancelAnimationFrame(restoreFrame)
-    restoreFrame = 0
-  }
+  // `surface` is the engine root (`.mu-editor`); the top-level blocks are the
+  // children of the centered column inside it. The column does not exist yet when
+  // the editor mounts, so it has to be looked up again on every attempt - binding
+  // it once made the pruner watch the bare root, never find enough blocks, and
+  // silently leave the whole document in the accessibility tree.
+  const resolveContainer = (): HTMLElement =>
+    surface.querySelector<HTMLElement>('.mu-container') ?? surface
 
   const restoreAll = () => {
-    cancelRestore()
-    for (const block of hidden) block.removeAttribute('aria-hidden')
-    hidden.clear()
+    for (const block of pruned) block.removeAttribute('aria-hidden')
+    pruned.clear()
   }
 
-  const restoreProgressively = () => {
-    cancelRestore()
-    const step = () => {
-      restoreFrame = 0
-      let budget = RESTORE_BATCH
-      for (const block of hidden) {
-        if (budget-- <= 0) break
-        block.removeAttribute('aria-hidden')
-        hidden.delete(block)
-      }
-      if (hidden.size > 0) restoreFrame = requestAnimationFrame(step)
-    }
-    restoreFrame = requestAnimationFrame(step)
+  const stopWatchingReadiness = () => {
+    for (const watcher of pending) watcher.disconnect()
+    pending = []
   }
 
-  const prune = () => {
-    cancelRestore()
-    for (const block of hidden) block.removeAttribute('aria-hidden')
-    hidden.clear()
-    const scrollerRect = scroller.getBoundingClientRect()
-    const top = scrollerRect.top - OVERSCAN_PX
-    const bottom = scrollerRect.bottom + OVERSCAN_PX
+  const hide = (block: HTMLElement) => {
+    // The caret's block must stay announced: `aria-hidden` on an ancestor of the
+    // focused element hides the very node assistive tech is tracking.
     const focused = document.activeElement
-    // One batched read pass: the layout is already clean at gesture start.
-    for (const block of Array.from(container.children)) {
-      if (!(block instanceof HTMLElement)) continue
-      // The caret's block must stay in the tree: `aria-hidden` on an ancestor
-      // of the focused element hides the very node assistive tech is tracking.
-      if (focused && block.contains(focused)) continue
-      const rect = block.getBoundingClientRect()
-      if (rect.bottom < top || rect.top > bottom) {
-        block.setAttribute('aria-hidden', 'true')
-        hidden.add(block)
+    if (focused && block.contains(focused)) return
+    block.setAttribute('aria-hidden', 'true')
+    pruned.add(block)
+  }
+
+  const onIntersect = (entries: IntersectionObserverEntry[]) => {
+    for (const entry of entries) {
+      const block = entry.target as HTMLElement
+      if (entry.isIntersecting) {
+        if (pruned.delete(block)) block.removeAttribute('aria-hidden')
+      } else if (!pruned.has(block)) {
+        hide(block)
       }
     }
   }
 
-  // A drag keeps firing resize events. Re-arming on each one keeps the tree
-  // pruned for the whole gesture, while a genuine loss of the gesture-end
-  // message still restores the document once resizing goes quiet.
-  const rearm = () => {
-    clearTimeout(watchdog)
-    watchdog = setTimeout(restoreAll, IDLE_RESTORE_MS)
+  const observeBlocks = (blocks: HTMLElement[]) => {
+    observer ??= new IntersectionObserver(onIntersect, {
+      root: scroller,
+      rootMargin: `${OVERSCAN_PX}px 0px`
+    })
+    for (const block of blocks) {
+      if (observed.has(block)) continue
+      observed.add(block)
+      observer.observe(block)
+    }
+  }
+
+  // Editing appends blocks after the first pass; without this they would stay in
+  // the tree forever, since nothing re-observes them.
+  const followNewBlocks = (container: HTMLElement) => {
+    follow = new MutationObserver(() => {
+      observeBlocks(Array.from(container.children).filter(isElement))
+    })
+    follow.observe(container, { childList: true })
+  }
+
+  const teardown = () => {
+    stopWatchingReadiness()
+    follow?.disconnect()
+    follow = undefined
+    observer?.disconnect()
+    observer = undefined
+    observed = new WeakSet<HTMLElement>()
+    restoreAll()
+  }
+
+  const attempt = (): boolean => {
+    if (disposed) return false
+    // A hidden or not-yet-laid-out window reports a 0x0 scroll port, and with a
+    // 0x0 root every block reads as "not intersecting" - the first callback would
+    // hide the whole document and, because `IntersectionObserver` only fires on
+    // change, nothing would ever be re-announced.
+    if (scroller.clientHeight <= 0 || scroller.clientWidth <= 0) return false
+    const container = resolveContainer()
+    const blocks = Array.from(container.children).filter(isElement)
+    if (blocks.length < MIN_BLOCKS) return false
+    observeBlocks(blocks)
+    followNewBlocks(container)
+    return true
   }
 
   return {
-    setActive(active: boolean) {
+    refresh() {
       if (disposed) return
-      clearTimeout(watchdog)
-      watchdog = undefined
-      if (!active) {
-        window.removeEventListener('resize', rearm)
-        restoreProgressively()
-        return
+      teardown()
+      if (attempt()) return
+      // Muya renders asynchronously and the window may still be laid out later, so
+      // wait for whichever of the two arrives instead of assuming a fixed delay.
+      const onReady = () => {
+        if (attempt()) stopWatchingReadiness()
       }
-      prune()
-      window.addEventListener('resize', rearm)
-      rearm()
+      const resize = new ResizeObserver(onReady)
+      resize.observe(scroller)
+      const mutation = new MutationObserver(onReady)
+      mutation.observe(surface, { childList: true, subtree: true })
+      pending = [resize, mutation]
     },
     dispose() {
       disposed = true
-      clearTimeout(watchdog)
-      window.removeEventListener('resize', rearm)
-      restoreAll()
+      teardown()
     }
   }
 }
