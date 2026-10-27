@@ -9,7 +9,14 @@ describe('Native theme source', () => {
   })
 
   it('uses dark native menus for dark MarkText themes', () => {
-    for (const theme of ['dark', 'dracula', 'nord', 'rose-pine', 'kanagawa', 'cyberdream']) {
+    for (const theme of [
+      'dark',
+      'typora-github-dark',
+      'typora-notion-dark',
+      'typora-drake-dark',
+      'typora-cobalt',
+      'typora-lapis'
+    ]) {
       expect(isDarkApplicationTheme(theme)).to.equal(true)
       expect(getNativeThemeSource({ followSystemTheme: false, theme })).to.equal('dark')
     }
@@ -23,7 +30,16 @@ describe('Native theme source', () => {
   })
 
   it('uses light native menus for light MarkText themes', () => {
-    for (const theme of ['light', 'graphite', 'ulysses', 'tokyo-night-light', 'unknown-theme']) {
+    for (const theme of [
+      'light',
+      'typora-github',
+      'typora-newsprint',
+      'typora-notion',
+      'typora-vue',
+      'typora-solarized-light',
+      'typora-drake',
+      'unknown-theme'
+    ]) {
       expect(isDarkApplicationTheme(theme)).to.equal(false)
       expect(getNativeThemeSource({ followSystemTheme: false, theme })).to.equal('light')
     }

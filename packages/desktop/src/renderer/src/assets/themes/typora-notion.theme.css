@@ -94,7 +94,7 @@
   --floatBorderColor: rgba(15, 15, 15, 0.1);
   --floatShadow: rgba(15, 15, 15, 0.1);
   --maskColor: rgba(15, 15, 15, 0.6);
-  --editorAreaWidth: 900px;
+  --editorAreaWidth: 1000px;
 
   --theme-color: var(--themeColor);
   --highlight-color: var(--highlightColor);

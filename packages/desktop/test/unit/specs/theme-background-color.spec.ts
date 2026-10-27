@@ -13,16 +13,17 @@ describe('theme launch background colour (#3957)', () => {
   })
 
   it('maps representative dark themes to their own editor background', () => {
-    expect(getThemeBackgroundColor('dracula')).toBe('#282a36')
-    expect(getThemeBackgroundColor('nord')).toBe('#2e3440')
-    expect(getThemeBackgroundColor('tokyo-night')).toBe('#1a1b26')
+    expect(getThemeBackgroundColor('typora-github-dark')).toBe('#0d1117')
+    expect(getThemeBackgroundColor('typora-notion-dark')).toBe('#191919')
+    expect(getThemeBackgroundColor('typora-drake-dark')).toBe('#2b2b2b')
+    expect(getThemeBackgroundColor('typora-cobalt')).toBe('#193549')
+    expect(getThemeBackgroundColor('typora-lapis')).toBe('#1f2433')
     expect(getThemeBackgroundColor('dark')).toBe('#282828')
-    expect(getThemeBackgroundColor('one-dark')).toBe('#282c34')
   })
 
   it('uses the explicit background for built-in light themes', () => {
-    expect(getThemeBackgroundColor('ulysses')).toBe('#f3f3f3')
-    expect(getThemeBackgroundColor('tokyo-night-light')).toBe('#d5d6db')
+    expect(getThemeBackgroundColor('typora-newsprint')).toBe('#f9f7f1')
+    expect(getThemeBackgroundColor('typora-solarized-light')).toBe('#fdf6e3')
   })
 
   it('falls back to white for the default light theme and unknown themes', () => {

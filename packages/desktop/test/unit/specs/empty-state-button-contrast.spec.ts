@@ -161,7 +161,7 @@ const COMPONENTS = [
 
 describe('empty-state button readability (#4774)', () => {
   it('found theme files and base variables to test against', () => {
-    expect(themeFiles.length).toBeGreaterThan(20)
+    expect(themeFiles.length).toBeGreaterThan(10)
     expect(baseVars['--buttonPrimaryFontColor']).toBeTruthy()
     expect(baseVars['--buttonPrimaryBgColor']).toBeTruthy()
   })
