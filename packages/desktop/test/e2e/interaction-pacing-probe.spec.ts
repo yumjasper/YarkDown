@@ -155,6 +155,10 @@ test('measures frame pacing across layout-changing interactions', async() => {
     }
 
     if (only === 'all' || only === 'toc') {
+      // The side bar opens on the file tree; the outline only renders after the
+      // rail's third icon (files, search, toc) is activated.
+      await page.locator('.side-bar-rail .rail-icon').nth(2).click()
+      await expect(page.locator('.side-bar-toc .el-tree-node__content').first()).toBeVisible()
       const entries = page.locator('.side-bar-toc .el-tree-node__content')
       const count = await entries.count()
       console.log('[toc] entries', count)

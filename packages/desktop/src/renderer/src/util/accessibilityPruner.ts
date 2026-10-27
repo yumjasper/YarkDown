@@ -254,6 +254,13 @@ export const createAccessibilityPruner = (
         toHide.delete(block)
         toShow.add(block)
       } else {
+        // The observer only reports changes, so a block that entered and left
+        // again before the batch was written would stay in `toShow` forever.
+        // `flush` restores everything in `toShow` and drops it from `toHide`,
+        // which left the block unpruned and un-observed to the end of the
+        // session: a 300 ms animated outline scroll grew the accessibility tree
+        // from 1372 to 19226 nodes and every later jump serialized it.
+        toShow.delete(block)
         toHide.add(block)
       }
     }

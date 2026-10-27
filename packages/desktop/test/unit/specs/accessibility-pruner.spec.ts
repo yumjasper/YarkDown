@@ -413,4 +413,21 @@ describe('accessibilityPruner', () => {
     expect(blocks.filter((block) => block.hasAttribute('aria-hidden'))).toHaveLength(0)
     expect(observers[0].targets).toHaveLength(0)
   })
+
+  it('prunes a block that scrolls back out before its batch lands', () => {
+    const { scroller, surface, blocks } = mount(200)
+    const pruner = createAccessibilityPruner(scroller, surface)
+    pruner.refresh()
+    // An animated outline scroll moves several viewports in 300 ms, so blocks
+    // enter and leave again inside one batch window. The observer only reports
+    // changes, so a block left queued for restore is never reported again: it
+    // stayed announced for the rest of the session, and on the math tutorial the
+    // accessibility tree grew from 1372 to 19226 nodes, which made every later
+    // jump serialize it for ~115 ms.
+    reportOnly([blocks[120]], true)
+    reportOnly([blocks[120]], false)
+    pruner.flush()
+    expect(blocks[120].getAttribute('aria-hidden')).toBe('true')
+    pruner.dispose()
+  })
 })

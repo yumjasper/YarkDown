@@ -139,6 +139,7 @@ import {
   TOP_LEVEL_HEADINGS_SELECTOR
 } from '@/util/tocNavigation'
 import { findActiveHeadingSlug, type HeadingPosition } from '@/util/findActiveHeading'
+import { scheduleMarkdownMathWarmup } from '@/codeMirror/warmMode'
 import { addCommonStyle, setEditorWidth } from '@/util/theme'
 import { usePreferencesStore } from '@/store/preferences'
 import { useEditorStore } from '@/store/editor'
@@ -1883,6 +1884,7 @@ const resizeObserverForEditor = new ResizeObserver(handleResetPaddingBottom)
 
 onMounted(() => {
   printer = new Printer()
+  scheduleMarkdownMathWarmup()
   const ele = editorRef.value
   if (!ele) return
 
@@ -2346,7 +2348,11 @@ onBeforeUnmount(() => {
   /* `z-index: -1` only hides the editor visually; `document.elementsFromPoint`
      ignores stacking, so muya's mousemove-driven float tools (front button/menu,
      table drag/column toolbars, preview toolbar) still re-trigger over the source
-     editor. Drop the subtree from hit-testing too so they cannot (#4731). */
+     editor. Drop the subtree from hit-testing too so they cannot (#4731).
+     `content-visibility: hidden` was tried as a replacement — it is not an
+     inherited property, so it looks cheaper — but it makes the WAY BACK rebuild
+     the subtree's layout, and on the 27k-node tutorial that cost ~50 ms more on
+     exit than it saved on entry. */
   pointer-events: none;
 }
 

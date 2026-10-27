@@ -562,3 +562,156 @@ pnpm -C packages/desktop exec playwright test test/e2e/interaction-pacing-probe.
 回归：`parity-source-undo-saved.spec.ts`（PG2 光标落点、PG14 单步撤销）、`source-toc-scroll.spec.ts`、`toc-scroll.spec.ts`、`minimap.spec.ts`、`view-modes.spec.ts`、`editor-layout.spec.ts`、`plain-text.spec.ts`；`pnpm run test:quick` 291 文件 2492 项全通过；`pnpm run typecheck` 通过；本次改动的 muya 文件 ESLint 零问题。
 
 `parity-cursor-lang.spec.ts` 的 G8（语言切换刷新 quick-insert 提示）失败，已用 stash 回到基线复现同样失败，属既有问题，与本轮改动无关。
+
+## 第八轮：目录跳转后首尾跳转的 120 ms 长任务
+
+### 症状
+
+完整序列（resize → toc → sidebar → ends → source）里，`ends` 场景稳定出现 4 次 117–125 ms 的 `longtask`。单独跑 `ends` 只有 max 73.9 且没有任何长任务，"开目录后跳转"也只有 max 81，说明是前面的某个步骤留下了状态。
+
+### 二分
+
+逐步叠加前置动作再跳首尾（`ends-bisect-probe.spec.ts`）：
+
+| stage                                         | max             | longTasks               |
+| --------------------------------------------- | --------------- | ----------------------- |
+| none                                          | 67              | 无                      |
+| resize                                        | 54              | 无                      |
+| tocopen（只打开目录页签）                     | 94              | 无                      |
+| scrollmid（视口停在 45%，不用目录）           | 65              | 无                      |
+| tocsettle（点 8 条目录后等 2.5 s）            | 112             | 113/112/111/111/110/110 |
+| tocoreset（点完目录再把视口重置到顶部）       | 133             | 133/127/126/124         |
+| tocdouble（连做三轮首尾跳）                   | 133 / 125 / 133 | 每轮 5–6 条             |
+| tocsvitch（点完目录切回文件页签，目录树卸载） | 121             | 125/118/117/117/117/113 |
+
+四个否定结论：
+
+- 不是滚动位置：`tocreset` 把 `scrollTop` 归零后仍然 124–133 ms。
+- 不是残留动画：`tocreset` 里 `document.getAnimations().length` 为 0。
+- 不是一次性成本：三轮连跳每轮都慢。
+- 不是目录面板本身：切回文件页签让 `el-tree` 卸载（`tocNodes` 为 0）后依然 113–125 ms。
+
+### trace 归因
+
+`jump-trace-probe.spec.ts` 对跳转本身采 Chromium trace，筛 `ph === 'X'` 按总耗时排序：
+
+```
+ProxyMain::BeginMainFrame  462.9 ms / 10 次 / max 131.3
+Commit                     346.4 ms / 3 次  / max 115.9
+LocalFrameView::RunAccessibilitySteps  336.1 / 3 / 114.8
+Blink.Accessibility.UpdateTime         336.1 / 3 / 114.8
+```
+
+同一次跳转在干净会话里是 `RunTask max 26.1`、`Blink.Accessibility.UpdateTime max 11.1`（合计 34.8），使用目录后单次涨到 114.8 ms。`Commit` 与 `RunAccessibilitySteps` 的耗时完全一致，说明这一帧几乎全部花在把无障碍树提交给浏览器进程。
+
+### 无障碍树规模
+
+用 CDP `Accessibility.getFullAXTree` 对比（`axstate-probe.spec.ts`）：
+
+| 状态             | 节点总数 | InlineTextBox |
+| ---------------- | -------- | ------------- |
+| 打开文档         | 1372     | 129           |
+| 目录点击 8 条后  | 19226    | 10893         |
+| 修好之后同一场景 | 2121     | 365           |
+
+等待 8 秒不回落，跳转一次也不会回落：这是永久状态，不是队列没排空。
+
+### 根因
+
+`accessibilityPruner.ts` 的 `IntersectionObserver` 回调只做了单向记账：
+
+```ts
+} else {
+  toHide.add(block)
+}
+```
+
+`IntersectionObserver` 只在交叉状态变化时回调。区块 A 在批次落地前先进入（写入 `toShow`）又离开（写入 `toHide`），两个集合里同时存在 A。`flush` 先写还原、再写隐藏：
+
+```ts
+for (const block of toShow) {
+  toHide.delete(block)
+  if (pruned.delete(block)) block.removeAttribute('aria-hidden')
+}
+```
+
+于是 A 被 `removeAttribute` 掉、`toHide.delete` 掉，最终既不在 `pruned` 里也不在 `toHide` 里；而它的交叉状态已经报成"不在视口"，观察器不会再回调。A 从此永久留在无障碍树里。
+
+目录跳转是 `animatedScrollTo(container, target, 300)` 的 300 ms 平滑滚动，一次跨过好几个视口，正好大量制造这种"进入又离开"的区块。实测被剪枝的区块从 639 掉到 175，虽然只掉 464 个，但掉的是公式最密的那些块（KaTeX 子树），树节点数因此翻了 14 倍。
+
+### 修复
+
+进入分支补一次撤销：
+
+```ts
+} else {
+  // The observer only reports changes, so a block that entered and left
+  // again before the batch was written would stay in `toShow` forever.
+  // ...
+  toShow.delete(block)
+  toHide.add(block)
+}
+```
+
+回归用例 `accessibility-pruner.spec.ts` → `prunes a block that scrolls back out before its batch lands`：先报进入再报离开，`flush` 后断言 `aria-hidden` 为 `"true"`。
+
+### 效果
+
+无障碍开启（最严格）条件下，`interaction-pacing-probe.spec.ts` 的五场景：
+
+| 场景    | 修前 max / longTasks                       | 修后 max / longTasks |
+| ------- | ------------------------------------------ | -------------------- |
+| resize  | 63.4 / 无                                  | 63.8 / 无            |
+| toc     | 96 / 无（AX 关闭时）→ 修复前含 AX 为 4×120 | 63.9 / 无            |
+| sidebar | 129 / 1 条                                 | 63.9 / 无            |
+| ends    | 137 / 4 条 120–138                         | 66.1 / 无            |
+| source  | 138 / [112,72,51]                          | 141 / [119,72,53]    |
+
+`over100` 从 5 降到 2（source 场景的两帧）。四个滚动/布局类场景的长任务全部清零。
+
+`--disable-renderer-accessibility`（`YARKTEXT_ACCESSIBILITY_MODE=performance`）作为对照：`ends` max 54–66.9、longTasks 空，与修复后开 AX 的结果接近，说明剩余开销已不再是 AX 序列化。
+
+### 源码模式的 119 ms
+
+单独把源代码切换拆开计时（`performance.mark` 一次性埋点，验证后已移除），33k 字符文档：
+
+```
+cycle0  total 96.8  cm 80.3  tail 16.3
+cycle1  total 34.7  cm 31.3  tail  3.4
+cycle2  total 35.2  cm 32.0  tail  3.2
+```
+
+71.5% 在 CodeMirror 构造函数里，首次比之后多 49 ms。后续验证：
+
+- 把构建推迟一帧（`requestAnimationFrame`）后，独立帧反而变成 144 ms，净亏，已回退。
+- 用真实全文在空闲时段预热，开屏帧涨到 380 ms（`requestIdleCallback` 仍在主线程上），已回退，并在 `warmMode.ts` 注释里记录。
+- `pointer-events: auto` 覆盖实验：同轮多次采样后基线 155–181 ms、覆盖后 168–183 ms，差异在噪声内；此前"245 → 152"是冷启动偏差，不能作为结论。
+- `inert` 属性在 2.8 万节点上强制布局 36.3 ms，比 `pointer-events` 的 24.8 ms 更贵，不采用。
+- CodeMirror 配置对比（`window.CodeMirror` 直接构建 33k 字符）：`viewportMargin: Infinity` 117 ms、`lineNumbers: false` 89.6 ms、`mode: 'gfm'` 130.8 ms，均不足以单独消掉 119 ms。
+
+结论：这一帧的成本是「隐藏编辑器继承属性重算（约 57 ms）+ CodeMirror 构建（80 ms）」两段叠加，两者都是真实工作，无法通过换属性或挪帧安全消除。保持现状，代价是每次进入源码模式一帧 110–140 ms。
+
+### 方法论
+
+- `long-animation-frame` 只对长脚本生效，对 `scrollTop` 赋值型卡顿一条都不产生；跳转类必须用 trace。
+- `Performance.getMetrics` 是累计值，"一帧冻 120 ms"和"120 ms 摊到多帧"都会让总分同向变化，必须同时采帧间隔与 `longtask`。
+- Playwright 通过 CDP 驱动页面，会打开渲染进程的无障碍模式；屏幕阅读器未启用的真实用户不会。比较必须在同一 AX 状态下进行，否则会把框架开销算成产品开销。
+- 判断某个属性/改动是否有效，必须在同一轮里多次采样，冷启动那一发往往偏差 50 ms 以上。
+- `pointer-events` 是继承属性，`inert`/`content-visibility` 不是；但三者在这份文档上的实测排名是 `z-index` 0 ms < `position` 2.4 ms < `content-visibility: hidden` 10.1 ms < `pointer-events` 24.8 ms < `inert` 36.3 ms < `visibility: hidden` 38.9 ms。
+
+### 验证
+
+```powershell
+# 剪枝器回归（含新增用例）
+pnpm -C packages/desktop exec vitest run test/unit/specs/accessibility-pruner.spec.ts
+
+# 多场景帧率（必须先 pnpm run build:unpack，spec 跑的是 out/ 里的产物）
+$env:LIGHTOPT_PERF = '1'
+$env:LIGHTOPT_PERF_ACK_SYSTEM_STALL = '1'
+pnpm -C packages/desktop exec playwright test test/e2e/interaction-pacing-probe.spec.ts --reporter=line
+
+# 对照：关闭渲染进程无障碍
+$env:LIGHTOPT_PERF_ACCESSIBILITY = 'performance'
+```
+
+回归：`view-modes.spec.ts`、`source-toc-scroll.spec.ts`、`parity-source-undo-saved.spec.ts`（16 passed / 1 skipped）、`toc-scroll.spec.ts`、`minimap.spec.ts`（4 passed）；`pnpm run test:quick` 291 文件 2492 项全通过；`pnpm run typecheck` 通过；本轮改动文件 ESLint 零问题。
