@@ -152,11 +152,20 @@ const refresh = () => {
     return
   }
   const next = document.activeElement?.closest('.table-tools, .editor-context-menu') ? cell.value : getTableCell(engine)
-  const rect = next?.table.domNode?.querySelector('table')?.getBoundingClientRect()
+  // A scroll outside tables must not flush layout of the entire math document.
+  if (!next?.outMostBlock) {
+    cell.value = null
+    popup.value = ''
+    return
+  }
+  const rect = next.table.domNode?.querySelector('table')?.getBoundingClientRect()
+  if (!rect) {
+    cell.value = null
+    popup.value = ''
+    return
+  }
   const editorRect = engine.domNode.getBoundingClientRect()
   if (
-    !next?.outMostBlock ||
-    !rect ||
     rect.bottom < Math.max(56, editorRect.top) ||
     rect.top > window.innerHeight
   ) {
