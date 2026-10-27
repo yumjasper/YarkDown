@@ -66,7 +66,7 @@ const triggerMutation = () => {
   for (const item of [...mutationCallbacks]) if (item.active) item.callback()
 }
 
-const mount = (blockCount: number, portSize = 900) => {
+const mount = (blockCount: number, portSize = 900, heavyNodes = 30) => {
   const scroller = document.createElement('div')
   const surface = document.createElement('div')
   const container = document.createElement('div')
@@ -78,6 +78,8 @@ const mount = (blockCount: number, portSize = 900) => {
   for (let index = 0; index < blockCount; index++) {
     const block = document.createElement('p')
     block.textContent = `block ${index}`
+    // Dense subtrees are the ones worth pruning; a bare paragraph is not.
+    for (let child = 0; child < heavyNodes; child++) block.appendChild(document.createElement('span'))
     container.appendChild(block)
     blocks.push(block)
   }
@@ -86,14 +88,54 @@ const mount = (blockCount: number, portSize = 900) => {
   return { scroller, surface, container, blocks }
 }
 
-/** Reports the given blocks as either visible or offscreen. */
-const report = (blocks: HTMLElement[], isIntersecting: boolean) => {
+/** Delivers intersection results without applying the batch. */
+const reportOnly = (blocks: HTMLElement[], isIntersecting: boolean) => {
   const observer = observers[observers.length - 1]
   observer.callback(
     blocks.map(
       (target) => ({ target, isIntersecting }) as unknown as IntersectionObserverEntry
     )
   )
+}
+
+/** jsdom has no layout, so `scrollTop` is always 0 unless it is made writable. */
+const makeScrollable = (scroller: HTMLElement) => {
+  let value = 0
+  Object.defineProperty(scroller, 'scrollTop', {
+    configurable: true,
+    get: () => value,
+    set: (next: number) => {
+      value = next
+    }
+  })
+  return (next: number) => {
+    scroller.scrollTop = next
+    scroller.dispatchEvent(new Event('scroll'))
+  }
+}
+
+/** Reports the given blocks as either visible or offscreen and applies the batch. */
+const report = (
+  blocks: HTMLElement[],
+  isIntersecting: boolean,
+  pruner: { flush: () => void }
+) => {
+  reportOnly(blocks, isIntersecting)
+  // Attribute writes are batched into a frame; flush stands in for that frame.
+  pruner.flush()
+}
+
+/** Once a gesture settles the queued hides drain a few blocks per frame, so a
+ *  large queue finishes over several frames rather than in one long task. Polls
+ *  instead of assuming a frame count. */
+const waitForHidden = async(blocks: HTMLElement[], expected: number) => {
+  const deadline = Date.now() + 4000
+  const hidden = () => blocks.filter((block) => block.hasAttribute('aria-hidden'))
+  while (Date.now() < deadline) {
+    if (hidden().length >= expected) return
+    await new Promise((resolve) => setTimeout(resolve, 16))
+  }
+  return hidden().length
 }
 
 describe('accessibilityPruner', () => {
@@ -222,9 +264,9 @@ describe('accessibilityPruner', () => {
     const { scroller, surface, blocks } = mount(200)
     const pruner = createAccessibilityPruner(scroller, surface)
     pruner.refresh()
-    report([blocks[150]], false)
+    report([blocks[150]], false, pruner)
     expect(blocks[150].getAttribute('aria-hidden')).toBe('true')
-    report([blocks[150]], true)
+    report([blocks[150]], true, pruner)
     expect(blocks[150].hasAttribute('aria-hidden')).toBe(false)
     pruner.dispose()
   })
@@ -234,7 +276,7 @@ describe('accessibilityPruner', () => {
     const pruner = createAccessibilityPruner(scroller, surface)
     pruner.refresh()
     const textBefore = blocks.map((block) => block.textContent)
-    report(blocks.slice(100), false)
+    report(blocks.slice(100), false, pruner)
     // Attribute-only pruning: content and structure stay identical.
     expect(blocks.map((block) => block.textContent)).toEqual(textBefore)
     expect(blocks.filter((block) => block.hasAttribute('aria-hidden'))).toHaveLength(100)
@@ -249,7 +291,7 @@ describe('accessibilityPruner', () => {
     editable.focus()
     const pruner = createAccessibilityPruner(scroller, surface)
     pruner.refresh()
-    report([blocks[150]], false)
+    report([blocks[150]], false, pruner)
     expect(blocks[150].hasAttribute('aria-hidden')).toBe(false)
     pruner.dispose()
   })
@@ -258,10 +300,107 @@ describe('accessibilityPruner', () => {
     const { scroller, surface, blocks } = mount(200)
     const pruner = createAccessibilityPruner(scroller, surface)
     pruner.refresh()
-    report(blocks.slice(100), false)
+    report(blocks.slice(100), false, pruner)
     expect(blocks.filter((block) => block.hasAttribute('aria-hidden'))).toHaveLength(100)
     pruner.refresh()
     expect(blocks.filter((block) => block.hasAttribute('aria-hidden'))).toHaveLength(0)
+    pruner.dispose()
+  })
+
+  it('coalesces a burst of intersections into a single batch', () => {
+    const { scroller, surface, blocks } = mount(200)
+    const pruner = createAccessibilityPruner(scroller, surface)
+    pruner.refresh()
+    const writes: string[] = []
+    const record = (block: HTMLElement) => {
+      const original = block.setAttribute.bind(block)
+      block.setAttribute = (name: string, value: string) => {
+        if (name === 'aria-hidden') writes.push(block.textContent || '')
+        original(name, value)
+      }
+    }
+    blocks.slice(100).forEach(record)
+    // Two separate intersection callbacks before the frame lands: the style write
+    // must be batched once, not once per callback.
+    reportOnly(blocks.slice(100, 150), false)
+    reportOnly(blocks.slice(150), false)
+    expect(writes).toHaveLength(0)
+    pruner.flush()
+    expect(writes).toHaveLength(100)
+    pruner.dispose()
+  })
+
+  it('holds hiding back until the scroll settles', async() => {
+    const { scroller, surface, blocks } = mount(200)
+    const pruner = createAccessibilityPruner(scroller, surface)
+    pruner.refresh()
+    const scrollTo = makeScrollable(scroller)
+    // No write may happen mid-gesture: every `aria-hidden` toggle invalidates that
+    // block's subtree and makes the browser re-serialize the accessibility tree,
+    // measured at up to 38 ms per task. Travel alone must not release a batch.
+    scrollTo(200)
+    reportOnly(blocks.slice(100), false)
+    await new Promise((resolve) => requestAnimationFrame(() => resolve(null)))
+    expect(blocks.filter((block) => block.hasAttribute('aria-hidden'))).toHaveLength(0)
+    // Crossing the quantum mid-gesture must still not write.
+    scrollTo(1200)
+    await new Promise((resolve) => requestAnimationFrame(() => resolve(null)))
+    expect(blocks.filter((block) => block.hasAttribute('aria-hidden'))).toHaveLength(0)
+    // The settle timer applies the whole queue, a few blocks per frame so that no
+    // single task blocks the main thread.
+    await new Promise((resolve) => setTimeout(resolve, 200))
+    await waitForHidden(blocks, 100)
+    expect(blocks.filter((block) => block.hasAttribute('aria-hidden'))).toHaveLength(100)
+    pruner.dispose()
+  })
+
+  it('applies a pending batch once the scroll settles', async() => {
+    const { scroller, surface, blocks } = mount(200)
+    const pruner = createAccessibilityPruner(scroller, surface)
+    pruner.refresh()
+    const scrollTo = makeScrollable(scroller)
+    scrollTo(50)
+    reportOnly(blocks.slice(100), false)
+    await new Promise((resolve) => setTimeout(resolve, 200))
+    // A gesture that never reaches the quantum still ends up pruned.
+    await waitForHidden(blocks, 100)
+    expect(blocks.filter((block) => block.hasAttribute('aria-hidden'))).toHaveLength(100)
+    pruner.dispose()
+  })
+
+  it('prunes on the first pass without waiting for a scroll', async() => {
+    const { scroller, surface, blocks } = mount(200)
+    const pruner = createAccessibilityPruner(scroller, surface)
+    pruner.refresh()
+    // Opening a long document produces one intersection pass and no scroll at
+    // all; gating that pass behind a travel quantum left every offscreen block
+    // announced until the user happened to wheel.
+    reportOnly(blocks.slice(100), false)
+    await new Promise((resolve) => requestAnimationFrame(() => resolve(null)))
+    await waitForHidden(blocks, 100)
+    expect(blocks.filter((block) => block.hasAttribute('aria-hidden'))).toHaveLength(100)
+    pruner.dispose()
+  })
+
+  it('restores a block once the gesture settles', async() => {
+    const { scroller, surface, blocks } = mount(200)
+    const pruner = createAccessibilityPruner(scroller, surface)
+    pruner.refresh()
+    report(blocks.slice(100), false, pruner)
+    expect(blocks[120].getAttribute('aria-hidden')).toBe('true')
+    scroller.dispatchEvent(new Event('scroll'))
+    // Mid-gesture the attribute is left alone in both directions: every toggle
+    // re-serializes the accessibility tree, and a restore costs more than a hide
+    // because it puts the whole subtree back. `reportOnly` is used here on
+    // purpose: `report` calls the public `flush`, which is the explicit
+    // apply-now escape hatch and is not what a wheel gesture goes through.
+    reportOnly([blocks[120]], true)
+    await new Promise((resolve) => requestAnimationFrame(() => resolve(null)))
+    expect(blocks[120].getAttribute('aria-hidden')).toBe('true')
+    // The settle timer is armed by the scroll event above, so the block that came
+    // back on screen is announced once the gesture stops.
+    await new Promise((resolve) => setTimeout(resolve, 200))
+    expect(blocks[120].hasAttribute('aria-hidden')).toBe(false)
     pruner.dispose()
   })
 
@@ -269,7 +408,7 @@ describe('accessibilityPruner', () => {
     const { scroller, surface, blocks } = mount(200)
     const pruner = createAccessibilityPruner(scroller, surface)
     pruner.refresh()
-    report(blocks.slice(100), false)
+    report(blocks.slice(100), false, pruner)
     pruner.dispose()
     expect(blocks.filter((block) => block.hasAttribute('aria-hidden'))).toHaveLength(0)
     expect(observers[0].targets).toHaveLength(0)

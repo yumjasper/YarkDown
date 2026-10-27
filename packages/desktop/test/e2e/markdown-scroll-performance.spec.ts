@@ -299,6 +299,12 @@ test('profiles sustained wheel scrolling of the real math tutorial', async() => 
         frames: frames.length,
         p95: frames[Math.floor(frames.length * 0.95)],
         max: Math.max(0, ...frames),
+        // Index of the slowest frames within the recording: a spike at index 0-5
+        // is document open, a spike past index 60 is the scroll itself.
+        worstFrames: probe.frames
+          .map((duration, index) => ({ index, duration: Math.round(duration) }))
+          .sort((a, b) => b.duration - a.duration)
+          .slice(0, 5),
         tasks: probe.tasks
       }
     })

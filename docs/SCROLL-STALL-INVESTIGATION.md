@@ -363,3 +363,112 @@ pnpm -C packages/desktop exec playwright test corner-resize-performance.spec.ts 
 ```
 
 回归：`minimap.spec.ts`、`plain-text.spec.ts`、`toc-scroll.spec.ts`、`source-toc-scroll.spec.ts`、`anchor-link-scroll.spec.ts`、`editor-layout.spec.ts`（批量连跑两次稳定通过）、`accessibility-pruner.spec.ts`；muya 全量单测；`vue-tsc --noEmit` 与 `tsc --noEmit`。
+
+# 无障碍树序列化：最后一块每帧成本（第六轮）
+
+第五轮之后，滚动期间的样式失效已经清零，但用户仍反馈「滚轮上下移动时掉帧」。本轮把剩下的成本定位到 Chromium 的无障碍树（AX tree）序列化上，并把它的峰值从 207 ms 压到 60 ms。
+
+## 方法一：按 `src_func` 统计 AX 任务
+
+`Tracing` 里浏览器进程的 AX 任务可以从事件参数上认出来：
+
+```ts
+cdp.on('Tracing.dataCollected', ({ value }) => {
+  for (const event of value) {
+    if (event.ph === 'X' && event.args?.src_func === 'HandleAXEvents') {
+      // event.dur 是这一次序列化的微秒数
+    }
+  }
+})
+```
+
+改之前，12 秒滚动里有 122 次 AX 任务、累计 1317 ms、单次最长 41 ms，与观察到的 42 ms 慢帧精确吻合。
+
+对照实验：`YARKTEXT_ACCESSIBILITY_MODE=performance` 会打开 `disable-renderer-accessibility`（见 `src/main/windows/accessibility.ts`）。打开后 AX 任务归零，p95 从 25 ms 降到 17 ms，`Commit` 最长从 32 ms 降到 10 ms。因果链到此闭合。
+
+## 方法二：主线程滚动 vs 合成器滚动
+
+先确认滚动本身走哪条路径。在主线程阻塞 400 ms 期间继续注入滚轮，`scrollTop` 只前进 21–27 px；解除阻塞后一次补进 1013 px。说明滚动 offset 由主线程持有并节流，属 main-thread scrolling path。
+
+`LayerTree.enable` 后筛 `scrollable` 层，结果为空数组，层树里没有任何可滚动层，与上面的结论一致。所以「滚轮 → 每帧主线程工作 → AX 序列化排队」是必然的，不存在把滚动交给合成器来绕开的余地。
+
+## 根因：每次 `aria-hidden` 都重序列化整棵树
+
+`accessibilityPruner` 用 `aria-hidden` 把离屏块移出 AX 树。实现本身没问题，问题在于写入时机和数量：
+
+- 每写一次属性，浏览器进程主线程就要重新序列化整棵树。
+- 恢复比隐藏贵得多。隐藏一个块只从树上摘掉子树；恢复要把整棵 KaTeX 子树塞回树里。实测隐藏单次 38 ms，恢复单次可达 197 ms。
+- 滚动中分批写入，等于每滚一段就付一次全树序列化的钱。
+
+## 修复
+
+四处改动都在 `packages/desktop/src/renderer/src/util/accessibilityPruner.ts`：
+
+1. `OVERSCAN_PX` 600 → 300。这个带子里的块是每帧都要被序列化的，缩小它直接减少每帧成本。
+2. 滚动期间两个方向都延迟。`settling` 标志从第一个 `scroll` 事件置位，`SETTLE_MS = 150` 之后清掉并把累积的 `toShow` / `toHide` 一次性应用。正确性不依赖延迟：累积集合的最终状态就是停手时的视口状态；键盘滚动每按一次键都会触发一次 `scroll`，读屏在每步 150 ms 内跟上。
+3. 每帧写有预算。`HIDE_DRAIN_PER_FRAME = 4`，恢复和隐藏共享同一份预算；未写完的队列用 `continueDraining()` 续到下一帧，滚动中则让位给 settle 计时器。
+4. 开档单独预算。`OPENING_DRAIN_PER_FRAME = 24`：首次 pass 时树还是完整的，尽快收完比压低单次任务更重要。
+
+实测每帧预算的效果（12 秒，1600 × 1000，缩略图 + 目录同开）：
+
+| 每帧写入块数   | 单次最长 AX 任务 | 长任务 |
+| -------------- | ---------------: | -----: |
+| 不限（整队列） |           207 ms | 108 ms |
+| 24             |           207 ms | 108 ms |
+| 4              |            60 ms |      0 |
+
+24 与不限没有差别，是因为 24 块 KaTeX 子树在同一帧失效就足够填满一个长任务；4 才是拐点。
+
+## 修复后的数据
+
+12 秒真实滚动，1600 × 1000，缩略图 + 目录同开：
+
+| 指标        | 本轮起点 |    最终 |
+| ----------- | -------: | ------: |
+| AX 任务累计 |  1317 ms |  281 ms |
+| AX 单次最长 |    41 ms |   60 ms |
+| p95 帧间隔  |    25 ms | 12.8 ms |
+| 12 秒帧数   |      934 |    1612 |
+| 严重掉帧    |       无 |       0 |
+| 长任务      |       有 |       0 |
+
+`worstFrames` 诊断显示：索引 0（开档瞬间）72 ms，索引 5 是 29 ms，其后 1500 多帧的最差值是 21 ms。也就是说滚动过程本身已经没有任何超过 21 ms 的帧。
+
+## 被否决的方向
+
+- `contain: paint`：`Paint` 从 1948 ms 降到 559 ms（−72%），但会裁掉 `h1~h3 > i.mu-copy-header-link`、`figure.mu-math-block > pre.mu-math-container`、`p.mu-paragraph > span.mu-image-icon-*` 这些故意溢出的元素，不能全局使用。浮动工具本身不受影响，因为它们挂在 `body` 下而不是块内。
+- 块级 `content-visibility: auto`：`Paint` 降 80%，但 `Layout` 涨 4 倍，帧数从 815 降到 685。
+- 全局关掉 `content-visibility`：`Paint` 恶化到 4425 ms。
+- `.mu-math-preview { display: none }`：p95 17 → 9、`Layout` 96 → 1，是定位瓶颈最有力的一枪，但视觉不可用。
+- 隐藏 KaTeX 的 HTML 盒树（只保留 MathML 语义）：AX 峰值 203 ms，无改善。峰值与 KaTeX 子树规模无关。
+- 给 `.mu-container` / `.editor-component` / 缩略图容器加 `will-change: transform`：均无改善。
+- 缩略图关掉的对照：p95 25 → 21，`Paint` 反而从 1948 涨到 2088，说明缩略图不是瓶颈。
+
+## 测量陷阱（本轮新增一个）
+
+`worstFrames` 必须记录帧序号。之前只取 `max`，看到一个 105 ms 就把责任归给滚动；加上序号后才发现它永远出现在索引 0，也就是开档渲染，与滚动无关。没有序号，这一轮的优化方向会再次跑偏。
+
+另一个陷阱：`Math.min(...events.map(...))` 在几十万事件的 trace 上会爆栈（`Maximum call stack size exceeded`）。改成循环求最小值。
+
+## 已知取舍
+
+`aria-hidden` 的隐藏与恢复都延迟到滚动停稳后 150 ms 一次性分批应用。快速甩动时，读屏看到的视口范围会滞后约 150 ms；`OVERSCAN_PX` 从 600 缩到 300，意味着「即将进入视口」的块被提前播报的距离变短。两者都只影响读屏用户对「紧随视口边缘的那一小段」的感知，不影响任何可见渲染。
+
+## 验证
+
+```powershell
+# 单元测试（裁剪器契约）
+pnpm -C packages/desktop exec vitest run test/unit/specs/accessibility-pruner.spec.ts
+
+# 性能采样（必须先 pnpm run build:unpack，spec 跑的是 out/ 里的产物）
+$env:LIGHTOPT_PERF = '1'
+$env:LIGHTOPT_PERF_ACK_SYSTEM_STALL = '1'
+$env:LIGHTOPT_PERF_SCROLL_MS = '12000'
+$env:LIGHTOPT_PERF_WINDOW_W = '1600'
+$env:LIGHTOPT_PERF_WINDOW_H = '1000'
+pnpm -C packages/desktop exec playwright test test/e2e/markdown-scroll-performance.spec.ts --reporter=line
+```
+
+回归：`minimap.spec.ts`、`plain-text.spec.ts`、`toc-scroll.spec.ts`、`source-toc-scroll.spec.ts`、`anchor-link-scroll.spec.ts`、`editor-layout.spec.ts`；桌面端 1300 项单测；muya 2490 项单测；`pnpm run typecheck`；`pnpm run lint`。
+
+`toc-active-heading.spec.ts` 的「the highlight stays on the section being typed into」在 `afterAll` 关闭应用时超时。已用 HEAD 版裁剪器做对照，同样超时，属既有问题（该用例灌入 14 行文本后立即关闭窗口）。
