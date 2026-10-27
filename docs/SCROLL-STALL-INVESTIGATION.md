@@ -73,3 +73,68 @@ pnpm -C packages/desktop exec playwright test markdown-scroll-performance.spec.t
 ```
 
 测试只运行单个隔离实例。切换为 `performance` 只影响该测试实例；不修改用户正常启动模式。不要同时运行其他 Electron 性能测试。
+
+---
+
+# 斜向拖动边角卡顿排查（第二轮）
+
+日期：2026-10-27。版本基线：1.0.13。用户反馈斜向同时拖动上下与左右边界时，拖动过程持续卡顿。
+
+## 此前测试的盲区
+
+已有 `pdf-real-resize.spec.ts` 全部通过 `win.setBounds()` 单次改尺寸，且只改宽或只改高。用户实际拖动边角时，宽高在同一手势内高频连续变化，且走 Windows 原生模态循环（`WM_ENTERSIZEMOVE` / `WM_EXITSIZEMOVE`），与单次 `setBounds` 的时序完全不同，因此旧用例通过不代表拖动流畅。
+
+新增 `corner-resize-performance.spec.ts`：在主进程用 24 毫秒间隔交替放大缩小约 120 像素，宽高同时变化，模拟真实斜向拖动。
+
+## 根因
+
+`accessibilityModes` 为 `nativeAPIs, webContents, extendedProperties`，即 Chromium 在维护完整无障碍树。缩放期间每一帧都会触发一次无障碍树序列化，任务运行在 `CrBrowserMain`（`HandleAXEvents`）。
+
+本文档有 653 个顶层区块、29135 个 DOM 节点、381 个 KaTeX 公式（其中 6412 个 MathML 节点、14907 个 KaTeX HTML 节点）。全量序列化一次的最长任务达 3665 毫秒，主进程计时器间隔最长 1883 毫秒，渲染帧最长 1008 毫秒。
+
+对照数据：
+
+| 场景                             |        最长 AX 任务 | 最长主进程阻塞 | 最长渲染帧 |
+| -------------------------------- | ------------------: | -------------: | ---------: |
+| 默认（基线）                     |             3665 ms |        1883 ms |    1008 ms |
+| 关闭无障碍（`performance`）      |                0 ms |          73 ms |     325 ms |
+| 隐藏 `.katex-mathml`             |             1031 ms |         461 ms |     458 ms |
+| 取消 `content-visibility` 隔离   | 主进程阻塞 29184 ms |              — |    1021 ms |
+| 仅手势期间裁剪离屏区块（已采纳） |              483 ms |          78 ms |     208 ms |
+
+隐藏 MathML 只把任务从 3665 毫秒降到 1031 毫秒，说明膨胀来源是整棵可见子树的规模，而不是 KaTeX 的 MathML 副本。取消 `content-visibility` 后阻塞反而暴涨到 29 秒，进一步说明参与序列化的节点总量是决定因素。
+
+## 修复
+
+新增 `packages/desktop/src/renderer/src/util/accessibilityPruner.ts`，在原生缩放手势期间给视口外（含 400 像素外扩）的顶层区块加 `aria-hidden="true"`，把 649 / 653 个区块移出无障碍树，视口内只剩 4 个区块、27 个节点。
+
+关键取舍：
+
+- 只改 `aria-hidden`，不改布局。`scrollHeight` 保持 47846 与基线完全一致，无需重新测量。此前实验过用 `content-visibility` + `contain-intrinsic-size` 预测量块高度，滚动高度出现 680 至 12000 像素偏差，已放弃。
+- 只在手势期间生效。挂到已有的 `mt::window-resize-state`（`WM_ENTERSIZEMOVE` / `WM_EXITSIZEMOVE`）上，松手立即恢复，静止状态下读屏软件看到的仍是完整文档。
+- 分批恢复。一次性移除 600+ 个区块的 `aria-hidden` 会让 Chromium 在同一轮里遍历整棵子树，松手瞬间产生约 700 毫秒主进程停顿；改为每帧恢复 40 个区块。
+- 焦点保护。包含 `document.activeElement` 的区块一律不裁剪，避免给光标所在区块的祖先加 `aria-hidden`。
+- 空闲兜底。拖动期间用 `resize` 事件续期，一旦尺寸停止变化 2 秒即自动恢复，防止手势结束消息丢失后内容被永久隐藏。
+
+## 复测
+
+连续斜向拖动 10 秒、316 次尺寸变更：主进程计时器最长间隔 78 毫秒，无任何超过 150 毫秒的停顿；渲染帧间隔 P95 为 8.4 毫秒，最长 208 毫秒，超过 250 毫秒的帧为 0；超 100 毫秒的帧从 11 个降到 1 个。手势结束后 `aria-hidden` 区块数归零，无障碍树完整恢复。
+
+## 验证
+
+新增 `test/unit/specs/accessibility-pruner.spec.ts`，7 项测试通过：裁剪范围、布局几何不变、分批恢复、新手势取消待执行恢复、销毁后无副作用、焦点区块保护、长时间拖动下的空闲续期。
+
+`pnpm run typecheck` 通过；本次改动文件的 ESLint 无错误（仓库其余文件存在 330 个历史遗留错误，与本轮无关）。
+
+复测命令：
+
+```powershell
+$env:LIGHTOPT_PERF = '1'
+$env:LIGHTOPT_PERF_ACK_SYSTEM_STALL = '1'
+$env:LIGHTOPT_PERF_SIMULATE_GESTURE = '1'
+$env:LIGHTOPT_PERF_RESIZE_MS = '10000'
+$env:LIGHTOPT_PERF_MODE = 'corner-final'
+pnpm -C packages/desktop exec playwright test corner-resize-performance.spec.ts --workers=1 --reporter=line
+```
+
+`LIGHTOPT_PERF_SIMULATE_GESTURE=1` 会通过主进程发送真实的手势开始与结束消息，从而覆盖生产代码里的裁剪器；不设置该项则测量未裁剪的基线。

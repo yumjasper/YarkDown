@@ -85,6 +85,7 @@
 import { computed, ref, shallowRef, reactive, watch, onMounted, onBeforeUnmount, nextTick, markRaw } from 'vue'
 import { observeSettledViewport, type SettledViewport } from '@/util/settledViewport'
 import { observeMathPreviewVisibility } from '@/util/mathPreviewVisibility'
+import { createAccessibilityPruner, type AccessibilityPruner } from '@/util/accessibilityPruner'
 import { isPlainTextFile } from '@shared/plainText'
 import { isPdfFile } from '@shared/pdf'
 import TableTools from '../tableTools/index.vue'
@@ -290,6 +291,7 @@ const tableChecker = reactive({
 const viewportRef = ref<HTMLElement | null>(null)
 let resizeViewport: SettledViewport | undefined
 let stopNativeResize: (() => void) | undefined
+let accessibilityPruner: AccessibilityPruner | undefined
 let stopMathPreviewVisibility: (() => void) | undefined
 const editorRef = ref<HTMLDivElement | null>(null)
 const mediaViewer = ref<InstanceType<typeof MediaViewer> | null>(null)
@@ -2178,8 +2180,10 @@ onMounted(() => {
     }
     updateViewportSpacing()
     resizeViewport = observeSettledViewport(viewportRef.value, muya.domNode, updateViewportSpacing)
+    accessibilityPruner = createAccessibilityPruner(editorRef.value!, muya.domNode)
     stopNativeResize = window.electron.ipcRenderer.on('mt::window-resize-state', (_event, active) => {
       resizeViewport?.setInteractive(active)
+      accessibilityPruner?.setActive(active)
     })
   }
   emit('ready')
@@ -2236,6 +2240,8 @@ onBeforeUnmount(() => {
   stopNativeResize?.()
   stopMathPreviewVisibility?.()
   resizeViewport?.dispose()
+  accessibilityPruner?.dispose()
+  accessibilityPruner = undefined
   resizeObserverForEditor.disconnect()
 
   if (editor.value) {
