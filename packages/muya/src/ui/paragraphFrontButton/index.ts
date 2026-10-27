@@ -17,6 +17,9 @@ const dragIcon = toolbarIconUrl('drag');
 
 const LEFT_OFFSET = 100;
 
+/** How long after the last scroll event the gesture counts as settled. */
+const SCROLL_SETTLE_MS = 140;
+
 function defaultOptions() {
     return {
         placement: 'left-start' as const,
@@ -74,6 +77,24 @@ export class ParagraphFrontButton {
     private _shadow: HTMLDivElement | null = null;
     private _disableListen: boolean = false;
     private _dragEvents: string[] = [];
+    /**
+     * Set while a scroll gesture is in flight and cleared `SCROLL_SETTLE_MS` after it.
+     *
+     * floating-ui's `autoUpdate` listens to every scrollable ancestor and re-runs
+     * `computePosition` on each scroll event, which writes `left`/`top` on the float box
+     * every frame. On a 47 000 px document that turns a compositor-only wheel gesture
+     * into one style recalc, layout, commit and paint per frame.
+     */
+    private _scrolling: boolean = false;
+    private _scrollSettleTimer: ReturnType<typeof setTimeout> | null = null;
+    private _scrollListener: (() => void) | null = null;
+    /**
+     * The positioning function of the block currently shown, kept so the settled scroll
+     * can replay the one measurement that was skipped.
+     */
+    private _showUpdatePosition: (() => void) | null = null;
+    /** Bumped on every positioning run so a late `computePosition` cannot write back. */
+    private _positionGeneration: number = 0;
 
     constructor(public muya: Muya, options = {}) {
         this._options = Object.assign({}, defaultOptions(), options);
@@ -155,6 +176,22 @@ export class ParagraphFrontButton {
         eventCenter.attachDOMEvent(container, 'mouseup', this._dragBarMouseUp);
         eventCenter.attachDOMEvent(document, 'mousemove', mousemoveHandler);
         eventCenter.attachDOMEvent(container, 'click', clickHandler);
+
+        // Capture phase on `document` catches the editor's own scroller as well as any
+        // nested scrollable ancestor of the hovered block. `passive` keeps the listener
+        // off the critical path of the wheel gesture.
+        this._scrollListener = () => {
+            this._scrolling = true;
+            if (this._scrollSettleTimer)
+                clearTimeout(this._scrollSettleTimer);
+            this._scrollSettleTimer = setTimeout(() => {
+                this._scrollSettleTimer = null;
+                this._scrolling = false;
+                // Replay the single measurement that the whole gesture skipped.
+                this._showUpdatePosition?.();
+            }, SCROLL_SETTLE_MS);
+        };
+        document.addEventListener('scroll', this._scrollListener, { capture: true, passive: true });
     }
 
     private _dragBarMouseDown = (event: Event) => {
@@ -368,6 +405,13 @@ export class ParagraphFrontButton {
 
         this._block = null;
         this._status = false;
+        // The settle replay below must not resurrect a hidden button at the offset of
+        // the block it used to follow: that put the button back on top of the editor
+        // with `opacity: 1` and made every click underneath it get intercepted.
+        this._showUpdatePosition = null;
+        // Invalidate any `computePosition` that is still in flight from the moment the
+        // box was shown: it would otherwise write `opacity: 1` back onto a hidden box.
+        this._positionGeneration++;
         const { eventCenter } = this.muya;
         if (this._cleanup) {
             this._cleanup();
@@ -415,6 +459,11 @@ export class ParagraphFrontButton {
         }
 
         const updatePosition = () => {
+            // `computePosition` is async. A `hide()` can land before it resolves, and the
+            // stale write then re-shows the box at the old offset with `opacity: 1`,
+            // where it swallows clicks meant for the editor underneath. Tag each run so
+            // only the newest one is allowed to touch the style.
+            const generation = ++this._positionGeneration;
             computePosition(domNode!, floatBox, {
                 placement,
                 middleware: [
@@ -426,6 +475,8 @@ export class ParagraphFrontButton {
                     flip(),
                 ],
             }).then(({ x, y }) => {
+                if (generation !== this._positionGeneration)
+                    return;
                 Object.assign(floatBox.style, {
                     left: `${x}px`,
                     top: `${y}px`,
@@ -434,10 +485,24 @@ export class ParagraphFrontButton {
             });
         };
 
-        updatePosition();
-        this._cleanup = autoUpdate(domNode!, floatBox, updatePosition);
-
+        // `_status` has to be true before the first positioning run: its callback checks
+        // whether the box is still the one being shown, and a false status there discarded
+        // the first placement, leaving the box to appear late under the pointer.
         this._status = true;
+        updatePosition();
+        // `autoUpdate` fires on every scroll event of every scrollable ancestor and on
+        // each animation frame while the reference moves. Each call wrote `left`/`top`
+        // on the float box, which invalidated style and layout for a fixed element on
+        // top of the document for every wheel frame. The position only has to be
+        // correct when the user stops scrolling, so scroll-driven updates are skipped
+        // while a gesture is in flight and replayed once it settles.
+        this._cleanup = autoUpdate(domNode!, floatBox, () => {
+            if (this._scrolling)
+                return;
+            updatePosition();
+        });
+        this._showUpdatePosition = updatePosition;
+
         eventCenter.emit('muya-float-button', this, true);
     }
 
@@ -445,11 +510,22 @@ export class ParagraphFrontButton {
         if (this._container && this._resizeObserver)
             this._resizeObserver.unobserve(this._container);
 
+        if (this._scrollListener) {
+            document.removeEventListener('scroll', this._scrollListener, { capture: true });
+            this._scrollListener = null;
+        }
+
+        if (this._scrollSettleTimer) {
+            clearTimeout(this._scrollSettleTimer);
+            this._scrollSettleTimer = null;
+        }
+
         if (this._cleanup) {
             this._cleanup();
             this._cleanup = null;
         }
 
+        this._showUpdatePosition = null;
         this._floatBox.remove();
     }
 }

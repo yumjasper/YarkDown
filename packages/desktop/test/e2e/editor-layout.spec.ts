@@ -20,7 +20,11 @@ test('image source and placeholder occupy separate rows and Ctrl+N creates a fil
   await writeFile(filename, 'Images\n\n')
   const { app, page } = await launchWithDoc(filename, { suppressErrorDialog: true })
   try {
-    await page.locator('.editor-component').click({ position: { x: 30, y: 30 } })
+    // Focus through the element instead of clicking a viewport coordinate: the drag
+    // handle for the paragraph is drawn in the left gutter, and a click aimed there can
+    // be intercepted by that handle depending on where the pointer happened to rest.
+    // This step only needs the editor focused — the caret is placed by Ctrl+End below.
+    await page.locator('.editor-component').evaluate(element => (element as HTMLElement).focus())
     await page.keyboard.press(process.platform === 'darwin' ? 'Meta+End' : 'Control+End')
     await page.keyboard.press('Enter')
     await clickMenuById(app, 'imageMenuItem')

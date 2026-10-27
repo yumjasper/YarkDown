@@ -269,3 +269,97 @@ $env:LIGHTOPT_PERF_SCROLL_MS = '15000'
 $env:LIGHTOPT_PERF_MODE = 'minimap-on-toc-on'
 pnpm -C packages/desktop exec playwright test minimap-scroll-performance.spec.ts --workers=1 --reporter=line
 ```
+
+# 每帧失效的真正来源（第五轮）
+
+同一份文档，1600 × 1000，缩略图 + 目录同开，注入滚轮 12 秒。第四轮把 p95 从 71 ms 压到 42–50 ms 后仍有肉眼可见的顿挫，本轮的结论是：主要成本不在缩略图，而在一个每帧都在写样式的浮动按钮。
+
+## 方法：失效追踪
+
+在此之前试过 CDP session、Profiler 顶部函数、`PerformanceObserver` 长任务，都只看到「`(program)` 占 99%」这类无信息的结果。真正定位靠的是 Blink 的失效追踪类别：
+
+```ts
+await cdp.send('Tracing.start', {
+  categories: 'devtools.timeline,disabled-by-default-devtools.timeline.invalidationTracking',
+  options: 'record-until-full'
+})
+```
+
+它输出的 `LayoutInvalidationTracking` / `StyleRecalcInvalidationTracking` 直接给出「哪个节点、因为什么原因」失效，6 秒滚动汇总如下：
+
+```text
+348  layout | DIV | (无 class 变化)
+348  style  | DIV.mu-front-button-wrapper
+```
+
+即 `.mu-front-button-wrapper` 每帧被写一次。
+
+## 根因：floating-ui `autoUpdate`
+
+`packages/muya/src/ui/paragraphFrontButton/index.ts` 的 `show()` 用 `autoUpdate(domNode, floatBox, updatePosition)` 跟随被悬停的段落。`autoUpdate` 会监听所有可滚动祖先的 `scroll` 事件，并逐帧重跑 `computePosition`，随后把 `left` / `top` / `opacity` 写进浮层内联样式。
+
+一个 `position: absolute; z-index: 1000` 的浮层在 47 000 px 文档上每帧改位置，代价不是一次 `transform`，而是每帧一次 style recalc + layout + commit + paint 覆盖 27 696 个节点。这与第四轮「缩略图 + 目录」叠加放大的现象正好对应。
+
+修复三点：
+
+1. 滚动期间不跟随。捕获阶段在 `document` 上挂 `passive` 滚动监听，滚动开始置 `_scrolling`，`SCROLL_SETTLE_MS = 140` 后清掉并重放一次定位。位置只需要在用户停手时正确。
+2. 代次校验。`computePosition` 是异步的，`hide()` 之后迟到的 promise 会把 `opacity: 1` 写回已隐藏的浮层，并在旧坐标重新出现。每次定位自增 `_positionGeneration`，回调不匹配就丢弃。
+3. `_status` 提前。首次定位回调会检查浮层是否仍是当前显示的那个，原先 `_status = true` 在 `updatePosition()` 之后，导致第一次放置被丢弃，浮层反而在指针停下后突然出现。
+
+## 缩略图侧的两处剩余开销
+
+- overlay 画布在没有搜索命中、也没有源码模式光标行时仍然每帧 `clearRect`。改为仅在有内容时清屏，并用 `overlayDirty` 保证标记消失时补一次清屏。
+- 每个瓦片每帧重写自己的 `translateY`。改为瓦片绝对定位在文档位置，整层只平移一次容器；合成层提示 `will-change: transform` 也从瓦片移到 `.minimap-tiles` / `.minimap-slider`，避免大量嵌套合成层。
+
+## 被否决的两个方向
+
+- 移除 `content-visibility: auto`：`Layout` 从 157 降到 0，但 `Paint` 从 2758 ms 恶化到 6298 ms，最长帧从 4 升到 8，净变差。保留。
+- 给滚动容器加 `will-change: scroll-position`：`Commit` 625、`Paint` 1984、p95 21，与不加基本一致。滚动走传统（主线程）路径，该提示不改变路径。
+
+## 修复后的数据
+
+1600 × 1000，缩略图 + 目录同开，12 秒：
+
+| 指标          | 修复前 | 修复后 |
+| ------------- | -----: | -----: |
+| `Layout` 次数 |    580 |    161 |
+| p95 帧间隔    |  38 ms |  25 ms |
+| 12 秒帧数     |    630 |    985 |
+| 每秒帧数      |  48–57 |  74–85 |
+| 长任务        |     有 |      0 |
+| 严重掉帧      |     有 |      0 |
+
+pacing 探针视角（每帧间隔 p50 / p95）：16.7 / 33.3 ms → 8.4 / 16.8–20.8 ms；无缩略图对照为 8.3 / 16.6 ms，说明缩略图成本已与「不开缩略图」基本持平。
+
+斜向拖角（用户最初抱怨的场景）复测：`p95` 8.4 ms，`over100` 0，`over250` 0，最长帧 66.8 ms 且 `blocking` 为 0。
+
+## 测量陷阱（两次都白跑了十几轮）
+
+- 滚轮方向。`sendInputEvent` 里 `deltaY = -60` 才是向下滚。`+60` 在 `scrollTop = 0` 时是向上滚，也就是完全不滚动，于是 idle 帧被当成滚动帧，测出「p95 4.3 ms，240 fps」的假象。现在采样前会打印 `scrollBefore` / `scrollTop`，位移为 0 即视为样本无效。
+- 窗口失焦。未聚焦窗口的动画帧被节流，p95 会稳定虚高到约 38 ms。采样前必须 `win.focus()`。
+
+## 已知取舍
+
+浮动按钮在滚动期间不跟随，停稳 140 ms 后归位；`aria-valuenow` 按 1% 步进播报；滚动位置延迟写回 store，切换标签走 latch 兜底。三者都是「停手后一致」而非「逐帧一致」。
+
+## 一个既有缺陷的界定
+
+`editor-layout.spec.ts` 在批量运行时超时，被误判为本轮引入。用失效追踪与探针逐步复刻后确认：段落拖拽手柄（`.mu-front-button`）悬停在左侧天沟时会出现，若指针正好停在该位置，下一次点击会被手柄截获。基线同样复现，属既有竞态，与本轮改动无关。
+
+处理方式是不改产品行为，只把该测试里依赖天沟坐标的点击改成 `element.focus()`。测试要的只是「编辑器获得焦点」，用坐标点击是在用副作用达成目的。
+
+## 验证
+
+```powershell
+# 滚动性能（需先 pnpm run build:unpack，性能 spec 跑的是 out/ 里的产物）
+$env:LIGHTOPT_PERF = '1'
+$env:LIGHTOPT_PERF_SCROLL_MS = '12000'
+pnpm -C packages/desktop exec playwright test minimap-scroll-performance.spec.ts --reporter=line
+
+# 斜向拖角
+$env:LIGHTOPT_PERF = '1'
+$env:LIGHTOPT_PERF_ACK_SYSTEM_STALL = '1'
+pnpm -C packages/desktop exec playwright test corner-resize-performance.spec.ts --reporter=line
+```
+
+回归：`minimap.spec.ts`、`plain-text.spec.ts`、`toc-scroll.spec.ts`、`source-toc-scroll.spec.ts`、`anchor-link-scroll.spec.ts`、`editor-layout.spec.ts`（批量连跑两次稳定通过）、`accessibility-pruner.spec.ts`；muya 全量单测；`vue-tsc --noEmit` 与 `tsc --noEmit`。

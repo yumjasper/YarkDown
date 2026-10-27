@@ -9,7 +9,7 @@
     aria-orientation="vertical"
     :aria-valuenow="announced"
     aria-valuemin="0"
-    :aria-valuemax="Math.round(geometry.scrollRange)"
+    :aria-valuemax="Math.round(scrollRange)"
     @pointerdown="pointerDown"
     @pointermove="pointerMove"
     @pointerup="pointerUp"
@@ -29,8 +29,9 @@
       aria-hidden="true"
     />
     <div
+      ref="slider"
       class="minimap-slider"
-      :style="{ transform: `translateY(${geometry.sliderTop}px)`, height: `${geometry.sliderHeight}px` }"
+      :style="{ height: `${sliderHeight}px` }"
     />
     <button
       class="minimap-close"
@@ -64,7 +65,15 @@ const { t } = useI18n()
 const host = ref<HTMLElement | null>(null)
 const canvas = ref<HTMLCanvasElement | null>(null)
 const tileLayer = ref<HTMLDivElement | null>(null)
-const scrollTop = ref(0)
+// The slider tracks the scroll offset, which changes every frame. Binding its
+// transform in the template made each wheel frame re-render this component; it is
+// written directly from `paint` instead, next to the tiles that move with it.
+const slider = ref<HTMLDivElement | null>(null)
+// `scrollTop` is deliberately a plain variable, not a `ref`: it changes on every
+// frame of a wheel gesture, and making it reactive re-evaluated `geometry` and
+// re-rendered this component each frame. The pieces that need it (slider transform,
+// tile offsets) are written straight to the DOM from `paint`.
+let scrollTop = 0
 // Screen readers get the position at a human pace. Writing `aria-valuenow` on
 // every wheel event forced an accessibility-tree update per event, the same
 // class of cost that stalled the document while scrolling.
@@ -77,7 +86,19 @@ const viewportHeight = ref(1)
 const rowCount = ref(1)
 const dragging = ref(false)
 const scrolling = ref(false)
-const geometry = computed(() => minimapLayout(height.value, documentHeight.value, viewportHeight.value, scrollTop.value, rowCount.value, preferences.minimapScale, preferences.minimapSize))
+// A plain function, not a `computed`: its input `scrollTop` updates outside the
+// reactive graph, so a cached value would go stale between frames.
+const computeGeometry = () => minimapLayout(height.value, documentHeight.value, viewportHeight.value, scrollTop, rowCount.value, preferences.minimapScale, preferences.minimapSize)
+// The two pieces the template binds do not depend on the scroll offset.
+const scrollRange = computed(() => Math.max(0, documentHeight.value - viewportHeight.value))
+const sliderHeight = computed(() => {
+  const content = preferences.minimapSize === 'fill'
+    ? Math.max(1, height.value)
+    : preferences.minimapSize === 'fit'
+      ? Math.min(Math.max(1, height.value), Math.max(1, rowCount.value * 3 * preferences.minimapScale))
+      : Math.max(1, rowCount.value * 3 * preferences.minimapScale)
+  return Math.min(Math.max(1, height.value), content, Math.max(12, content * Math.min(1, viewportHeight.value / Math.max(1, documentHeight.value))))
+})
 let scroller: HTMLElement | null = null
 let cm: CodeMirror.Editor | null = null
 let rows: Array<{ text: string; top: number; height: number; heading?: boolean }> = []
@@ -90,6 +111,9 @@ let scrollTimer: ReturnType<typeof setTimeout> | undefined
 let dragOffset = 0
 let lastPaintOffset = NaN
 let forcePaint = true
+// Whether the overlay still holds marks that have to be cleared before it can be
+// skipped. Without this the last drawn search marks would stay on screen forever.
+let overlayDirty = false
 let disconnected = false
 let bindGeneration = 0
 let textCache = new WeakMap<Element, string>()
@@ -123,13 +147,17 @@ const requestPaint = (force = false) => {
   forcePaint ||= force
   if (!frame) frame = requestAnimationFrame(paint)
 }
+// `liveScrollTop` carries each wheel tick without touching reactivity; the paint
+// frame copies it once into `scrollTop`, so a 40-event-per-second wheel stream
+// produces one component update per frame instead of forty.
+let liveScrollTop = 0
 const syncScroll = () => {
   if (!scroller) return
   // `scrollTop` is the only value a scroll tick can change. Reading
   // `scrollHeight`/`clientHeight` here forced a layout flush on every wheel
   // event, which is what made scrolling crawl on the long tutorial; `rebuild`
   // refreshes both whenever the document or the viewport actually resizes.
-  scrollTop.value = scroller.scrollTop
+  liveScrollTop = scroller.scrollTop
   scrolling.value = true
   clearTimeout(scrollTimer)
   scrollTimer = setTimeout(() => {
@@ -139,8 +167,8 @@ const syncScroll = () => {
   // Announcing every tick would rewrite an ARIA attribute per wheel event and
   // rebuild the accessibility node each time. One announcement per ~1% of the
   // document is still readable, and the settled value lands last.
-  pendingScrollTop = scroller.scrollTop
-  const step = Math.max(1, geometry.value.scrollRange / 100)
+  pendingScrollTop = liveScrollTop
+  const step = Math.max(1, computeGeometry().scrollRange / 100)
   if (Math.abs(pendingScrollTop - announcedAt) >= step) {
     announcedAt = pendingScrollTop
     announced.value = Math.round(pendingScrollTop)
@@ -153,9 +181,11 @@ const rebuild = () => {
   height.value = host.value.clientHeight
   documentHeight.value = scroller.scrollHeight
   viewportHeight.value = scroller.clientHeight
-  scrollTop.value = scroller.scrollTop
+  scrollTop = scroller.scrollTop
+  liveScrollTop = scroller.scrollTop
   pendingScrollTop = announcedAt = scroller.scrollTop
   announced.value = Math.round(scroller.scrollTop)
+  if (slider.value) slider.value.style.transform = `translateY(${computeGeometry().sliderTop}px)`
   if (cm) {
     const count = cm.lineCount()
     const step = Math.max(1, Math.ceil(count / 15000))
@@ -211,7 +241,14 @@ const paint = () => {
   frame = 0
   const target = canvas.value
   if (!target || !host.value || !scroller) return
-  const layout = geometry.value
+  // The paint frame is the only place the live offset is published: the tiles and
+  // the slider then read one consistent value for that frame.
+  scrollTop = liveScrollTop
+  const layout = computeGeometry()
+  if (slider.value) {
+    const transform = `translateY(${layout.sliderTop}px)`
+    if (slider.value.style.transform !== transform) slider.value.style.transform = transform
+  }
   if (!forcePaint && Math.abs(lastPaintOffset - layout.offset) < .5) return
   forcePaint = false
   lastPaintOffset = layout.offset
@@ -223,7 +260,6 @@ const paint = () => {
   const context = target.getContext('2d', { alpha: true })
   if (!context) return
   context.setTransform(ratio, 0, 0, ratio, 0, 0)
-  context.clearRect(0, 0, width, height.value)
   // Reading this every frame forces a style recalc inside the scroll frame; it
   // only changes with the theme, so it is cached and invalidated on theme edits.
   const { normal, accent } = palette()
@@ -236,7 +272,7 @@ const paint = () => {
       const bitmap = document.createElement('canvas')
       bitmap.width = Math.ceil(width * ratio)
       bitmap.height = TILE_HEIGHT * ratio
-      bitmap.style.cssText = `position:absolute;top:0;left:0;width:${width}px;height:${TILE_HEIGHT}px;will-change:transform`
+      bitmap.style.cssText = `position:absolute;top:${index * TILE_HEIGHT}px;left:0;width:${width}px;height:${TILE_HEIGHT}px`
       tileLayer.value?.appendChild(bitmap)
       tile = { canvas: bitmap, job: 0, ready: false }
       tiles.set(index, tile)
@@ -269,17 +305,32 @@ const paint = () => {
         tile.ready = true
       }
     }
-    const translate = `translateY(${Math.round((index * TILE_HEIGHT - layout.offset) * ratio) / ratio}px)`
-    if (tile.canvas.style.transform !== translate) tile.canvas.style.transform = translate
   }
+  // Tiles sit at their absolute document position and the whole layer is shifted once,
+  // instead of rewriting a transform on every visible tile in every scroll frame.
+  const layerTranslate = `translateY(${-layout.offset}px)`
+  if (tileLayer.value && tileLayer.value.style.transform !== layerTranslate) tileLayer.value.style.transform = layerTranslate
   for (const [index, tile] of tiles) if (index < firstTile - 1 || index > lastTile + 1) { tile.canvas.remove(); tiles.delete(index) }
+  const search = currentFile.value?.searchMatches
+  const matches = (search?.matches || []).filter((raw) => typeof (raw as { start?: number }).start === 'number')
+  // The overlay only carries search marks and the source-mode cursor line. When there
+  // are neither, the canvas has nothing to show and clearing it every frame is pure
+  // per-frame paint work. It still has to be cleared once when the marks disappear.
+  if (!matches.length && !cm) {
+    if (overlayDirty) {
+      context.clearRect(0, 0, width, height.value)
+      overlayDirty = false
+    }
+    return
+  }
+  context.clearRect(0, 0, width, height.value)
+  overlayDirty = true
   context.globalAlpha = .8
   context.fillStyle = accent
-  const search = currentFile.value?.searchMatches
   const contentLength = currentFile.value?.markdown.length || 1
-  for (const raw of search?.matches || []) {
-    const match = raw as { start?: number }
-    if (typeof match.start === 'number') context.fillRect(width - 4, match.start / contentLength * layout.contentHeight - layout.offset, 3, 2)
+  for (const raw of matches) {
+    const start = (raw as { start: number }).start
+    context.fillRect(width - 4, start / contentLength * layout.contentHeight - layout.offset, 3, 2)
   }
   if (cm) {
     const line = cm.getCursor().line
@@ -377,7 +428,7 @@ const pointerDown = (event: PointerEvent) => {
   if (event.button !== 0 || !host.value || !scroller) return
   event.preventDefault()
   const y = event.clientY - host.value.getBoundingClientRect().top
-  const layout = geometry.value
+  const layout = computeGeometry()
   const inside = y >= layout.sliderTop && y <= layout.sliderTop + layout.sliderHeight
   dragOffset = inside ? y - layout.sliderTop : layout.sliderHeight / 2
   dragging.value = true
@@ -387,8 +438,8 @@ const pointerDown = (event: PointerEvent) => {
 const pointerMove = (event: PointerEvent) => {
   if (!dragging.value || !host.value) return
   const y = event.clientY - host.value.getBoundingClientRect().top - dragOffset
-  const travel = Math.max(1, Math.min(height.value, geometry.value.contentHeight) - geometry.value.sliderHeight)
-  scrollTo(Math.max(0, Math.min(1, y / travel)) * geometry.value.scrollRange)
+  const travel = Math.max(1, Math.min(height.value, computeGeometry().contentHeight) - computeGeometry().sliderHeight)
+  scrollTo(Math.max(0, Math.min(1, y / travel)) * computeGeometry().scrollRange)
 }
 const pointerUp = () => { dragging.value = false }
 const wheel = (event: WheelEvent) => { if (scroller) scrollTo(scroller.scrollTop + event.deltaY * (event.deltaMode === 1 ? 20 : event.deltaMode === 2 ? viewportHeight.value : 1)) }
@@ -397,7 +448,7 @@ const keydown = (event: KeyboardEvent) => {
   const keys: Record<string, number> = { ArrowDown: 40, ArrowUp: -40, PageDown: viewportHeight.value, PageUp: -viewportHeight.value, Home: -Infinity, End: Infinity }
   if (!(event.key in keys)) return
   event.preventDefault()
-  scrollTo(event.key === 'Home' ? 0 : event.key === 'End' ? geometry.value.scrollRange : scrollTop.value + keys[event.key])
+  scrollTo(event.key === 'Home' ? 0 : event.key === 'End' ? computeGeometry().scrollRange : scrollTop + keys[event.key])
 }
 watch(() => [currentFile.value?.id, props.plainText, props.sourceCode], bind, { flush: 'post' })
 watch(() => [preferences.minimapSize, preferences.minimapScale, preferences.minimapRenderCharacters, preferences.minimapMaxColumn, preferences.theme], () => {
@@ -448,6 +499,10 @@ onBeforeUnmount(() => {
 <style>
 .editor-minimap { position: absolute; top: 0; right: 12px; bottom: 0; width: var(--minimap-width, 100px); z-index: 4; color: var(--editorColor); background: transparent; overflow: hidden; touch-action: none; user-select: none; cursor: pointer; }
 .editor-minimap .minimap-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+/* Both layers are translated on every scroll frame. Promoting them once keeps that
+   translation on the compositor instead of re-committing the whole minimap. */
+.editor-minimap .minimap-tiles { will-change: transform; }
+.editor-minimap .minimap-slider { will-change: transform; }
 .minimap-tiles { position: absolute; inset: 0; pointer-events: none; }
 .minimap-slider { position: absolute; top: 0; left: 0; right: 0; background: rgb(110 120 135 / 14%); border-left: 2px solid var(--themeColor); opacity: 0; pointer-events: none; }
 .editor-minimap:hover .minimap-slider, .editor-minimap:focus-visible .minimap-slider, .editor-minimap.slider-always .minimap-slider, .editor-minimap.dragging .minimap-slider { opacity: 1; }

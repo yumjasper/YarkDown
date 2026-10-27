@@ -1,7 +1,7 @@
 {
   "name": "marktext",
   "productName": "YarkText",
-  "version": "1.0.17",
+  "version": "1.0.18",
   "description": "YarkText",
   "main": "./out/main/index.js",
   "author": {
