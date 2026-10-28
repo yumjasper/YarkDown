@@ -1,0 +1,93 @@
+/*
+ * Inkwell Blue 语法高亮（Prism token 配色）
+ * 取自主题源码的 light-bg optimized 调色板：
+ * 关键字紫、字符串绿、注释灰斜体、数字橙、函数蓝、操作符青、标签粉。
+ */
+
+pre.mu-code-block,
+pre.mu-code-block code {
+  color: #3d4852;
+  background-color: #f7fafc;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #7f8c98;
+  font-style: italic;
+}
+
+.token.punctuation {
+  color: #64748b;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #be185d;
+}
+
+.token.boolean,
+.token.number {
+  color: #c2410c;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #15803d;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  color: #0d9488;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+  color: #7c3aed;
+  font-weight: 500;
+}
+
+.token.function,
+.token.class-name {
+  color: #2563eb;
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+  color: #b45309;
+}
+
+.token.important,
+.token.bold {
+  font-weight: 600;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+.token.macro.property,
+.token.preprocessor {
+  color: #6933b1;
+}

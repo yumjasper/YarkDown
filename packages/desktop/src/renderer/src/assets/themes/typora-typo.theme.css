@@ -1,0 +1,297 @@
+/*
+ * Typo
+ * 迁移自 Typora 官方画廊 Typo（https://theme.typora.io/theme/Typo/，MIT）。
+ * 书籍排版的浅色主题：米黄纸感底、深墨正文、书卷气的暖棕红强调。
+ * 排版特征：标题使用衬线字体并居中、正文段首缩进（可选段落首行微缩），
+ * 引用块为居中的斜体题记，整体模拟纸质书的阅读节奏。
+ */
+
+:root {
+  /*editor*/
+  --themeColor: #9e4b3f;
+  --themeColor90: rgba(158, 75, 63, 0.9);
+  --themeColor80: rgba(158, 75, 63, 0.8);
+  --themeColor70: rgba(158, 75, 63, 0.7);
+  --themeColor60: rgba(158, 75, 63, 0.6);
+  --themeColor50: rgba(158, 75, 63, 0.5);
+  --themeColor40: rgba(158, 75, 63, 0.4);
+  --themeColor30: rgba(158, 75, 63, 0.3);
+  --themeColor20: rgba(158, 75, 63, 0.2);
+  --themeColor10: rgba(158, 75, 63, 0.1);
+  --highlightThemeColor: #9e4b3f;
+
+  --highlightColor: rgba(214, 158, 78, 0.35);
+  --selectionColor: rgba(158, 75, 63, 0.15);
+  --editorColor: #3d3a34;
+  --editorColor80: #2a2721;
+  --editorColor70: rgba(61, 58, 52, 0.7);
+  --editorColor60: rgba(61, 58, 52, 0.6);
+  --editorColor50: rgba(61, 58, 52, 0.5);
+  --editorColor40: rgba(61, 58, 52, 0.4);
+  --editorColor30: rgba(61, 58, 52, 0.3);
+  --editorColor20: rgba(61, 58, 52, 0.2);
+  --editorColor10: rgba(61, 58, 52, 0.1);
+  --editorColor04: rgba(61, 58, 52, 0.04);
+  --editorBgColor: #f7f1e6;
+  --deleteColor: #b03a2e;
+  --iconColor: rgba(61, 58, 52, 0.5);
+  --codeBgColor: rgba(61, 58, 52, 0.06);
+  --codeBlockBgColor: #f0e8d9;
+  --codeBlockColor: #3d3a34;
+  --footnoteBgColor: rgba(61, 58, 52, 0.04);
+  --inputBgColor: #f0e8d9;
+
+  --focusColor: var(--themeColor);
+
+  --buttonFontColor: #3d3a34;
+  --buttonBgColor: #f0e8d9;
+  --buttonBorder: 1px solid #ded2bd;
+  --buttonShadow: none;
+  --buttonFontColorHover: var(--buttonFontColor);
+  --buttonBgColorHover: #e9dfcd;
+  --buttonBorderHover: 1px solid #cfc0a6;
+  --buttonFontColorActive: var(--buttonFontColor);
+  --buttonBgColorActive: #e0d4bf;
+  --buttonBorderActive: var(--buttonBorder);
+  --buttonFocusBorder: 1px solid #9e4b3f;
+
+  --buttonPrimaryFontColor: #fdfaf3;
+  --buttonPrimaryBgColor: #9e4b3f;
+  --buttonPrimaryBorder: none;
+  --buttonPrimaryShadow: none;
+  --buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
+  --buttonPrimaryBgColorHover: #b1584a;
+  --buttonPrimaryBorderHover: var(--buttonPrimaryBorder);
+  --buttonPrimaryFontColorActive: var(--buttonPrimaryFontColor);
+  --buttonPrimaryBgColorActive: #8a4036;
+  --buttonPrimaryBorderActive: var(--buttonPrimaryBorder);
+  --buttonPrimaryFocusBorder: none;
+  --buttonPrimaryFocusShadow: 0 0 0 3px rgba(158, 75, 63, 0.24);
+  --tableBorderColor: #ded2bd;
+
+  /* Markdown element colors */
+  --headingColor: #2a2721;
+  --h1Color: #2a2721;
+  --h2Color: #2a2721;
+  --h3Color: #332f28;
+  --h4Color: #3d3a34;
+  --h5Color: #3d3a34;
+  --h6Color: #6f695c;
+  --blockquoteTextColor: #6a6355;
+  --blockquoteBorderColor: #cfc0a6;
+  --hrColor: rgba(61, 58, 52, 0.16);
+  --linkColor: #9e4b3f;
+  --strongColor: #2a2721;
+  --emColor: #6a6355;
+  --listMarkerColor: #9e4b3f;
+
+  /*marktext*/
+  --sideBarColor: rgba(61, 58, 52, 0.6);
+  --sideBarIconColor: var(--iconColor);
+  --sideBarTitleColor: #2a2721;
+  --sideBarTextColor: rgba(61, 58, 52, 0.42);
+  --sideBarBgColor: #f0e8d9;
+  --sideBarItemHoverBgColor: rgba(158, 75, 63, 0.09);
+  --itemBgColor: #e9dfcd;
+
+  --floatFontColor: #3d3a34;
+  --floatBgColor: #fdfaf3;
+  --floatHoverColor: #f5efe3;
+  --floatBorderColor: #ded2bd;
+  --floatShadow: rgba(61, 58, 52, 0.16);
+  --maskColor: rgba(61, 58, 52, 0.2);
+
+  /* Status + notification colours */
+  --successColor: #4a7a3d;
+  --successBgColor: rgba(74, 122, 61, 0.11);
+  --warningColor: #8a6100;
+  --warningBgColor: rgba(138, 97, 0, 0.11);
+  --notificationPrimaryColor: #fdfaf3;
+  --notificationPrimaryBg: #9e4b3f;
+  --notificationInfoColor: #2a2721;
+  --notificationInfoBg: #e9dfcd;
+  --notificationWarningColor: #ffffff;
+  --notificationWarningBg: #8a6100;
+  --notificationErrorColor: #ffffff;
+  --notificationErrorBg: #b03a2e;
+  --editorAreaWidth: 1000px;
+
+  --theme-color: var(--themeColor);
+  --highlight-color: var(--highlightColor);
+  --selection-color: var(--selectionColor);
+  --editor-color: var(--editorColor);
+  --editor-color-80: var(--editorColor80);
+  --editor-color-50: var(--editorColor50);
+  --editor-color-30: var(--editorColor30);
+  --editor-color-10: var(--editorColor10);
+  --editor-color-04: var(--editorColor04);
+  --editor-bg-color: var(--editorBgColor);
+  --editor-area-width: var(--editorAreaWidth);
+  --delete-color: var(--deleteColor);
+  --icon-color: var(--iconColor);
+  --code-block-bg-color: var(--codeBlockBgColor);
+  --code-block-color: var(--codeBlockColor);
+  --table-border-color: var(--tableBorderColor);
+  --input-bg-color: var(--inputBgColor);
+  --button-font-color: var(--buttonFontColor);
+  --button-bg-color: var(--buttonBgColor);
+  --button-border: var(--buttonBorder);
+  --button-bg-color-hover: var(--buttonBgColorHover);
+  --button-border-hover: var(--buttonBorderHover);
+  --button-bg-color-active: var(--buttonBgColorActive);
+  --button-border-active: var(--buttonBorderActive);
+  --button-border-focus: var(--button-border);
+  --float-bg-color: var(--floatBgColor);
+  --float-hover-color: var(--floatHoverColor);
+  --float-border-color: var(--floatBorderColor);
+  --float-shadow: rgba(61, 58, 52, 0.08) 0 1px 3px, rgba(61, 58, 52, 0.13) 0 8px 24px;
+  --link-color: var(--linkColor);
+  --h1-color: var(--h1Color);
+  --h2-color: var(--h2Color);
+  --h3-color: var(--h3Color);
+  --h4-color: var(--h4Color);
+  --h5-color: var(--h5Color);
+  --h6-color: var(--h6Color);
+  --blockquote-text-color: var(--blockquoteTextColor);
+  --blockquote-border-color: var(--blockquoteBorderColor);
+  --strong-color: var(--strongColor);
+  --em-color: var(--emColor);
+  --list-marker-color: var(--listMarkerColor);
+  --hr-color: var(--hrColor);
+}
+
+::-webkit-scrollbar {
+  background: var(--editorBgColor);
+}
+
+.title-bar .frameless-titlebar-button > div > svg {
+  fill: #3d3a34;
+}
+
+.side-bar {
+  border-right: 1px solid #e4d9c6 !important;
+}
+
+.editor-tabs {
+  box-shadow: none !important;
+}
+
+/* ---------------- Markdown 排版 ---------------- */
+
+.mu-container {
+  font-family: 'Noto Serif SC', 'Songti SC', Georgia, serif;
+  line-height: 1.9;
+}
+
+.mu-container h1,
+.mu-container h2,
+.mu-container h3,
+.mu-container h4 {
+  font-family: 'Noto Serif SC', 'Songti SC', Georgia, serif;
+  text-align: center;
+}
+
+.mu-container h1 {
+  margin-top: 1.7em;
+  margin-bottom: 1em;
+  font-size: 1.72em;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+}
+
+.mu-container h2 {
+  margin-top: 1.9em;
+  margin-bottom: 0.85em;
+  font-size: 1.34em;
+  font-weight: 600;
+  letter-spacing: 0.015em;
+}
+
+.mu-container h3 {
+  margin-top: 1.7em;
+  margin-bottom: 0.75em;
+  font-size: 1.14em;
+  font-weight: 600;
+}
+
+.mu-container h4 {
+  font-size: 1.02em;
+  font-weight: 600;
+}
+
+.mu-container h5 {
+  font-size: 0.96em;
+  font-weight: 600;
+  color: #6f695c;
+}
+
+.mu-container h6 {
+  font-size: 0.9em;
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: 0.08em;
+  color: #6f695c;
+}
+
+.mu-container blockquote {
+  margin: 1.5em 2em;
+  padding: 0.2em 0;
+  font-style: italic;
+  text-align: center;
+  color: var(--blockquoteTextColor);
+  background: transparent;
+}
+
+.mu-container blockquote::before {
+  left: 0;
+  width: 0;
+  background: transparent;
+}
+
+.mu-container a {
+  color: var(--linkColor);
+  text-decoration: none;
+  border-bottom: 1px dotted rgba(158, 75, 63, 0.55);
+}
+
+.mu-container a:hover {
+  border-bottom-style: solid;
+}
+
+.mu-container strong {
+  color: var(--strongColor);
+}
+
+:not(pre) > code {
+  padding: 0.15em 0.4em;
+  font-size: 85%;
+  color: #8a6100;
+  background: rgba(61, 58, 52, 0.06);
+  border-radius: 2px;
+}
+
+.mu-container table {
+  border-collapse: collapse;
+  border-spacing: 0;
+  margin: 1.5em auto;
+  font-size: 0.95em;
+}
+
+.mu-container table th {
+  padding: 8px 14px;
+  font-weight: 600;
+  color: #2a2721;
+  background: rgba(61, 58, 52, 0.05);
+  border-bottom: 2px solid #cfc0a6;
+}
+
+.mu-container table td {
+  padding: 8px 14px;
+  border-bottom: 1px solid #e4d9c6;
+}
+
+.mu-thematic-break:not(.mu-active)::before {
+  height: 0;
+  border-top: 1px solid rgba(61, 58, 52, 0.16);
+}

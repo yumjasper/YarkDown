@@ -1,0 +1,117 @@
+/*
+ * Prism.js Pixyll
+ * Tokens mapped onto the Pixyll greyscale palette.
+ */
+
+code[class*='language-'],
+pre[class*='language-'],
+pre.ag-paragraph {
+  color: #313131;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+  overflow: visible;
+}
+
+pre.ag-paragraph {
+  padding: 1em;
+  margin: 1em 0;
+  border-radius: 2px;
+}
+
+:not(pre) > code[class*='language-'],
+pre.ag-paragraph {
+  background: #f7f7f7;
+}
+
+:not(pre) > code[class*='language-'] {
+  padding: 0.1em;
+  border-radius: 2px;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #8a8a8a;
+  font-style: italic;
+}
+
+.token.punctuation {
+  color: #313131;
+}
+
+.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #b33226;
+}
+
+.token.boolean,
+.token.number {
+  color: #c4451d;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #2c7a3f;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  color: #2a7ae2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.function,
+.token.class-name {
+  color: #1f6ac9;
+}
+
+.token.keyword {
+  color: #1f1f1f;
+  font-weight: bold;
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+  color: #8a6100;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}

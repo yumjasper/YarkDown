@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication } from 'playwright'
-import { clickMenuById, launchWithMarkdown, waitForMenuReady } from './helpers'
+import { clickMenuById, closeApp, launchWithMarkdown, waitForMenuReady } from './helpers'
 
 /**
  * Theme menu ids drifted away from the ids the tests used (`dracula` ->
@@ -47,7 +47,7 @@ test.describe('Theme menu ids', () => {
   })
 
   test.afterAll(async() => {
-    if (app) await app.close()
+    await closeApp(app)
   })
 
   test('every advertised theme switches the app and applies its dark class', async() => {

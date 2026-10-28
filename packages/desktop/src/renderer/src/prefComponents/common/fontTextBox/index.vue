@@ -176,7 +176,7 @@ onMounted(async () => {
     }
     .link {
       font-size: 12px;
-      color: #b4b4b4;
+      color: var(--editorColor40);
     }
   }
 }

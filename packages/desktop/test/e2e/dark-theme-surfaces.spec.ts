@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { clickMenuById, launchWithMarkdown } from './helpers'
+import { clickMenuById, closeApp, launchWithMarkdown } from './helpers'
 
 /**
  * #4831: every dark theme kept a light table surface and dark math glyphs.
@@ -61,6 +61,15 @@ const compositeLuma = (overlay: string, base: string): number => {
   ])
 }
 
+/**
+ * Fingerprint of the injected theme stylesheet. `body.dark` only distinguishes
+ * dark from light, so it cannot tell two light themes apart; comparing this
+ * string is what lets a test wait for the *specific* theme to be applied.
+ */
+const readThemeStylesheet = async(page: Page): Promise<string> => {
+  return await page.evaluate(() => document.getElementById('ag-theme')?.textContent ?? '')
+}
+
 const readSurfaces = async(page: Page) => {
   return await page.evaluate(() => {
     const style = (selector: string) => {
@@ -103,7 +112,7 @@ test.describe('Dark theme table and math surfaces', () => {
   })
 
   test.afterAll(async() => {
-    if (app) await app.close()
+    await closeApp(app)
   })
 
   for (const theme of DARK_THEMES) {
@@ -140,10 +149,16 @@ test.describe('Dark theme table and math surfaces', () => {
 
   for (const theme of LIGHT_THEMES) {
     test(`${theme} keeps light table rows with dark text`, async() => {
+      // `body.dark` alone is not a reliable signal between two light themes: the
+      // class is already absent, so waiting on it returns before the new
+      // stylesheet lands and the assertions read the previous theme. Snapshot
+      // the injected theme stylesheet and wait for it to actually change.
+      const before = await readThemeStylesheet(page)
       await clickMenuById(app, theme)
-      await page.waitForFunction(() => !document.body.classList.contains('dark'), null, {
-        timeout: 5000
-      })
+      await expect
+        .poll(async() => await readThemeStylesheet(page), { timeout: 5000 })
+        .not.toBe(before)
+      await expect(page.locator('body')).not.toHaveClass(/(^|\s)dark(\s|$)/)
       const state = await readSurfaces(page)
       const { cell, oddRow, editorBg } = state
       if (!cell || !oddRow) throw new Error('table not rendered')

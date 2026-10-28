@@ -15,15 +15,18 @@
   --themeColor30: rgba(47, 129, 247, 0.3);
   --themeColor20: rgba(47, 129, 247, 0.2);
   --themeColor10: rgba(47, 129, 247, 0.1);
+  --highlightThemeColor: #2f81f7;
 
   --highlightColor: rgba(187, 128, 9, 0.45);
   --selectionColor: rgba(56, 139, 253, 0.4);
   --editorColor: #e6edf3;
   --editorColor80: #f0f6fc;
   --editorColor60: rgba(230, 237, 243, 0.6);
+  --editorColor70: rgba(230, 237, 243, 0.7);
   --editorColor50: rgba(230, 237, 243, 0.5);
   --editorColor40: rgba(230, 237, 243, 0.4);
   --editorColor30: rgba(230, 237, 243, 0.3);
+  --editorColor20: rgba(230, 237, 243, 0.2);
   --editorColor10: rgba(230, 237, 243, 0.1);
   --editorColor04: rgba(230, 237, 243, 0.04);
   --editorBgColor: #0d1117;
@@ -47,6 +50,7 @@
   --buttonFontColorActive: var(--buttonFontColor);
   --buttonBgColorActive: #282e33;
   --buttonBorderActive: var(--buttonBorder);
+  --buttonFocusBorder: 1px solid #2f81f7;
 
   --buttonPrimaryFontColor: #ffffff;
   --buttonPrimaryBgColor: #238636;
@@ -93,6 +97,20 @@
   --floatBorderColor: #30363d;
   --floatShadow: rgba(1, 4, 9, 0.6);
   --maskColor: rgba(1, 4, 9, 0.8);
+
+  /* Status + notification colours (previously only in base styles) */
+  --successColor: #56d364;
+  --successBgColor: rgba(86, 211, 100, 0.12);
+  --warningColor: #e3b341;
+  --warningBgColor: rgba(227, 179, 65, 0.12);
+  --notificationPrimaryColor: #1b1f23;
+  --notificationPrimaryBg: #2f81f7;
+  --notificationInfoColor: #ffffff;
+  --notificationInfoBg: #54606b;
+  --notificationWarningColor: #1b1f23;
+  --notificationWarningBg: #e3b341;
+  --notificationErrorColor: #1b1f23;
+  --notificationErrorBg: #f85149;
   --editorAreaWidth: 1000px;
 
   --theme-color: var(--themeColor);

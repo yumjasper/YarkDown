@@ -141,6 +141,7 @@ import {
 import { findActiveHeadingSlug, type HeadingPosition } from '@/util/findActiveHeading'
 import { scheduleMarkdownMathWarmup } from '@/codeMirror/warmMode'
 import { addCommonStyle, setEditorWidth } from '@/util/theme'
+import { mountVlookEnhance, type VlookEnhanceHandle } from '@/util/vlookEnhance'
 import { usePreferencesStore } from '@/store/preferences'
 import { useEditorStore } from '@/store/editor'
 import { useProjectStore } from '@/store/project'
@@ -294,6 +295,10 @@ let resizeViewport: SettledViewport | undefined
 let stopNativeResize: (() => void) | undefined
 let accessibilityPruner: AccessibilityPruner | undefined
 let stopMathPreviewVisibility: (() => void) | undefined
+// VLOOK theme's plugin layer; see `@/util/vlookEnhance`. Only mounted for those
+// themes, and rebuilt whenever the editor DOM or the theme changes.
+let vlookEnhance: VlookEnhanceHandle | null = null
+let stopVlookThemeWatch: (() => void) | undefined
 const editorRef = ref<HTMLDivElement | null>(null)
 const mediaViewer = ref<InstanceType<typeof MediaViewer> | null>(null)
 const viewerOpen = ref(false)
@@ -2221,6 +2226,17 @@ onMounted(() => {
   }
   setEditorWidth(editorLineWidth.value)
   stopMathPreviewVisibility = observeMathPreviewVisibility(muya.domNode)
+
+  // VLOOK 主题的插件能力挂在编辑器滚动的生命周期上：容器销毁或换主题都要整体重建，
+  // 否则进度条与目录面板会指向已经不存在的 DOM。
+  vlookEnhance?.destroy()
+  vlookEnhance = mountVlookEnhance(theme.value, muya.domNode)
+  stopVlookThemeWatch = watch(theme, (value) => {
+    vlookEnhance?.destroy()
+    vlookEnhance = null
+    if (muya.domNode) vlookEnhance = mountVlookEnhance(value, muya.domNode)
+  })
+
   if (viewportRef.value) {
     // Muya replaces the Vue placeholder; only its live DOM node owns the document geometry.
     const updateViewportSpacing = () => {
@@ -2291,6 +2307,9 @@ onBeforeUnmount(() => {
 
   stopNativeResize?.()
   stopMathPreviewVisibility?.()
+  stopVlookThemeWatch?.()
+  vlookEnhance?.destroy()
+  vlookEnhance = null
   resizeViewport?.dispose()
   accessibilityPruner?.dispose()
   accessibilityPruner = undefined

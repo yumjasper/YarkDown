@@ -476,7 +476,7 @@ const replace = (isSingle = true) => {
   border-bottom-right-radius: 3px;
   background: var(--notificationErrorBg);
   line-height: 28px;
-  color: #ffffff;
+  color: var(--notificationErrorColor);
   font-size: 14px;
   z-index: 1;
 }

@@ -1,0 +1,713 @@
+/*
+ * VLOOK Joint锛堢Щ妞嶈嚜 https://theme.typora.io/theme/VLOOK-Joint-V2/锛? * 涓?Owl 鍚屾簮锛岄厤鑹叉敼鐢ㄣ€岀惀鐝€ #fabb0c 鈫?闈涜摑 #6464d1銆嶇殑瀵规挒娓愬彉锛? * 姝ｆ枃涓昏壊 #1c1e1f锛屾爣棰樿蛋澧ㄨ壊锛屽己璋冧氦缁欓粍鑹蹭笌闈涜摑锛? * 鍦嗚鍚屼负 18px/10px锛屽鍣ㄦ洿鎺ヨ繎鎵佸钩鎻掔敾椋庛€? */
+
+:root {
+  /* VLOOK 鍩虹鑹叉澘 */
+  --v-bg: #ffffff;
+  --v-bg-dk: #1c1e1f;
+  --v-fg: #1c1e1f;
+  --v-fg-a: #7d868a;
+  --v-fg-dk: #eceeef;
+  --v-pn: #ebedef;
+  --v-pn-a: #d4d9dd;
+  --v-bq-bg: rgba(235, 237, 239, 0.75);
+  --v-r-b: 18px;
+  --v-r-s: 10px;
+  --v-r-tag: 10px;
+  --v-ac-t1: #fabb0c;
+  --v-ac-t2: #6464d1;
+
+  /*editor*/
+  --themeColor: #6464d1;
+  --themeColor90: rgba(100, 100, 209, 0.9);
+  --themeColor80: rgba(100, 100, 209, 0.8);
+  --themeColor70: rgba(100, 100, 209, 0.7);
+  --themeColor60: rgba(100, 100, 209, 0.6);
+  --themeColor50: rgba(100, 100, 209, 0.5);
+  --themeColor40: rgba(100, 100, 209, 0.4);
+  --themeColor30: rgba(100, 100, 209, 0.3);
+  --themeColor20: rgba(100, 100, 209, 0.2);
+  --themeColor10: rgba(100, 100, 209, 0.1);
+  --highlightThemeColor: #6464d1;
+
+  --highlightColor: rgba(250, 187, 12, 0.35);
+  --selectionColor: rgba(100, 100, 209, 0.18);
+  --editorColor: #1c1e1f;
+  --editorColor80: #000000;
+  --editorColor60: rgba(28, 30, 31, 0.6);
+  --editorColor70: rgba(28, 30, 31, 0.7);
+  --editorColor50: rgba(28, 30, 31, 0.5);
+  --editorColor40: rgba(28, 30, 31, 0.4);
+  --editorColor30: rgba(28, 30, 31, 0.3);
+  --editorColor20: rgba(28, 30, 31, 0.2);
+  --editorColor10: rgba(28, 30, 31, 0.1);
+  --editorColor04: rgba(28, 30, 31, 0.04);
+  --editorBgColor: #ffffff;
+  --deleteColor: #d01010;
+  --iconColor: rgba(28, 30, 31, 0.5);
+  --codeBgColor: #ebedef;
+  --codeBlockBgColor: #f7f8f9;
+  --codeBlockColor: #1c1e1f;
+  --footnoteBgColor: #f7f8f9;
+  --inputBgColor: #ebedef;
+
+  --focusColor: var(--themeColor);
+
+  --buttonFontColor: #1c1e1f;
+  --buttonBgColor: #ffffff;
+  --buttonBorder: 1px solid #ebedef;
+  --buttonShadow: none;
+  --buttonFontColorHover: #1c1e1f;
+  --buttonBgColorHover: #ebedef;
+  --buttonBorderHover: 1px solid #d4d9dd;
+  --buttonFontColorActive: #1c1e1f;
+  --buttonBgColorActive: #d4d9dd;
+  --buttonBorderActive: var(--buttonBorder);
+  --buttonFocusBorder: 1px solid #6464d1;
+
+  --buttonPrimaryFontColor: #ffffff;
+  --buttonPrimaryBgColor: #6464d1;
+  --buttonPrimaryBorder: none;
+  --buttonPrimaryShadow: none;
+  --buttonPrimaryFontColorHover: #ffffff;
+  --buttonPrimaryBgColorHover: #5656bd;
+  --buttonPrimaryBorderHover: var(--buttonPrimaryBorder);
+  --buttonPrimaryFontColorActive: #ffffff;
+  --buttonPrimaryBgColorActive: #4646a0;
+  --buttonPrimaryBorderActive: var(--buttonPrimaryBorder);
+  --buttonPrimaryFocusBorder: none;
+  --buttonPrimaryFocusShadow: 0 0 0 3px rgba(100, 100, 209, 0.24);
+  --tableBorderColor: #d4d9dd;
+
+  /* Markdown element colors */
+  --headingColor: #1c1e1f;
+  --h1Color: #1c1e1f;
+  --h2Color: #1c1e1f;
+  --h3Color: #1c1e1f;
+  --h4Color: #1c1e1f;
+  --h5Color: #1c1e1f;
+  --h6Color: #7d868a;
+  --blockquoteTextColor: #4a4f52;
+  --blockquoteBorderColor: #fabb0c;
+  --hrColor: #d4d9dd;
+  --linkColor: #6464d1;
+  --strongColor: #1c1e1f;
+  --emColor: #4a4f52;
+  --listMarkerColor: #7d868a;
+
+  /*marktext*/
+  --sideBarColor: rgba(28, 30, 31, 0.6);
+  --sideBarIconColor: var(--iconColor);
+  --sideBarTitleColor: #1c1e1f;
+  --sideBarTextColor: #7d868a;
+  --sideBarBgColor: #f7f8f9;
+  --sideBarItemHoverBgColor: rgba(100, 100, 209, 0.1);
+  --itemBgColor: #ebedef;
+
+  --floatFontColor: #1c1e1f;
+  --floatBgColor: #ffffff;
+  --floatHoverColor: #ebedef;
+  --floatBorderColor: #ebedef;
+  --floatShadow: rgba(28, 30, 31, 0.14);
+  --maskColor: rgba(28, 30, 31, 0.5);
+
+  --successColor: #29a953;
+  --successBgColor: rgba(41, 169, 83, 0.12);
+  --warningColor: #8a5b00;
+  --warningBgColor: rgba(250, 187, 12, 0.18);
+  --notificationPrimaryColor: #ffffff;
+  --notificationPrimaryBg: #4646a0;
+  --notificationInfoColor: #1c1e1f;
+  --notificationInfoBg: #ebedef;
+  --notificationWarningColor: #1c1e1f;
+  --notificationWarningBg: #fabb0c;
+  --notificationErrorColor: #ffffff;
+  --notificationErrorBg: #d01010;
+  --editorAreaWidth: 1000px;
+
+  --theme-color: var(--themeColor);
+  --highlight-color: var(--highlightColor);
+  --selection-color: var(--selectionColor);
+  --editor-color: var(--editorColor);
+  --editor-color-80: var(--editorColor80);
+  --editor-color-50: var(--editorColor50);
+  --editor-color-30: var(--editorColor30);
+  --editor-color-10: var(--editorColor10);
+  --editor-color-04: var(--editorColor04);
+  --editor-bg-color: var(--editorBgColor);
+  --editor-area-width: var(--editorAreaWidth);
+  --delete-color: var(--deleteColor);
+  --icon-color: var(--iconColor);
+  --code-block-bg-color: var(--codeBlockBgColor);
+  --code-block-color: var(--codeBlockColor);
+  --table-border-color: var(--tableBorderColor);
+  --input-bg-color: var(--inputBgColor);
+  --button-font-color: var(--buttonFontColor);
+  --button-bg-color: var(--buttonBgColor);
+  --button-border: var(--buttonBorder);
+  --button-bg-color-hover: var(--buttonBgColorHover);
+  --button-border-hover: var(--buttonBorderHover);
+  --button-bg-color-active: var(--buttonBgColorActive);
+  --button-border-active: var(--buttonBorderActive);
+  --button-border-focus: var(--buttonBorder);
+  --float-bg-color: var(--floatBgColor);
+  --float-hover-color: var(--floatHoverColor);
+  --float-border-color: var(--floatBorderColor);
+  --float-shadow: rgba(28, 30, 31, 0.06) 0 1px 3px, rgba(28, 30, 31, 0.12) 0 8px 24px;
+  --link-color: var(--linkColor);
+  --h1-color: var(--h1Color);
+  --h2-color: var(--h2Color);
+  --h3-color: var(--h3Color);
+  --h4-color: var(--h4Color);
+  --h5-color: var(--h5Color);
+  --h6-color: var(--h6Color);
+  --blockquote-text-color: var(--blockquoteTextColor);
+  --blockquote-border-color: var(--blockquoteBorderColor);
+  --strong-color: var(--strongColor);
+  --em-color: var(--emColor);
+  --list-marker-color: var(--listMarkerColor);
+  --hr-color: var(--hrColor);
+}
+
+::-webkit-scrollbar {
+  background: var(--editorBgColor);
+}
+
+::-webkit-scrollbar-thumb {
+  border: 2px solid var(--editorBgColor);
+  border-radius: 10px;
+  background: #d4d9dd;
+}
+
+.title-bar .frameless-titlebar-button > div > svg {
+  fill: rgba(28, 30, 31, 0.6);
+}
+
+.side-bar {
+  border-right: 1px solid #ebedef !important;
+}
+
+.editor-tabs {
+  box-shadow: none !important;
+}
+
+/* ---------------- Markdown 鎺掔増 ---------------- */
+
+.mu-container {
+  font-family: -apple-system, 'HarmonyOS Sans', 'MiSans', 'vivo Sans', Roboto,
+    'PingFang SC', 'Microsoft YaHei', 'Source Han Sans SC', sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--editorColor);
+}
+
+.mu-container h1,
+.mu-container h2,
+.mu-container h3,
+.mu-container h4,
+.mu-container h5,
+.mu-container h6 {
+  margin: 1.6em 0 0.7em;
+  font-family: -apple-system, 'HarmonyOS Sans', 'MiSans', 'PingFang SC', 'Microsoft YaHei',
+    'Source Han Sans SC', sans-serif;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--headingColor);
+}
+
+/*
+ * Joint 鐨?h1 鏄€岀惀鐝€鈫掗潧钃濄€嶆í鍚戞笎鍙樼殑閫氭爮鑹插潡锛屾枃瀛椾繚鎸佸ⅷ鑹层€? * 杩欓噷鍚屾牱鐢ㄥ弻灞傝儗鏅繕鍘燂細涓婄櫧涓嬮€忕殑缃╁眰璁╄壊鍧楄繃娓℃煍鍜屻€? */
+.mu-container h1 {
+  margin: 1.4em 0 1em;
+  padding: 0.7em 1.2em;
+  font-size: 1.85em;
+  text-align: center;
+  border-radius: var(--v-r-b);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 1)),
+    linear-gradient(
+      270deg,
+      rgba(250, 187, 12, 0.42),
+      rgba(100, 100, 209, 0.42) 30%,
+      rgba(100, 100, 209, 0.42) 70%,
+      rgba(250, 187, 12, 0.42)
+    );
+}
+
+.mu-container h2 {
+  padding-left: 0.75em;
+  font-size: 1.45em;
+  border-left: 4px solid var(--v-ac-t1);
+}
+
+.mu-container h3 {
+  font-size: 1.25em;
+}
+
+.mu-container h3::before {
+  content: '';
+  display: inline-block;
+  width: 0.45em;
+  height: 0.45em;
+  margin-right: 0.5em;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--v-ac-t1), var(--v-ac-t2));
+  vertical-align: 0.12em;
+}
+
+.mu-container h4 {
+  font-size: 1.1em;
+}
+
+.mu-container h5 {
+  font-size: 1em;
+}
+
+.mu-container h6 {
+  font-size: 0.92em;
+  color: var(--h6Color);
+}
+
+.mu-container p {
+  margin: 0 0 0.9em;
+}
+
+.mu-container strong {
+  font-weight: 700;
+  color: var(--strongColor);
+}
+
+.mu-container blockquote {
+  margin: 1em 0;
+  padding: 0.8em 1.1em;
+  color: var(--blockquoteTextColor);
+  background: var(--v-bq-bg);
+  border-radius: var(--v-r-s);
+}
+
+.mu-container blockquote::before {
+  left: 0;
+  width: 4px;
+  border-radius: var(--v-r-s) 0 0 var(--v-r-s);
+  background: linear-gradient(180deg, var(--v-ac-t1), var(--v-ac-t2));
+}
+
+.mu-container a {
+  color: var(--linkColor);
+  text-decoration: none;
+}
+
+.mu-container a:hover {
+  text-decoration: underline;
+}
+
+.mu-container mark {
+  padding: 0.1em 0.3em;
+  color: #1c1e1f;
+  background-color: rgba(250, 187, 12, 0.5);
+  border-radius: 4px;
+}
+
+:not(pre) > code {
+  padding: 0.12em 0.45em;
+  color: #c7254e;
+  background-color: var(--codeBgColor);
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', 'Cascadia Code', 'SFMono-Regular', Consolas, monospace;
+  font-size: 0.87em;
+}
+
+.mu-code-block,
+.mu-frontmatter {
+  margin: 1.1em 0;
+  padding: 0.5em 0;
+  background-color: var(--codeBlockBgColor);
+  border: 1px solid var(--v-pn);
+  border-radius: var(--v-r-s);
+}
+
+.mu-code-block .mu-code,
+.mu-code-block .mu-code span,
+.mu-code-block .mu-language-input {
+  font-family: 'JetBrains Mono', 'Cascadia Code', 'SFMono-Regular', Consolas, monospace;
+  font-size: 0.88em;
+  line-height: 1.65;
+  color: var(--codeBlockColor);
+}
+
+.mu-table-inner {
+  border: 1px solid var(--v-pn);
+  border-radius: var(--v-r-s);
+  overflow: hidden;
+}
+
+.mu-table-inner tr th,
+.mu-table-inner tr td {
+  padding: 8px 14px;
+  border: 1px solid var(--tableBorderColor);
+}
+
+.mu-table-inner tr th {
+  font-weight: 700;
+  background-color: var(--v-pn);
+}
+
+.mu-table-inner tbody tr:nth-child(even) {
+  background-color: rgba(235, 237, 239, 0.4);
+}
+
+.mu-container figure:not(.mu-table) img {
+  border-radius: var(--v-r-s);
+  border: 1px solid var(--v-pn);
+}
+
+.mu-thematic-break:not(.mu-active)::before {
+  height: 0;
+  border-top: 2px solid var(--v-pn);
+}
+
+.mu-container ul li::marker,
+.mu-container ol li::marker {
+  color: var(--v-ac-t1);
+  font-weight: 700;
+}
+
+.mu-container .mu-task-list-item input[type='checkbox'] {
+  border-radius: 4px;
+  border: 1px solid var(--v-pn-a);
+}
+
+.mu-container .mu-task-list-item input[type='checkbox']:checked {
+  border-color: var(--v-ac-t2);
+  background: var(--v-ac-t2);
+}
+
+/* ================= VLOOK 插件增强层 ================= */
+/*
+ * VLOOK 的排版增强插件在 Typora 里是独立 JS + 大量注入类名。
+ * YarkText 的 DOM 不同，这里把插件依赖的类名收敛到一张固定表，
+ * 由 renderer 侧的 vlook-enhance 模块按主题 id 动态挂载这些节点，
+ * 主题只负责样式，两者通过 .v-* 类名契约通信。
+ * 未启用增强时下面的规则不会命中任何元素，不影响纯排版观感。
+ */
+
+/* 目录浮层（插件 .v-chapter-nav / #vlook-toc） */
+.v-toc {
+  font-family: -apple-system, 'HarmonyOS Sans', 'MiSans', 'PingFang SC', 'Microsoft YaHei',
+    sans-serif;
+  font-size: 13px;
+  color: var(--v-fg-a);
+}
+
+.v-toc-item {
+  display: block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  line-height: 1.5;
+  text-decoration: none;
+  color: inherit;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.v-toc-item:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--v-fg);
+}
+
+.v-toc-item.is-active {
+  color: #fabb0c;
+  background: rgba(0, 0, 0, 0.04);
+  font-weight: 700;
+}
+
+.v-toc-level-2 { padding-left: 22px; }
+.v-toc-level-3 { padding-left: 34px; }
+.v-toc-level-4 { padding-left: 46px; }
+.v-toc-level-5 { padding-left: 58px; }
+.v-toc-level-6 { padding-left: 70px; }
+
+/* 章节导航手柄（插件 .v-nav-center-handle） */
+.v-nav-handle {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  width: 6px;
+  height: 48px;
+  border-radius: 3px;
+  background: var(--v-pn);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.v-nav-handle:hover {
+  background: #fabb0c;
+}
+
+/* 右侧滚动区内的阅读进度条（插件 .v-fill-width 的变体） */
+.v-progress {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 3px;
+  height: 100vh;
+  background: transparent;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.v-progress-bar {
+  width: 100%;
+  height: 0;
+  background: linear-gradient(180deg, #fabb0c, #6464d1);
+  transition: height 80ms linear;
+}
+
+/* 浮动快捷条（插件 .v-shortcut-bar / .v-toolbar） */
+.v-shortcut-bar {
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  background: var(--v-bg);
+  border: 1px solid var(--v-pn);
+  border-radius: var(--v-r-s);
+  box-shadow: 0 4px 16px rgba(28, 30, 31, 0.12);
+}
+
+.v-shortcut-bar button {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  color: var(--v-fg);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.v-shortcut-bar button:hover {
+  background: var(--v-pn);
+}
+
+/* 脚注导航（插件 .v-footnote-pn） */
+.v-footnote-pn {
+  position: relative;
+  margin-left: 2px;
+  padding: 0 4px;
+  color: #fabb0c;
+  font-size: 0.75em;
+  font-weight: 700;
+  vertical-align: super;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.v-footnote-pn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 3px;
+}
+
+.v-footnote-pn-footer {
+  display: block;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--v-pn);
+  color: var(--v-fg-a);
+  font-size: 0.85em;
+}
+
+/* 表格增强（插件 .v-tbl-x 的十字高亮与首列固定） */
+.v-tbl-x .mu-table-inner tbody tr:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.v-tbl-x .mu-table-inner tr th:hover,
+.v-tbl-x .mu-table-inner tr td:hover {
+  box-shadow: inset 0 0 0 2px #fabb0c;
+}
+
+/* GitHub Style Alert（插件与 Typora 的说明块） */
+.v-alert {
+  position: relative;
+  margin: 1em 0;
+  padding: 0.75em 1em 0.75em 1.1em;
+  border-left: 4px solid #fabb0c;
+  border-radius: var(--v-r-s);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.v-alert-title {
+  display: block;
+  margin-bottom: 0.25em;
+  font-size: 0.85em;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.v-alert-note { border-left-color: #2082f0; }
+.v-alert-note .v-alert-title { color: #2082f0; }
+.v-alert-tip { border-left-color: #29a953; }
+.v-alert-tip .v-alert-title { color: #29a953; }
+.v-alert-important { border-left-color: #735de0; }
+.v-alert-important .v-alert-title { color: #735de0; }
+.v-alert-warning { border-left-color: #c79215; }
+.v-alert-warning .v-alert-title { color: #c79215; }
+.v-alert-caution { border-left-color: #d01010; }
+.v-alert-caution .v-alert-title { color: #d01010; }
+
+/* 标签徽章（插件 .v-q 的 tag/badge 形态） */
+.v-badge {
+  display: inline-block;
+  padding: 0.1em 0.5em;
+  border-radius: var(--v-r-tag);
+  background: #fabb0c;
+  color: #ffffff;
+  font-size: 0.8em;
+  font-weight: 700;
+  line-height: 1.6;
+  vertical-align: 0.08em;
+}
+
+.v-badge-outline {
+  background: transparent;
+  border: 1px solid #fabb0c;
+  color: #fabb0c;
+}
+
+/* 进度条（插件 .v-q 的 progress 形态） */
+.v-progress-inline {
+  display: inline-block;
+  width: 8em;
+  height: 0.5em;
+  margin: 0 0.4em;
+  border-radius: 999px;
+  background: var(--v-pn);
+  vertical-align: middle;
+  overflow: hidden;
+}
+
+.v-progress-inline > i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #fabb0c, #6464d1);
+}
+
+/* 面包屑（插件 .v-content-helper 顶部路径） */
+.v-breadcrumb {
+  margin: 0 0 0.8em;
+  color: var(--v-fg-a);
+  font-size: 0.82em;
+}
+
+.v-breadcrumb a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.v-breadcrumb a:hover {
+  color: #fabb0c;
+}
+
+.v-breadcrumb-sep {
+  margin: 0 0.35em;
+  opacity: 0.6;
+}
+
+/* 折叠（插件 .v-q 的 fold 形态） */
+.v-fold {
+  margin: 0.6em 0;
+  padding: 0.4em 0.8em;
+  border: 1px solid var(--v-pn);
+  border-radius: var(--v-r-s);
+  background: var(--v-bq-bg);
+}
+
+.v-fold > summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--v-fg);
+}
+
+.v-fold > summary::marker {
+  color: #fabb0c;
+}
+
+/* 注音 / 刮刮卡 / 提示（插件 .v-q 的 ruby、scratch、tips 形态） */
+.v-mask {
+  padding: 0 0.3em;
+  background: var(--v-pn-a);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.v-mask.is-revealed {
+  background: transparent;
+}
+
+.v-tool-tips {
+  position: relative;
+  border-bottom: 1px dashed var(--v-fg-a);
+  cursor: help;
+}
+
+.v-info-tips {
+  margin: 0.8em 0;
+  padding: 0.6em 0.9em;
+  border-radius: var(--v-r-s);
+  background: var(--v-bq-bg);
+  color: var(--v-fg-a);
+  font-size: 0.9em;
+}
+
+/* 图/表/公式索引浮层（插件 .v-fig-nav / .v-index-filter-result） */
+.v-index-panel {
+  padding: 8px;
+  background: var(--v-bg);
+  border: 1px solid var(--v-pn);
+  border-radius: var(--v-r-s);
+  box-shadow: 0 6px 20px rgba(28, 30, 31, 0.12);
+  font-size: 13px;
+}
+
+.v-index-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.v-index-items > li {
+  padding: 4px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  color: var(--v-fg);
+}
+
+.v-index-items > li:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* 聚焦态（插件 .zen 宁静视图）：非当前段落降透明度 */
+.v-zen .mu-container > *:not(.mu-active) {
+  opacity: 0.35;
+  transition: opacity 160ms ease;
+}
+
+.v-zen .mu-container > .mu-active {
+  opacity: 1;
+}
+
+/* 打印时隐藏所有增强层 */
+@media print {
+  .v-progress,
+  .v-nav-handle,
+  .v-shortcut-bar {
+    display: none !important;
+  }
+}

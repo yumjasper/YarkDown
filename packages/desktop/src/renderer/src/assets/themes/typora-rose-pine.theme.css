@@ -1,0 +1,286 @@
+/*
+ * Rosé Pine
+ * 迁移自 https://github.com/rose-pine/rose-pine-theme 官方调色板（MIT）。
+ * 玫瑰夜色：深紫罗兰底 #191724、正文 #e0def4、紫罗兰主强调 #c4a7e7。
+ * 排版特征：标题为薰衣草紫并带轻微字距，引用块用半透明叠加紫底，
+ * 强调文字取玫瑰红，链接取鸢尾蓝，整体柔和不刺眼。
+ */
+
+:root {
+  /*editor*/
+  --themeColor: #c4a7e7;
+  --themeColor90: rgba(196, 167, 231, 0.9);
+  --themeColor80: rgba(196, 167, 231, 0.8);
+  --themeColor70: rgba(196, 167, 231, 0.7);
+  --themeColor60: rgba(196, 167, 231, 0.6);
+  --themeColor50: rgba(196, 167, 231, 0.5);
+  --themeColor40: rgba(196, 167, 231, 0.4);
+  --themeColor30: rgba(196, 167, 231, 0.3);
+  --themeColor20: rgba(196, 167, 231, 0.2);
+  --themeColor10: rgba(196, 167, 231, 0.1);
+  --highlightThemeColor: #c4a7e7;
+
+  --highlightColor: rgba(196, 167, 231, 0.24);
+  --selectionColor: rgba(196, 167, 231, 0.2);
+  --editorColor: #e0def4;
+  --editorColor80: #f0eefb;
+  --editorColor70: rgba(224, 222, 244, 0.7);
+  --editorColor60: rgba(224, 222, 244, 0.6);
+  --editorColor50: rgba(224, 222, 244, 0.5);
+  --editorColor40: rgba(224, 222, 244, 0.4);
+  --editorColor30: rgba(224, 222, 244, 0.3);
+  --editorColor20: rgba(224, 222, 244, 0.2);
+  --editorColor10: rgba(224, 222, 244, 0.1);
+  --editorColor04: rgba(224, 222, 244, 0.04);
+  --editorBgColor: #191724;
+  --deleteColor: #eb6f92;
+  --iconColor: rgba(224, 222, 244, 0.55);
+  --codeBgColor: rgba(224, 222, 244, 0.08);
+  --codeBlockBgColor: #1f1d2e;
+  --codeBlockColor: #e0def4;
+  --footnoteBgColor: rgba(224, 222, 244, 0.05);
+  --inputBgColor: #1f1d2e;
+
+  --focusColor: var(--themeColor);
+
+  --buttonFontColor: #e0def4;
+  --buttonBgColor: #1f1d2e;
+  --buttonBorder: 1px solid #26233a;
+  --buttonShadow: none;
+  --buttonFontColorHover: #f0eefb;
+  --buttonBgColorHover: #26233a;
+  --buttonBorderHover: 1px solid #403d52;
+  --buttonFontColorActive: #f0eefb;
+  --buttonBgColorActive: #2f2b45;
+  --buttonBorderActive: var(--buttonBorder);
+  --buttonFocusBorder: 1px solid #c4a7e7;
+
+  --buttonPrimaryFontColor: #191724;
+  --buttonPrimaryBgColor: #c4a7e7;
+  --buttonPrimaryBorder: none;
+  --buttonPrimaryShadow: none;
+  --buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
+  --buttonPrimaryBgColorHover: #d0b9ee;
+  --buttonPrimaryBorderHover: var(--buttonPrimaryBorder);
+  --buttonPrimaryFontColorActive: var(--buttonPrimaryFontColor);
+  --buttonPrimaryBgColorActive: #b190dd;
+  --buttonPrimaryBorderActive: var(--buttonPrimaryBorder);
+  --buttonPrimaryFocusBorder: none;
+  --buttonPrimaryFocusShadow: 0 0 0 3px rgba(196, 167, 231, 0.3);
+  --tableBorderColor: #26233a;
+
+  /* Markdown element colors */
+  --headingColor: #c4a7e7;
+  --h1Color: #c4a7e7;
+  --h2Color: #c4a7e7;
+  --h3Color: #ebbcba;
+  --h4Color: #e0def4;
+  --h5Color: #e0def4;
+  --h6Color: #908caa;
+  --blockquoteTextColor: #c8c5e0;
+  --blockquoteBorderColor: #c4a7e7;
+  --hrColor: rgba(224, 222, 244, 0.2);
+  --linkColor: #9ccfd8;
+  --strongColor: #ebbcba;
+  --emColor: #c4a7e7;
+  --listMarkerColor: #c4a7e7;
+
+  /*marktext*/
+  --sideBarColor: rgba(224, 222, 244, 0.62);
+  --sideBarIconColor: var(--iconColor);
+  --sideBarTitleColor: #e0def4;
+  --sideBarTextColor: rgba(224, 222, 244, 0.42);
+  --sideBarBgColor: #1f1d2e;
+  --sideBarItemHoverBgColor: rgba(196, 167, 231, 0.12);
+  --itemBgColor: #26233a;
+
+  --floatFontColor: #e0def4;
+  --floatBgColor: #26233a;
+  --floatHoverColor: #2f2b45;
+  --floatBorderColor: #403d52;
+  --floatShadow: rgba(8, 6, 16, 0.55);
+  --maskColor: rgba(8, 6, 16, 0.45);
+
+  /* Status + notification colours */
+  --successColor: #9ccfd8;
+  --successBgColor: rgba(156, 207, 216, 0.15);
+  --warningColor: #f6c177;
+  --warningBgColor: rgba(246, 193, 119, 0.15);
+  --notificationPrimaryColor: #191724;
+  --notificationPrimaryBg: #c4a7e7;
+  --notificationInfoColor: #f0eefb;
+  --notificationInfoBg: #403d52;
+  --notificationWarningColor: #191724;
+  --notificationWarningBg: #f6c177;
+  --notificationErrorColor: #191724;
+  --notificationErrorBg: #eb6f92;
+  --editorAreaWidth: 1000px;
+
+  --theme-color: var(--themeColor);
+  --highlight-color: var(--highlightColor);
+  --selection-color: var(--selectionColor);
+  --editor-color: var(--editorColor);
+  --editor-color-80: var(--editorColor80);
+  --editor-color-50: var(--editorColor50);
+  --editor-color-30: var(--editorColor30);
+  --editor-color-10: var(--editorColor10);
+  --editor-color-04: var(--editorColor04);
+  --editor-bg-color: var(--editorBgColor);
+  --editor-area-width: var(--editorAreaWidth);
+  --delete-color: var(--deleteColor);
+  --icon-color: var(--iconColor);
+  --code-block-bg-color: var(--codeBlockBgColor);
+  --code-block-color: var(--codeBlockColor);
+  --table-border-color: var(--tableBorderColor);
+  --input-bg-color: var(--inputBgColor);
+  --button-font-color: var(--buttonFontColor);
+  --button-bg-color: var(--buttonBgColor);
+  --button-border: var(--buttonBorder);
+  --button-bg-color-hover: var(--buttonBgColorHover);
+  --button-border-hover: var(--buttonBorderHover);
+  --button-bg-color-active: var(--buttonBgColorActive);
+  --button-border-active: var(--buttonBorderActive);
+  --button-border-focus: var(--button-border);
+  --float-bg-color: var(--floatBgColor);
+  --float-hover-color: var(--floatHoverColor);
+  --float-border-color: var(--floatBorderColor);
+  --float-shadow: rgba(6, 4, 12, 0.4) 0 1px 3px, rgba(6, 4, 12, 0.6) 0 8px 24px;
+  --link-color: var(--linkColor);
+  --h1-color: var(--h1Color);
+  --h2-color: var(--h2Color);
+  --h3-color: var(--h3Color);
+  --h4-color: var(--h4Color);
+  --h5-color: var(--h5Color);
+  --h6-color: var(--h6Color);
+  --blockquote-text-color: var(--blockquoteTextColor);
+  --blockquote-border-color: var(--blockquoteBorderColor);
+  --strong-color: var(--strongColor);
+  --em-color: var(--emColor);
+  --list-marker-color: var(--listMarkerColor);
+  --hr-color: var(--hrColor);
+}
+
+::-webkit-scrollbar {
+  background: var(--editorBgColor);
+}
+
+.title-bar .frameless-titlebar-button > div > svg {
+  fill: #e0def4;
+}
+
+.side-bar {
+  border-right: 1px solid #14121e !important;
+}
+
+.editor-tabs {
+  box-shadow: none !important;
+}
+
+/* ---------------- Markdown 排版 ---------------- */
+
+.mu-container h1 {
+  margin-top: 1.55em;
+  margin-bottom: 0.65em;
+  font-size: 1.9em;
+  font-weight: 500;
+  line-height: 1.32;
+  letter-spacing: 0.008em;
+}
+
+.mu-container h2 {
+  margin-top: 1.65em;
+  font-size: 1.46em;
+  font-weight: 500;
+  letter-spacing: 0.006em;
+}
+
+.mu-container h3 {
+  margin-top: 1.5em;
+  font-size: 1.24em;
+  font-weight: 500;
+  color: #ebbcba;
+}
+
+.mu-container h4 {
+  font-size: 1.08em;
+  font-weight: 600;
+}
+
+.mu-container h5 {
+  font-size: 1em;
+  font-weight: 600;
+}
+
+.mu-container h6 {
+  font-size: 0.9em;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #908caa;
+}
+
+.mu-container blockquote {
+  margin: 1.1em 0;
+  padding: 0.45em 1em;
+  color: var(--blockquoteTextColor);
+  background: rgba(196, 167, 231, 0.07);
+  border-radius: 3px;
+}
+
+.mu-container blockquote::before {
+  left: 0;
+  width: 3px;
+  background: var(--blockquoteBorderColor);
+}
+
+.mu-container a {
+  color: var(--linkColor);
+  text-decoration: none;
+}
+
+.mu-container a:hover {
+  text-decoration: underline;
+}
+
+.mu-container strong {
+  color: var(--strongColor);
+  font-weight: 600;
+}
+
+.mu-container em {
+  color: var(--emColor);
+}
+
+:not(pre) > code {
+  padding: 0.15em 0.4em;
+  font-size: 85%;
+  color: #ebbcba;
+  background: rgba(224, 222, 244, 0.08);
+  border-radius: 3px;
+}
+
+.mu-container table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.mu-container table th {
+  padding: 7px 12px;
+  font-weight: 600;
+  color: #e0def4;
+  background: rgba(196, 167, 231, 0.09);
+  border: 1px solid #26233a;
+}
+
+.mu-container table td {
+  padding: 7px 12px;
+  border: 1px solid #26233a;
+}
+
+.mu-container table tr:nth-child(2n) {
+  background: rgba(224, 222, 244, 0.03);
+}
+
+.mu-thematic-break:not(.mu-active)::before {
+  height: 0;
+  border-top: 1px solid rgba(224, 222, 244, 0.2);
+}

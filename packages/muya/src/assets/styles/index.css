@@ -218,12 +218,21 @@
     }
 }
 
+/*
+ * Fallback page typography for standalone muya pages. The desktop app sets its
+ * own `html, body { font-family: var(--uiFontFamily) }`; this rule has identical
+ * specificity and used to load later, so it silently replaced the app's UI font
+ * with the editor's `Open Sans` stack — the menu bar rendered in the wrong
+ * family even though `--uiFontFamily` was correct.
+ */
+@layer muya-defaults {
 html,
 body {
     font-size: 16px;
     font-family: 'Open Sans', 'Clear Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
+}
 }
 
 .mu-highlight {

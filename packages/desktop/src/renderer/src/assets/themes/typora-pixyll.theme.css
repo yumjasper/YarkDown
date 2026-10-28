@@ -1,0 +1,282 @@
+/*
+ * Pixyll
+ * 迁移自 Typora 官方主题画廊 https://theme.typora.io/theme/Pixyll/ （MIT），
+ * 原主题由 John Otander 的 Pixyll Jekyll 主题衍生。
+ * 极简黑白：纯白底、深灰正文、单一蓝色链接，标题用等宽字体放大字距。
+ * 设计意图是让排版自己说话，因此除链接与代码外几乎不带彩色。
+ */
+
+:root {
+  /*editor*/
+  --themeColor: #2a7ae2;
+  --themeColor90: rgba(42, 122, 226, 0.9);
+  --themeColor80: rgba(42, 122, 226, 0.8);
+  --themeColor70: rgba(42, 122, 226, 0.7);
+  --themeColor60: rgba(42, 122, 226, 0.6);
+  --themeColor50: rgba(42, 122, 226, 0.5);
+  --themeColor40: rgba(42, 122, 226, 0.4);
+  --themeColor30: rgba(42, 122, 226, 0.3);
+  --themeColor20: rgba(42, 122, 226, 0.2);
+  --themeColor10: rgba(42, 122, 226, 0.1);
+  --highlightThemeColor: #2a7ae2;
+
+  --highlightColor: rgba(255, 231, 146, 0.55);
+  --selectionColor: rgba(42, 122, 226, 0.14);
+  --editorColor: #313131;
+  --editorColor80: #1f1f1f;
+  --editorColor70: rgba(49, 49, 49, 0.7);
+  --editorColor60: rgba(49, 49, 49, 0.6);
+  --editorColor50: rgba(49, 49, 49, 0.5);
+  --editorColor40: rgba(49, 49, 49, 0.4);
+  --editorColor30: rgba(49, 49, 49, 0.3);
+  --editorColor20: rgba(49, 49, 49, 0.2);
+  --editorColor10: rgba(49, 49, 49, 0.1);
+  --editorColor04: rgba(49, 49, 49, 0.04);
+  --editorBgColor: #ffffff;
+  --deleteColor: #c0392b;
+  --iconColor: rgba(49, 49, 49, 0.5);
+  --codeBgColor: rgba(49, 49, 49, 0.055);
+  --codeBlockBgColor: #f7f7f7;
+  --codeBlockColor: #313131;
+  --footnoteBgColor: rgba(49, 49, 49, 0.04);
+  --inputBgColor: #f7f7f7;
+
+  --focusColor: var(--themeColor);
+
+  --buttonFontColor: #313131;
+  --buttonBgColor: #f7f7f7;
+  --buttonBorder: 1px solid #e0e0e0;
+  --buttonShadow: none;
+  --buttonFontColorHover: var(--buttonFontColor);
+  --buttonBgColorHover: #efefef;
+  --buttonBorderHover: 1px solid #d2d2d2;
+  --buttonFontColorActive: var(--buttonFontColor);
+  --buttonBgColorActive: #e7e7e7;
+  --buttonBorderActive: var(--buttonBorder);
+  --buttonFocusBorder: 1px solid #2a7ae2;
+
+  --buttonPrimaryFontColor: #ffffff;
+  --buttonPrimaryBgColor: #2a7ae2;
+  --buttonPrimaryBorder: none;
+  --buttonPrimaryShadow: none;
+  --buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
+  --buttonPrimaryBgColorHover: #3d89ea;
+  --buttonPrimaryBorderHover: var(--buttonPrimaryBorder);
+  --buttonPrimaryFontColorActive: var(--buttonPrimaryFontColor);
+  --buttonPrimaryBgColorActive: #1f6ac9;
+  --buttonPrimaryBorderActive: var(--buttonPrimaryBorder);
+  --buttonPrimaryFocusBorder: none;
+  --buttonPrimaryFocusShadow: 0 0 0 3px rgba(42, 122, 226, 0.25);
+  --tableBorderColor: #e0e0e0;
+
+  /* Markdown element colors */
+  --headingColor: #1f1f1f;
+  --h1Color: #1f1f1f;
+  --h2Color: #1f1f1f;
+  --h3Color: #262626;
+  --h4Color: #313131;
+  --h5Color: #313131;
+  --h6Color: #6b6b6b;
+  --blockquoteTextColor: #5c5c5c;
+  --blockquoteBorderColor: #2a7ae2;
+  --hrColor: rgba(49, 49, 49, 0.15);
+  --linkColor: #2a7ae2;
+  --strongColor: #1f1f1f;
+  --emColor: #313131;
+  --listMarkerColor: #2a7ae2;
+
+  /*marktext*/
+  --sideBarColor: rgba(49, 49, 49, 0.6);
+  --sideBarIconColor: var(--iconColor);
+  --sideBarTitleColor: #1f1f1f;
+  --sideBarTextColor: rgba(49, 49, 49, 0.42);
+  --sideBarBgColor: #f7f7f7;
+  --sideBarItemHoverBgColor: rgba(42, 122, 226, 0.08);
+  --itemBgColor: #efefef;
+
+  --floatFontColor: #313131;
+  --floatBgColor: #ffffff;
+  --floatHoverColor: #f7f7f7;
+  --floatBorderColor: #e0e0e0;
+  --floatShadow: rgba(49, 49, 49, 0.14);
+  --maskColor: rgba(49, 49, 49, 0.2);
+
+  /* Status + notification colours */
+  --successColor: #2c7a3f;
+  --successBgColor: rgba(44, 122, 63, 0.11);
+  --warningColor: #8a6100;
+  --warningBgColor: rgba(138, 97, 0, 0.11);
+  --notificationPrimaryColor: #ffffff;
+  --notificationPrimaryBg: #2a7ae2;
+  --notificationInfoColor: #1f1f1f;
+  --notificationInfoBg: #efefef;
+  --notificationWarningColor: #ffffff;
+  --notificationWarningBg: #8a6100;
+  --notificationErrorColor: #ffffff;
+  --notificationErrorBg: #b33226;
+  --editorAreaWidth: 1000px;
+
+  --theme-color: var(--themeColor);
+  --highlight-color: var(--highlightColor);
+  --selection-color: var(--selectionColor);
+  --editor-color: var(--editorColor);
+  --editor-color-80: var(--editorColor80);
+  --editor-color-50: var(--editorColor50);
+  --editor-color-30: var(--editorColor30);
+  --editor-color-10: var(--editorColor10);
+  --editor-color-04: var(--editorColor04);
+  --editor-bg-color: var(--editorBgColor);
+  --editor-area-width: var(--editorAreaWidth);
+  --delete-color: var(--deleteColor);
+  --icon-color: var(--iconColor);
+  --code-block-bg-color: var(--codeBlockBgColor);
+  --code-block-color: var(--codeBlockColor);
+  --table-border-color: var(--tableBorderColor);
+  --input-bg-color: var(--inputBgColor);
+  --button-font-color: var(--buttonFontColor);
+  --button-bg-color: var(--buttonBgColor);
+  --button-border: var(--buttonBorder);
+  --button-bg-color-hover: var(--buttonBgColorHover);
+  --button-border-hover: var(--buttonBorderHover);
+  --button-bg-color-active: var(--buttonBgColorActive);
+  --button-border-active: var(--buttonBorderActive);
+  --button-border-focus: var(--button-border);
+  --float-bg-color: var(--floatBgColor);
+  --float-hover-color: var(--floatHoverColor);
+  --float-border-color: var(--floatBorderColor);
+  --float-shadow: rgba(49, 49, 49, 0.08) 0 1px 3px, rgba(49, 49, 49, 0.12) 0 8px 24px;
+  --link-color: var(--linkColor);
+  --h1-color: var(--h1Color);
+  --h2-color: var(--h2Color);
+  --h3-color: var(--h3Color);
+  --h4-color: var(--h4Color);
+  --h5-color: var(--h5Color);
+  --h6-color: var(--h6Color);
+  --blockquote-text-color: var(--blockquoteTextColor);
+  --blockquote-border-color: var(--blockquoteBorderColor);
+  --strong-color: var(--strongColor);
+  --em-color: var(--emColor);
+  --list-marker-color: var(--listMarkerColor);
+  --hr-color: var(--hrColor);
+}
+
+::-webkit-scrollbar {
+  background: var(--editorBgColor);
+}
+
+.title-bar .frameless-titlebar-button > div > svg {
+  fill: #313131;
+}
+
+.side-bar {
+  border-right: 1px solid #eaeaea !important;
+}
+
+.editor-tabs {
+  box-shadow: none !important;
+}
+
+/* ---------------- Markdown 排版 ---------------- */
+
+.mu-container h1,
+.mu-container h2,
+.mu-container h3 {
+  font-family: Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+  font-weight: 700;
+}
+
+.mu-container h1 {
+  margin-top: 1.6em;
+  margin-bottom: 0.7em;
+  font-size: 1.75em;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+}
+
+.mu-container h2 {
+  margin-top: 1.8em;
+  font-size: 1.35em;
+  letter-spacing: 0.01em;
+}
+
+.mu-container h3 {
+  margin-top: 1.6em;
+  font-size: 1.12em;
+  letter-spacing: 0.01em;
+}
+
+.mu-container h4 {
+  font-size: 1.02em;
+  font-weight: 700;
+}
+
+.mu-container h5 {
+  font-size: 0.98em;
+  font-weight: 700;
+}
+
+.mu-container h6 {
+  font-size: 0.9em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #6b6b6b;
+}
+
+.mu-container blockquote {
+  margin: 1.2em 0;
+  padding: 0.3em 1.1em;
+  font-style: italic;
+  color: var(--blockquoteTextColor);
+  background: transparent;
+}
+
+.mu-container blockquote::before {
+  left: 0;
+  width: 2px;
+  background: var(--themeColor);
+}
+
+.mu-container a {
+  color: var(--linkColor);
+  text-decoration: none;
+}
+
+.mu-container a:hover {
+  text-decoration: underline;
+}
+
+.mu-container strong {
+  color: var(--strongColor);
+}
+
+:not(pre) > code {
+  padding: 0.15em 0.4em;
+  font-size: 85%;
+  color: #c4451d;
+  background: rgba(49, 49, 49, 0.055);
+  border-radius: 2px;
+}
+
+.mu-container table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.mu-container table th {
+  padding: 7px 12px;
+  font-weight: 700;
+  color: #1f1f1f;
+  background: transparent;
+  border: 1px solid #e0e0e0;
+}
+
+.mu-container table td {
+  padding: 7px 12px;
+  border: 1px solid #e0e0e0;
+}
+
+.mu-thematic-break:not(.mu-active)::before {
+  height: 0;
+  border-top: 1px solid rgba(49, 49, 49, 0.15);
+}

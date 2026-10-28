@@ -31,7 +31,14 @@ import {
   typoraIaLight,
   typoraTypo,
   typoraTokyoNight,
-  typoraRosePine
+  typoraRosePine,
+  typoraInkwellBlue,
+  typoraLucidLight,
+  typoraLucidDark,
+  typoraArkfield,
+  typoraVlookOwl,
+  typoraVlookNote,
+  typoraVlookJoint
 } from './themeColor'
 import { isLinux } from './index'
 
@@ -66,7 +73,14 @@ const THEME_BUILDERS: Record<string, () => string> = {
   'typora-ia-light': typoraIaLight,
   'typora-typo': typoraTypo,
   'typora-tokyo-night': typoraTokyoNight,
-  'typora-rose-pine': typoraRosePine
+  'typora-rose-pine': typoraRosePine,
+  'typora-inkwell-blue': typoraInkwellBlue,
+  'typora-lucid-light': typoraLucidLight,
+  'typora-lucid-dark': typoraLucidDark,
+  'typora-arkfield': typoraArkfield,
+  'typora-vlook-owl': typoraVlookOwl,
+  'typora-vlook-note': typoraVlookNote,
+  'typora-vlook-joint': typoraVlookJoint
 }
 
 // Themes rendered on a dark background. Drives the `dark` body class that
@@ -84,7 +98,8 @@ const DARK_THEME_IDS = new Set([
   'typora-one-dark',
   'typora-gruvbox',
   'typora-tokyo-night',
-  'typora-rose-pine'
+  'typora-rose-pine',
+  'typora-lucid-dark'
 ])
 
 /**

@@ -36,18 +36,30 @@ test('window chrome and toolbar follow the editor column', async() => {
   }
   const geometry = () =>
     page.evaluate(() => {
-      const editor = document.querySelector('.editor-with-tabs')!.getBoundingClientRect()
+      const editorEl = document.querySelector('.editor-with-tabs')!
+      const editor = editorEl.getBoundingClientRect()
       const toolbar = document.querySelector('.bottom-toolbar')!.getBoundingClientRect()
       const sidebar = document.querySelector('.side-bar')!.getBoundingClientRect()
       return {
         error: Math.abs(toolbar.x + toolbar.width / 2 - editor.x - editor.width / 2),
         center: toolbar.x + toolbar.width / 2,
         editorLeft: editor.left,
-        sidebarRight: sidebar.right
+        sidebarRight: sidebar.right,
+        // The card shell insets the editor from the sidebar by this margin, so
+        // editorLeft and sidebarRight never coincide.
+        gutter: parseFloat(getComputedStyle(editorEl).marginLeft)
       }
     })
   const centered = async() => {
-    await expect.poll(async() => (await geometry()).error).toBeLessThan(1)
+    const deadline = Date.now() + 10000
+    let last = await geometry()
+    while (Date.now() < deadline && last.error >= 1) {
+      await page.waitForTimeout(100)
+      last = await geometry()
+    }
+    // Carry the measurements in the assertion message: a bare "expected < 1" on
+    // an intermittent failure says nothing about which box moved.
+    expect(last.error, `toolbar off centre: ${JSON.stringify(last)}`).toBeLessThan(1)
     await expect(page.locator('.bottom-toolbar')).toBeVisible()
   }
   try {
@@ -59,7 +71,13 @@ test('window chrome and toolbar follow the editor column', async() => {
       await centered()
       const expanded = await geometry()
       expect(expanded.center).toBeGreaterThan(hiddenCenter + 100)
-      expect(Math.abs(expanded.editorLeft - expanded.sidebarRight)).toBeLessThan(1)
+      // The editor sits in its own card, inset from the sidebar by a fixed
+      // gutter. Assert the gutter instead of expecting the two edges to touch:
+      // the pre-1.0.9 flush layout is gone, but the editor must still border the
+      // sidebar (no unstyled gap beyond that margin).
+      expect(expanded.editorLeft - expanded.sidebarRight).toBeCloseTo(expanded.gutter, 1)
+      expect(expanded.gutter).toBeGreaterThan(0)
+      expect(expanded.gutter).toBeLessThan(8)
     })
     await test.step('follow collapse, repeated expansion and dragging without accumulating rail width', async() => {
       const rail = page.locator('.side-bar-rail .rail-icon').first()

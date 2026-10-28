@@ -1,0 +1,281 @@
+/*
+ * Ayu Light
+ * 迁移自 https://github.com/ayu-theme/ayu 官方 light 配色（MIT）。
+ * 极浅米白底 + 琥珀橙强调：背景 #fcfcfc、正文 #5c6166、强调 #f29718。
+ * 排版特征：标题极简无装饰，引用块为浅灰米底配橙色细线，圆角克制。
+ */
+
+:root {
+  /*editor*/
+  --themeColor: #f29718;
+  --themeColor90: rgba(242, 151, 24, 0.9);
+  --themeColor80: rgba(242, 151, 24, 0.8);
+  --themeColor70: rgba(242, 151, 24, 0.7);
+  --themeColor60: rgba(242, 151, 24, 0.6);
+  --themeColor50: rgba(242, 151, 24, 0.5);
+  --themeColor40: rgba(242, 151, 24, 0.4);
+  --themeColor30: rgba(242, 151, 24, 0.3);
+  --themeColor20: rgba(242, 151, 24, 0.2);
+  --themeColor10: rgba(242, 151, 24, 0.1);
+  --highlightThemeColor: #f29718;
+
+  --highlightColor: rgba(242, 151, 24, 0.3);
+  --selectionColor: rgba(3, 91, 214, 0.15);
+  --editorColor: #5c6166;
+  --editorColor80: #40454a;
+  --editorColor70: rgba(92, 97, 102, 0.7);
+  --editorColor60: rgba(92, 97, 102, 0.6);
+  --editorColor50: rgba(92, 97, 102, 0.5);
+  --editorColor40: rgba(92, 97, 102, 0.4);
+  --editorColor30: rgba(92, 97, 102, 0.3);
+  --editorColor20: rgba(92, 97, 102, 0.2);
+  --editorColor10: rgba(92, 97, 102, 0.1);
+  --editorColor04: rgba(92, 97, 102, 0.04);
+  --editorBgColor: #fcfcfc;
+  --deleteColor: #f07171;
+  --iconColor: rgba(92, 97, 102, 0.55);
+  --codeBgColor: rgba(130, 142, 159, 0.12);
+  --codeBlockBgColor: #f5f5f4;
+  --codeBlockColor: #5c6166;
+  --footnoteBgColor: rgba(130, 142, 159, 0.1);
+  --inputBgColor: #f5f5f4;
+
+  --focusColor: var(--themeColor);
+
+  --buttonFontColor: #5c6166;
+  --buttonBgColor: #f5f5f4;
+  --buttonBorder: 1px solid #e2e2e0;
+  --buttonShadow: none;
+  --buttonFontColorHover: var(--buttonFontColor);
+  --buttonBgColorHover: #ececeb;
+  --buttonBorderHover: 1px solid #d5d5d3;
+  --buttonFontColorActive: var(--buttonFontColor);
+  --buttonBgColorActive: #e4e4e2;
+  --buttonBorderActive: var(--buttonBorder);
+  --buttonFocusBorder: 1px solid #f29718;
+
+  --buttonPrimaryFontColor: #ffffff;
+  --buttonPrimaryBgColor: #f29718;
+  --buttonPrimaryBorder: none;
+  --buttonPrimaryShadow: none;
+  --buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
+  --buttonPrimaryBgColorHover: #f5a63c;
+  --buttonPrimaryBorderHover: var(--buttonPrimaryBorder);
+  --buttonPrimaryFontColorActive: var(--buttonPrimaryFontColor);
+  --buttonPrimaryBgColorActive: #dd880f;
+  --buttonPrimaryBorderActive: var(--buttonPrimaryBorder);
+  --buttonPrimaryFocusBorder: none;
+  --buttonPrimaryFocusShadow: 0 0 0 3px rgba(242, 151, 24, 0.28);
+  --tableBorderColor: #e2e2e0;
+
+  /* Markdown element colors */
+  --headingColor: #40454a;
+  --h1Color: #3d4248;
+  --h2Color: #3d4248;
+  --h3Color: #40454a;
+  --h4Color: #5c6166;
+  --h5Color: #5c6166;
+  --h6Color: #828e9f;
+  --blockquoteTextColor: #5c6166;
+  --blockquoteBorderColor: #f29718;
+  --hrColor: rgba(92, 97, 102, 0.2);
+  --linkColor: #22a4e6;
+  --strongColor: #3d4248;
+  --emColor: #a37acc;
+  --listMarkerColor: #f29718;
+
+  /*marktext*/
+  --sideBarColor: rgba(92, 97, 102, 0.6);
+  --sideBarIconColor: var(--iconColor);
+  --sideBarTitleColor: #3d4248;
+  --sideBarTextColor: rgba(92, 97, 102, 0.45);
+  --sideBarBgColor: #f5f5f4;
+  --sideBarItemHoverBgColor: rgba(242, 151, 24, 0.1);
+  --itemBgColor: #ececeb;
+
+  --floatFontColor: #5c6166;
+  --floatBgColor: #ffffff;
+  --floatHoverColor: #f5f5f4;
+  --floatBorderColor: #e2e2e0;
+  --floatShadow: rgba(92, 97, 102, 0.16);
+  --maskColor: rgba(92, 97, 102, 0.2);
+
+  /* Status + notification colours */
+  --successColor: #4d8a2c;
+  --successBgColor: rgba(77, 138, 44, 0.12);
+  --warningColor: #a86400;
+  --warningBgColor: rgba(168, 100, 0, 0.12);
+  --notificationPrimaryColor: #3d2b06;
+  --notificationPrimaryBg: #f6b73f;
+  --notificationInfoColor: #40454a;
+  --notificationInfoBg: #ececeb;
+  --notificationWarningColor: #3d4248;
+  --notificationWarningBg: #ffd08a;
+  --notificationErrorColor: #ffffff;
+  --notificationErrorBg: #e35535;
+  --editorAreaWidth: 1000px;
+
+  --theme-color: var(--themeColor);
+  --highlight-color: var(--highlightColor);
+  --selection-color: var(--selectionColor);
+  --editor-color: var(--editorColor);
+  --editor-color-80: var(--editorColor80);
+  --editor-color-50: var(--editorColor50);
+  --editor-color-30: var(--editorColor30);
+  --editor-color-10: var(--editorColor10);
+  --editor-color-04: var(--editorColor04);
+  --editor-bg-color: var(--editorBgColor);
+  --editor-area-width: var(--editorAreaWidth);
+  --delete-color: var(--deleteColor);
+  --icon-color: var(--iconColor);
+  --code-block-bg-color: var(--codeBlockBgColor);
+  --code-block-color: var(--codeBlockColor);
+  --table-border-color: var(--tableBorderColor);
+  --input-bg-color: var(--inputBgColor);
+  --button-font-color: var(--buttonFontColor);
+  --button-bg-color: var(--buttonBgColor);
+  --button-border: var(--buttonBorder);
+  --button-bg-color-hover: var(--buttonBgColorHover);
+  --button-border-hover: var(--buttonBorderHover);
+  --button-bg-color-active: var(--buttonBgColorActive);
+  --button-border-active: var(--buttonBorderActive);
+  --button-border-focus: var(--button-border);
+  --float-bg-color: var(--floatBgColor);
+  --float-hover-color: var(--floatHoverColor);
+  --float-border-color: var(--floatBorderColor);
+  --float-shadow: rgba(92, 97, 102, 0.1) 0 1px 3px, rgba(92, 97, 102, 0.14) 0 8px 24px;
+  --link-color: var(--linkColor);
+  --h1-color: var(--h1Color);
+  --h2-color: var(--h2Color);
+  --h3-color: var(--h3Color);
+  --h4-color: var(--h4Color);
+  --h5-color: var(--h5Color);
+  --h6-color: var(--h6Color);
+  --blockquote-text-color: var(--blockquoteTextColor);
+  --blockquote-border-color: var(--blockquoteBorderColor);
+  --strong-color: var(--strongColor);
+  --em-color: var(--emColor);
+  --list-marker-color: var(--listMarkerColor);
+  --hr-color: var(--hrColor);
+}
+
+::-webkit-scrollbar {
+  background: var(--editorBgColor);
+}
+
+.title-bar .frameless-titlebar-button > div > svg {
+  fill: #5c6166;
+}
+
+.side-bar {
+  border-right: 1px solid #e8e8e6 !important;
+}
+
+.editor-tabs {
+  box-shadow: none !important;
+}
+
+/* ---------------- Markdown 排版 ---------------- */
+
+.mu-container h1 {
+  margin-top: 1.5em;
+  margin-bottom: 0.7em;
+  font-size: 1.9em;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.012em;
+}
+
+.mu-container h2 {
+  margin-top: 1.6em;
+  font-size: 1.45em;
+  font-weight: 600;
+}
+
+.mu-container h3 {
+  margin-top: 1.4em;
+  font-size: 1.24em;
+  font-weight: 600;
+}
+
+.mu-container h4 {
+  font-size: 1.08em;
+  font-weight: 600;
+}
+
+.mu-container h5 {
+  font-size: 1em;
+  font-weight: 600;
+}
+
+.mu-container h6 {
+  font-size: 0.9em;
+  font-weight: 600;
+  color: #828e9f;
+}
+
+.mu-container blockquote {
+  margin: 1em 0;
+  padding: 0.4em 1em;
+  color: var(--blockquoteTextColor);
+  background: rgba(130, 142, 159, 0.08);
+  border-radius: 3px;
+}
+
+.mu-container blockquote::before {
+  left: 0;
+  width: 3px;
+  background: var(--themeColor);
+}
+
+.mu-container a {
+  color: var(--linkColor);
+  text-decoration: none;
+}
+
+.mu-container a:hover {
+  text-decoration: underline;
+}
+
+.mu-container strong {
+  color: var(--strongColor);
+}
+
+.mu-container em {
+  color: var(--emColor);
+}
+
+:not(pre) > code {
+  padding: 0.15em 0.4em;
+  font-size: 85%;
+  color: #e08a0c;
+  background: rgba(130, 142, 159, 0.13);
+  border-radius: 3px;
+}
+
+.mu-container table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.mu-container table th {
+  padding: 7px 12px;
+  font-weight: 600;
+  color: #40454a;
+  background: rgba(130, 142, 159, 0.1);
+  border: 1px solid #e2e2e0;
+}
+
+.mu-container table td {
+  padding: 7px 12px;
+  border: 1px solid #e2e2e0;
+}
+
+.mu-container table tr:nth-child(2n) {
+  background: rgba(130, 142, 159, 0.05);
+}
+
+.mu-thematic-break:not(.mu-active)::before {
+  height: 0;
+  border-top: 1px solid rgba(92, 97, 102, 0.2);
+}

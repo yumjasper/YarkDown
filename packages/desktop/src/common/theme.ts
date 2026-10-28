@@ -6,7 +6,15 @@ export const railscastsThemes: readonly string[] = Object.freeze([
   'typora-notion-dark',
   'typora-drake-dark',
   'typora-cobalt',
-  'typora-lapis'
+  'typora-lapis',
+  'typora-nord',
+  'typora-dracula',
+  'typora-catppuccin',
+  'typora-one-dark',
+  'typora-gruvbox',
+  'typora-tokyo-night',
+  'typora-rose-pine',
+  'typora-lucid-dark'
 ])
 
 export const oneDarkThemes: readonly string[] = Object.freeze([])
@@ -36,7 +44,27 @@ const themeBackgroundColors: ReadonlyMap<string, string> = new Map([
   ['typora-notion-dark', '#191919'],
   ['typora-orange-heart', '#fffefb'],
   ['typora-solarized-light', '#fdf6e3'],
-  ['typora-vue', '#ffffff']
+  ['typora-vue', '#ffffff'],
+  ['typora-nord', '#2e3440'],
+  ['typora-dracula', '#282a36'],
+  ['typora-catppuccin', '#1e1e2e'],
+  ['typora-ayu-light', '#fcfcfc'],
+  ['typora-one-light', '#fafafa'],
+  ['typora-pixyll', '#ffffff'],
+  ['typora-whitey', '#ffffff'],
+  ['typora-one-dark', '#282c34'],
+  ['typora-gruvbox', '#282828'],
+  ['typora-ia-light', '#fafafa'],
+  ['typora-typo', '#f7f1e6'],
+  ['typora-tokyo-night', '#24283b'],
+  ['typora-rose-pine', '#191724'],
+  ['typora-inkwell-blue', '#ffffff'],
+  ['typora-lucid-light', '#ffffff'],
+  ['typora-lucid-dark', '#131416'],
+  ['typora-arkfield', '#fafaf8'],
+  ['typora-vlook-owl', '#ffffff'],
+  ['typora-vlook-note', '#ffffff'],
+  ['typora-vlook-joint', '#ffffff']
 ])
 
 const DARK_FALLBACK_BACKGROUND = '#282828'

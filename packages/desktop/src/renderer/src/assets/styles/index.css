@@ -31,9 +31,11 @@
   --editorColor: #4d4d4d;
   --editorColor80: #333333;
   --editorColor60: #666666;
+  --editorColor70: #4d4d4d;
   --editorColor50: #808080;
   --editorColor40: #999999;
   --editorColor30: #b3b3b3;
+  --editorColor20: #cccccc;
   --editorColor10: #e6e6e6;
   --editorColor04: #f7f7f7;
   --editorBgColor: rgba(255, 255, 255, 1);
@@ -114,6 +116,13 @@
   --notificationWarningBg: #ff8800;
   --notificationErrorColor: #ffffff;
   --notificationErrorBg: #ff6969;
+
+  /* Status colors. Themes override these to stay legible on their own surface;
+     the fallbacks here match the light palette used by the image uploader. */
+  --successColor: #1a7f37;
+  --successBgColor: #f0f9ff;
+  --warningColor: #9a6700;
+  --warningBgColor: #fffbeb;
 }
 
 html::-webkit-scrollbar,

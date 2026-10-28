@@ -18,7 +18,19 @@ const LIGHT_THEMES: ReadonlyArray<readonly [string, string]> = [
   ['typoraVue', 'typora-vue'],
   ['typoraOrangeHeart', 'typora-orange-heart'],
   ['typoraSolarizedLight', 'typora-solarized-light'],
-  ['typoraNewsprint', 'typora-newsprint']
+  ['typoraNewsprint', 'typora-newsprint'],
+  ['typoraAyuLight', 'typora-ayu-light'],
+  ['typoraOneLight', 'typora-one-light'],
+  ['typoraPixyll', 'typora-pixyll'],
+  ['typoraWhitey', 'typora-whitey'],
+  ['typoraIaLight', 'typora-ia-light'],
+  ['typoraTypo', 'typora-typo'],
+  ['typoraInkwellBlue', 'typora-inkwell-blue'],
+  ['typoraLucidLight', 'typora-lucid-light'],
+  ['typoraArkfield', 'typora-arkfield'],
+  ['typoraVlookOwl', 'typora-vlook-owl'],
+  ['typoraVlookNote', 'typora-vlook-note'],
+  ['typoraVlookJoint', 'typora-vlook-joint']
 ]
 
 const DARK_THEMES: ReadonlyArray<readonly [string, string]> = [
@@ -27,7 +39,15 @@ const DARK_THEMES: ReadonlyArray<readonly [string, string]> = [
   ['typoraNotionDark', 'typora-notion-dark'],
   ['typoraDrakeDark', 'typora-drake-dark'],
   ['typoraCobalt', 'typora-cobalt'],
-  ['typoraLapis', 'typora-lapis']
+  ['typoraLapis', 'typora-lapis'],
+  ['typoraNord', 'typora-nord'],
+  ['typoraDracula', 'typora-dracula'],
+  ['typoraCatppuccin', 'typora-catppuccin'],
+  ['typoraOneDark', 'typora-one-dark'],
+  ['typoraGruvbox', 'typora-gruvbox'],
+  ['typoraTokyoNight', 'typora-tokyo-night'],
+  ['typoraRosePine', 'typora-rose-pine'],
+  ['typoraLucidDark', 'typora-lucid-dark']
 ]
 
 export default function(userPreference: Preference): MenuItemConstructorOptions {

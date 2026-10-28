@@ -1,10 +1,19 @@
 import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
-import { launchWithMarkdown, clickMenuById, setSourceMarkdown } from './helpers'
+import { launchWithMarkdown, clickMenuById, setSourceMarkdown, closeApp } from './helpers'
 
 test.describe('Theme switching', () => {
   let app: ElectronApplication
   let page: Page
+
+  /**
+   * Fingerprint of the injected theme stylesheet. Several themes share the same
+   * `body.dark` state, so tests that switch between them must wait for the
+   * stylesheet itself to change rather than for the class.
+   */
+  const readThemeStylesheet = async(): Promise<string> => {
+    return await page.evaluate(() => document.getElementById('ag-theme')?.textContent ?? '')
+  }
 
   test.beforeAll(async() => {
     const launched = await launchWithMarkdown('# Theme test\n\nHello theme world.\n')
@@ -13,7 +22,7 @@ test.describe('Theme switching', () => {
   })
 
   test.afterAll(async() => {
-    if (app) await app.close()
+    await closeApp(app)
   })
 
   test('Switch to a dark theme adds body.dark', async() => {
@@ -123,7 +132,12 @@ test.describe('Theme switching', () => {
 
     const observed = new Map<string, string>()
     for (const theme of ['typora-dracula', 'typora-nord', 'typora-github-dark']) {
+      // Waiting on `body.dark` is not enough: every dark theme keeps that class,
+      // so the wait returns immediately and we would read the previous theme's
+      // colour. Wait until the injected stylesheet actually holds this theme.
+      const before = await readThemeStylesheet()
       await clickMenuById(app, theme)
+      await expect.poll(readThemeStylesheet, { timeout: 10000 }).not.toBe(before)
       await expect(page.locator('body')).toHaveClass(/(^|\s)dark(\s|$)/)
       await expect
         .poll(async() => await readKeywordColor(), { timeout: 10000 })

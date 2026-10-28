@@ -1,0 +1,365 @@
+/*
+ * Inkwell Blue（移植自 https://theme.typora.io/theme/inkwell-blue/）
+ * 天空与海的静谧蓝色调浅色主题，面向技术笔记与长篇写作。
+ * 排版特征：h1/h2 底部细分隔线、表格外框与单元格网格线 + 白蓝斑马纹、
+ * 代码块浅色底 + 语言标签条、链接悬停时下划线浮现。
+ */
+
+:root {
+  /*editor*/
+  --themeColor: #3b82c4;
+  --themeColor90: rgba(59, 130, 196, 0.9);
+  --themeColor80: rgba(59, 130, 196, 0.8);
+  --themeColor70: rgba(59, 130, 196, 0.7);
+  --themeColor60: rgba(59, 130, 196, 0.6);
+  --themeColor50: rgba(59, 130, 196, 0.5);
+  --themeColor40: rgba(59, 130, 196, 0.4);
+  --themeColor30: rgba(59, 130, 196, 0.3);
+  --themeColor20: rgba(59, 130, 196, 0.2);
+  --themeColor10: rgba(59, 130, 196, 0.1);
+  --highlightThemeColor: #3b82c4;
+
+  --highlightColor: rgba(254, 243, 205, 0.9);
+  --selectionColor: #d4e4f7;
+  --editorColor: #3d4852;
+  --editorColor80: #2c3644;
+  --editorColor60: rgba(61, 72, 82, 0.6);
+  --editorColor70: rgba(61, 72, 82, 0.7);
+  --editorColor50: rgba(61, 72, 82, 0.5);
+  --editorColor40: rgba(61, 72, 82, 0.4);
+  --editorColor30: rgba(61, 72, 82, 0.3);
+  --editorColor20: rgba(61, 72, 82, 0.2);
+  --editorColor10: rgba(61, 72, 82, 0.1);
+  --editorColor04: rgba(61, 72, 82, 0.04);
+  --editorBgColor: #ffffff;
+  --deleteColor: #dc2626;
+  --iconColor: rgba(61, 72, 82, 0.5);
+  --codeBgColor: #f7fafc;
+  --codeBlockBgColor: #f7fafc;
+  --codeBlockColor: #3d4852;
+  --footnoteBgColor: #f8fafc;
+  --inputBgColor: #f7fafc;
+
+  --focusColor: var(--themeColor);
+
+  --buttonFontColor: #3d4852;
+  --buttonBgColor: #ffffff;
+  --buttonBorder: 1px solid #e2e8f0;
+  --buttonShadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --buttonFontColorHover: var(--buttonFontColor);
+  --buttonBgColorHover: #f1f5f9;
+  --buttonBorderHover: 1px solid #cbd5e1;
+  --buttonFontColorActive: var(--buttonFontColor);
+  --buttonBgColorActive: #e2e8f0;
+  --buttonBorderActive: var(--buttonBorder);
+  --buttonFocusBorder: 1px solid #3b82c4;
+
+  --buttonPrimaryFontColor: #ffffff;
+  --buttonPrimaryBgColor: #3b82c4;
+  --buttonPrimaryBorder: none;
+  --buttonPrimaryShadow: none;
+  --buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
+  --buttonPrimaryBgColorHover: #2563a0;
+  --buttonPrimaryBorderHover: var(--buttonPrimaryBorder);
+  --buttonPrimaryFontColorActive: var(--buttonPrimaryFontColor);
+  --buttonPrimaryBgColorActive: #1d4e7f;
+  --buttonPrimaryBorderActive: var(--buttonPrimaryBorder);
+  --buttonPrimaryFocusBorder: none;
+  --buttonPrimaryFocusShadow: 0 0 0 3px rgba(59, 130, 196, 0.22);
+  --tableBorderColor: #8095a5;
+
+  /* Markdown element colors */
+  --headingColor: #1a2332;
+  --h1Color: #1a2332;
+  --h2Color: #2c3e50;
+  --h3Color: #2c3e50;
+  --h4Color: #2c3e50;
+  --h5Color: #5a6872;
+  --h6Color: #6b7a88;
+  --blockquoteTextColor: #5a6872;
+  --blockquoteBorderColor: #94a3b8;
+  --hrColor: #d1d9e0;
+  --linkColor: #3b82c4;
+  --strongColor: #2c3644;
+  --emColor: #2c3e50;
+  --listMarkerColor: #94a3b8;
+
+  /*marktext*/
+  --sideBarColor: rgba(61, 72, 82, 0.6);
+  --sideBarIconColor: var(--iconColor);
+  --sideBarTitleColor: #1a2332;
+  --sideBarTextColor: rgba(61, 72, 82, 0.45);
+  --sideBarBgColor: #f7fafc;
+  --sideBarItemHoverBgColor: rgba(59, 130, 196, 0.08);
+  --itemBgColor: #eef4f8;
+
+  --floatFontColor: #3d4852;
+  --floatBgColor: #ffffff;
+  --floatHoverColor: #f1f5f9;
+  --floatBorderColor: #e2e8f0;
+  --floatShadow: rgba(48, 72, 88, 0.16);
+  --maskColor: rgba(26, 35, 50, 0.55);
+
+  --successColor: #15803d;
+  --successBgColor: #f0fdf4;
+  --warningColor: #b45309;
+  --warningBgColor: #fffbeb;
+  --notificationPrimaryColor: #ffffff;
+  --notificationPrimaryBg: #3b82c4;
+  --notificationInfoColor: #1a2332;
+  --notificationInfoBg: #e2e8f0;
+  --notificationWarningColor: #ffffff;
+  --notificationWarningBg: #b45309;
+  --notificationErrorColor: #ffffff;
+  --notificationErrorBg: #dc2626;
+  --editorAreaWidth: 1000px;
+
+  --theme-color: var(--themeColor);
+  --highlight-color: var(--highlightColor);
+  --selection-color: var(--selectionColor);
+  --editor-color: var(--editorColor);
+  --editor-color-80: var(--editorColor80);
+  --editor-color-50: var(--editorColor50);
+  --editor-color-30: var(--editorColor30);
+  --editor-color-10: var(--editorColor10);
+  --editor-color-04: var(--editorColor04);
+  --editor-bg-color: var(--editorBgColor);
+  --editor-area-width: var(--editorAreaWidth);
+  --delete-color: var(--deleteColor);
+  --icon-color: var(--iconColor);
+  --code-block-bg-color: var(--codeBlockBgColor);
+  --code-block-color: var(--codeBlockColor);
+  --table-border-color: var(--tableBorderColor);
+  --input-bg-color: var(--inputBgColor);
+  --button-font-color: var(--buttonFontColor);
+  --button-bg-color: var(--buttonBgColor);
+  --button-border: var(--buttonBorder);
+  --button-bg-color-hover: var(--buttonBgColorHover);
+  --button-border-hover: var(--buttonBorderHover);
+  --button-bg-color-active: var(--buttonBgColorActive);
+  --button-border-active: var(--buttonBorderActive);
+  --button-border-focus: var(--button-border);
+  --float-bg-color: var(--floatBgColor);
+  --float-hover-color: var(--floatHoverColor);
+  --float-border-color: var(--floatBorderColor);
+  --float-shadow: rgba(48, 72, 88, 0.09) 0 2px 6px, rgba(48, 72, 88, 0.12) 0 8px 24px;
+  --link-color: var(--linkColor);
+  --h1-color: var(--h1Color);
+  --h2-color: var(--h2Color);
+  --h3-color: var(--h3Color);
+  --h4-color: var(--h4Color);
+  --h5-color: var(--h5Color);
+  --h6-color: var(--h6Color);
+  --blockquote-text-color: var(--blockquoteTextColor);
+  --blockquote-border-color: var(--blockquoteBorderColor);
+  --strong-color: var(--strongColor);
+  --em-color: var(--emColor);
+  --list-marker-color: var(--listMarkerColor);
+  --hr-color: var(--hrColor);
+}
+
+::-webkit-scrollbar {
+  background: var(--editorBgColor);
+}
+
+.title-bar .frameless-titlebar-button > div > svg {
+  fill: rgba(26, 35, 50, 0.6);
+}
+
+.side-bar {
+  border-right: 1px solid #eef2f7 !important;
+}
+
+.editor-tabs {
+  box-shadow: none !important;
+}
+
+/* ---------------- Markdown 排版 ---------------- */
+
+.mu-container {
+  font-family:
+    'JetBrains Mono', 'Cascadia Code', 'Consolas', 'Noto Sans SC', 'Microsoft YaHei UI', sans-serif;
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--editorColor);
+}
+
+.mu-container h1,
+.mu-container h2,
+.mu-container h3,
+.mu-container h4,
+.mu-container h5,
+.mu-container h6 {
+  margin-top: 1.8em;
+  margin-bottom: 0.65em;
+  color: var(--headingColor);
+  font-weight: 600;
+  line-height: 1.35;
+  position: relative;
+}
+
+.mu-container h1 {
+  margin-top: 1.2em;
+  padding-bottom: 0.35em;
+  font-size: 2em;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.mu-container h2 {
+  padding-bottom: 0.25em;
+  font-size: 1.55em;
+  color: #2c3e50;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.mu-container h3 {
+  font-size: 1.3em;
+  color: #2c3e50;
+}
+
+.mu-container h4 {
+  font-size: 1.12em;
+  color: #2c3e50;
+}
+
+.mu-container h5 {
+  font-size: 1em;
+  color: #5a6872;
+}
+
+.mu-container h6 {
+  font-size: 0.92em;
+  font-weight: 500;
+  color: #6b7a88;
+}
+
+.mu-container p {
+  margin: 0 0 1em;
+  line-height: 1.75;
+}
+
+.mu-container strong {
+  font-weight: 600;
+  color: #2c3644;
+}
+
+.mu-container em {
+  font-style: italic;
+}
+
+.mu-container blockquote {
+  margin: 1em 0;
+  padding: 0.8em 1.2em;
+  color: var(--blockquoteTextColor);
+  background-color: #f8fafc;
+  border-radius: 0 6px 6px 0;
+}
+
+.mu-container blockquote::before {
+  left: 0;
+  width: 4px;
+  background: #94a3b8;
+}
+
+.mu-container blockquote blockquote::before {
+  background: #cbd5e1;
+}
+
+.mu-container a {
+  color: var(--linkColor);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.mu-container a:hover {
+  color: #2563a0;
+  border-bottom-color: #2563a0;
+}
+
+.mu-container ul > li::marker {
+  color: #94a3b8;
+}
+
+.mu-container ol > li::marker {
+  color: #2c3e50;
+  font-weight: 500;
+}
+
+.mu-container mark {
+  padding: 0.15em 0.35em;
+  color: #7c6200;
+  background-color: #fef3cd;
+  border-radius: 3px;
+}
+
+:not(pre) > code {
+  padding: 0.2em 0.45em;
+  font-family: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
+  font-size: 0.88em;
+  color: #c7254e;
+  background-color: #f7fafc;
+  border-radius: 4px;
+}
+
+/* 代码块：浅色底 + 语言标签条 */
+.mu-code-block,
+.mu-frontmatter {
+  margin: 1.2em 0;
+  background-color: #f7fafc;
+  border: 1px solid #c8d7e2;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(48, 72, 88, 0.09);
+}
+
+.mu-code-block .mu-language-input,
+.mu-code-block .mu-language-input:empty::after {
+  color: #8896a4;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 0.78em;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mu-code-block .mu-code,
+.mu-code-block .mu-code span {
+  font-family: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
+  font-size: 0.88em;
+  line-height: 1.65;
+  color: #3d4852;
+}
+
+/* 表格：可见外框 + 单元格网格线 + 白蓝斑马纹 */
+.mu-table-inner tr th,
+.mu-table-inner tr td {
+  padding: 8px 14px;
+  border: 1px solid #8095a5;
+}
+
+.mu-table-inner tr th {
+  color: #1a2332;
+  font-weight: 600;
+  background-color: #f1f5f9;
+}
+
+.mu-table-inner tr:nth-child(odd) {
+  background-color: #ffffff;
+}
+
+.mu-table-inner tr:nth-child(even) {
+  background-color: #eef4f8;
+}
+
+.mu-container figure:not(.mu-table) img {
+  border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(48, 72, 88, 0.12);
+}
+
+.mu-thematic-break:not(.mu-active)::before {
+  height: 0;
+  border-top: 1px solid #d1d9e0;
+}

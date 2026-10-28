@@ -143,6 +143,32 @@ export const clearRendererErrors = async(app: ElectronApplication): Promise<void
   })
 }
 
+// `app.close()` occasionally hangs while tearing down editor windows, which
+// surfaces as an opaque "afterAll hook timeout" on a test that actually passed.
+// Tear down via `app.quit()` first and fall back to a forced close, so a stuck
+// window cannot fail an unrelated spec.
+export const closeApp = async(app: ElectronApplication, timeoutMs = 15000): Promise<void> => {
+  if (!app) return
+  try {
+    await app.evaluate(({ app: electronApp }) => {
+      for (const win of electronApp.getWindows?.() ?? []) {
+        if (!win.isDestroyed()) win.destroy()
+      }
+      electronApp.quit()
+    })
+  } catch {
+    /* the app may already be gone */
+  }
+  try {
+    await Promise.race([
+      app.close(),
+      new Promise((resolve) => setTimeout(resolve, timeoutMs))
+    ])
+  } catch {
+    /* ignored: the window tree is already torn down above */
+  }
+}
+
 // Assert that no renderer-process error has been captured since the last clear.
 // On failure, prints the captured stacks so the spec output is actionable.
 export const expectNoRendererErrors = async(app: ElectronApplication): Promise<void> => {

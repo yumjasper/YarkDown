@@ -1,0 +1,529 @@
+/*
+ * Arkfield（移植自 https://theme.typora.io/theme/arkfield/）
+ * 工程制图气质的浅色主题：canvas #f2f2f0 网格底 + paper #fafaf8 纸面，
+ * signal #fffa00 荧光黄作为唯一强调色，所有线条直角、零圆角。
+ * 排版特征：Space Grotesk 标题 + Inter 正文 + Fira Code 等宽；
+ * h1 底部「黄 4rem + 墨色延伸」双段标尺线，h2 前置方块加双段下划线，
+ * h3~h6 左侧 inset 竖条分级。
+ */
+
+@font-face {
+  font-family: 'Inter';
+  src: url('./fonts/Inter-VF.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('./fonts/Inter-Italic-VF.woff2') format('woff2');
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('./fonts/SpaceGrotesk-VF.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Fira Code';
+  src: url('./fonts/FiraCode-VF.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+}
+
+:root {
+  --ark-ink: #191919;
+  --ark-soft: #33332e;
+  --ark-muted: #55554e;
+  --ark-char: #8a8a82;
+  --ark-blur: #9c9c95;
+  --ark-rule: #d7d7d1;
+  --ark-canvas: #f2f2f0;
+  --ark-paper: #fafaf8;
+  --ark-signal: #fffa00;
+  --ark-verified: #00754a;
+  --ark-info: #315b76;
+  --ark-important: #6843a5;
+  --ark-warning: #8a4b00;
+  --ark-error: #d92e16;
+
+  /*editor*/
+  --themeColor: #191919;
+  --themeColor90: rgba(25, 25, 25, 0.9);
+  --themeColor80: rgba(25, 25, 25, 0.8);
+  --themeColor70: rgba(25, 25, 25, 0.7);
+  --themeColor60: rgba(25, 25, 25, 0.6);
+  --themeColor50: rgba(25, 25, 25, 0.5);
+  --themeColor40: rgba(25, 25, 25, 0.4);
+  --themeColor30: rgba(25, 25, 25, 0.3);
+  --themeColor20: rgba(25, 25, 25, 0.2);
+  --themeColor10: rgba(25, 25, 25, 0.1);
+  --highlightThemeColor: #191919;
+
+  --highlightColor: rgba(255, 250, 0, 0.52);
+  --selectionColor: var(--ark-signal);
+  --editorColor: #191919;
+  --editorColor80: #000000;
+  --editorColor60: rgba(25, 25, 25, 0.6);
+  --editorColor70: rgba(25, 25, 25, 0.7);
+  --editorColor50: rgba(25, 25, 25, 0.5);
+  --editorColor40: rgba(25, 25, 25, 0.4);
+  --editorColor30: rgba(25, 25, 25, 0.3);
+  --editorColor20: rgba(25, 25, 25, 0.2);
+  --editorColor10: rgba(25, 25, 25, 0.1);
+  --editorColor04: rgba(25, 25, 25, 0.04);
+  --editorBgColor: #fafaf8;
+  --deleteColor: #d92e16;
+  --iconColor: rgba(25, 25, 25, 0.5);
+  --codeBgColor: #fafaf8;
+  --codeBlockBgColor: #fafaf8;
+  --codeBlockColor: #191919;
+  --footnoteBgColor: #f2f2f0;
+  --inputBgColor: #fafaf8;
+
+  --focusColor: var(--ark-signal);
+
+  --buttonFontColor: #191919;
+  --buttonBgColor: #fafaf8;
+  --buttonBorder: 1px solid #d7d7d1;
+  --buttonShadow: none;
+  --buttonFontColorHover: #191919;
+  --buttonBgColorHover: rgba(25, 25, 25, 0.08);
+  --buttonBorderHover: 1px solid #191919;
+  --buttonFontColorActive: #fafaf8;
+  --buttonBgColorActive: #191919;
+  --buttonBorderActive: 1px solid #191919;
+  --buttonFocusBorder: 1px solid #191919;
+
+  --buttonPrimaryFontColor: #fafaf8;
+  --buttonPrimaryBgColor: #191919;
+  --buttonPrimaryBorder: 1px solid #191919;
+  --buttonPrimaryShadow: none;
+  --buttonPrimaryFontColorHover: #fafaf8;
+  --buttonPrimaryBgColorHover: #33332e;
+  --buttonPrimaryBorderHover: 1px solid #33332e;
+  --buttonPrimaryFontColorActive: #fafaf8;
+  --buttonPrimaryBgColorActive: #000000;
+  --buttonPrimaryBorderActive: 1px solid #000000;
+  --buttonPrimaryFocusBorder: 1px solid #191919;
+  --buttonPrimaryFocusShadow: 0 0 0 4px rgba(255, 250, 0, 0.55);
+  --tableBorderColor: #d7d7d1;
+
+  /* Markdown element colors */
+  --headingColor: #191919;
+  --h1Color: #191919;
+  --h2Color: #191919;
+  --h3Color: #191919;
+  --h4Color: #191919;
+  --h5Color: #33332e;
+  --h6Color: #55554e;
+  --blockquoteTextColor: #33332e;
+  --blockquoteBorderColor: #fffa00;
+  --hrColor: #d7d7d1;
+  --linkColor: #191919;
+  --strongColor: #191919;
+  --emColor: #33332e;
+  --listMarkerColor: #191919;
+
+  /*marktext*/
+  --sideBarColor: rgba(25, 25, 25, 0.6);
+  --sideBarIconColor: var(--iconColor);
+  --sideBarTitleColor: #191919;
+  --sideBarTextColor: #55554e;
+  --sideBarBgColor: #fafaf8;
+  --sideBarItemHoverBgColor: rgba(25, 25, 25, 0.08);
+  --itemBgColor: rgba(25, 25, 25, 0.14);
+
+  --floatFontColor: #191919;
+  --floatBgColor: #fafaf8;
+  --floatHoverColor: rgba(25, 25, 25, 0.08);
+  --floatBorderColor: #d7d7d1;
+  --floatShadow: rgba(25, 25, 25, 0.12);
+  --maskColor: rgba(25, 25, 25, 0.5);
+
+  --successColor: #00754a;
+  --successBgColor: #eaf5ef;
+  --warningColor: #8a4b00;
+  --warningBgColor: #fff5e6;
+  --notificationPrimaryColor: #fafaf8;
+  --notificationPrimaryBg: #191919;
+  --notificationInfoColor: #191919;
+  --notificationInfoBg: #e8e8e4;
+  --notificationWarningColor: #fafaf8;
+  --notificationWarningBg: #8a4b00;
+  --notificationErrorColor: #fafaf8;
+  --notificationErrorBg: #d92e16;
+  --editorAreaWidth: 1000px;
+
+  --theme-color: var(--themeColor);
+  --highlight-color: var(--highlightColor);
+  --selection-color: var(--selectionColor);
+  --editor-color: var(--editorColor);
+  --editor-color-80: var(--editorColor80);
+  --editor-color-50: var(--editorColor50);
+  --editor-color-30: var(--editorColor30);
+  --editor-color-10: var(--editorColor10);
+  --editor-color-04: var(--editorColor04);
+  --editor-bg-color: var(--editorBgColor);
+  --editor-area-width: var(--editorAreaWidth);
+  --delete-color: var(--deleteColor);
+  --icon-color: var(--iconColor);
+  --code-block-bg-color: var(--codeBlockBgColor);
+  --code-block-color: var(--codeBlockColor);
+  --table-border-color: var(--tableBorderColor);
+  --input-bg-color: var(--inputBgColor);
+  --button-font-color: var(--buttonFontColor);
+  --button-bg-color: var(--buttonBgColor);
+  --button-border: var(--buttonBorder);
+  --button-bg-color-hover: var(--buttonBgColorHover);
+  --button-border-hover: var(--buttonBorderHover);
+  --button-bg-color-active: var(--buttonBgColorActive);
+  --button-border-active: var(--buttonBorderActive);
+  --button-border-focus: var(--buttonBorder);
+  --float-bg-color: var(--floatBgColor);
+  --float-hover-color: var(--floatHoverColor);
+  --float-border-color: var(--floatBorderColor);
+  --float-shadow: rgba(25, 25, 25, 0.04) 0 1px 3px, rgba(25, 25, 25, 0.12) 0 8px 24px;
+  --link-color: var(--linkColor);
+  --h1-color: var(--h1Color);
+  --h2-color: var(--h2Color);
+  --h3-color: var(--h3Color);
+  --h4-color: var(--h4Color);
+  --h5-color: var(--h5Color);
+  --h6-color: var(--h6Color);
+  --blockquote-text-color: var(--blockquoteTextColor);
+  --blockquote-border-color: var(--blockquoteBorderColor);
+  --strong-color: var(--strongColor);
+  --em-color: var(--emColor);
+  --list-marker-color: var(--listMarkerColor);
+  --hr-color: var(--hrColor);
+}
+
+/* ---------------- 外框与滚动条 ---------------- */
+
+::-webkit-scrollbar {
+  background: var(--ark-canvas);
+}
+
+::-webkit-scrollbar-thumb {
+  border: 2px solid var(--ark-canvas);
+  border-radius: 0;
+  background: #8b8b84;
+}
+
+.title-bar .frameless-titlebar-button > div > svg {
+  fill: rgba(25, 25, 25, 0.6);
+}
+
+.side-bar {
+  border-right: 1px solid var(--ark-rule) !important;
+}
+
+.editor-tabs {
+  box-shadow: none !important;
+}
+
+/* ---------------- Markdown 排版 ---------------- */
+
+/*
+ * Typora 把正文放在带网格背景的 canvas 上、再叠一张纸面 #write。
+ * YarkText 的编辑器区只有一个容器，这里用同色网格背景 + 纸面内层
+ * 复现「图纸上的纸」层次：网格随容器铺满，正文宽度由 --editorAreaWidth 约束。
+ */
+.mu-container {
+  font-family: 'Inter', 'Noto Sans SC', 'Source Han Sans SC', 'PingFang SC',
+    'Microsoft YaHei', sans-serif;
+  font-size: 17px;
+  line-height: 1.75;
+  letter-spacing: 0.005em;
+  color: var(--ark-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.mu-container > .mu-editor-wrapper {
+  background-image:
+    linear-gradient(rgba(25, 25, 25, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(25, 25, 25, 0.04) 1px, transparent 1px);
+  background-size: 5.5rem 5.5rem;
+}
+
+.mu-container h1,
+.mu-container h2,
+.mu-container h3,
+.mu-container h4,
+.mu-container h5,
+.mu-container h6 {
+  position: relative;
+  color: var(--ark-ink);
+  font-family: 'Space Grotesk', 'Noto Sans SC', 'Source Han Sans SC', 'PingFang SC',
+    'Microsoft YaHei', sans-serif;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.mu-container h1 {
+  margin: 2.2rem 0 1.1rem;
+  padding-bottom: 0.65rem;
+  font-size: 2.15rem;
+  letter-spacing: -0.025em;
+}
+
+/* h1 的标尺线：前 4rem 荧光黄，其余延伸为墨色 */
+.mu-container h1::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--ark-signal) 0 4rem, var(--ark-ink) 4rem);
+}
+
+.mu-container h2 {
+  margin: 1.85rem 0 0.9rem;
+  padding: 0 0 0.45rem 1rem;
+  font-size: 1.55rem;
+  letter-spacing: -0.015em;
+}
+
+.mu-container h2::before {
+  content: '';
+  position: absolute;
+  inset: 0.4em auto auto 0;
+  width: 0.4rem;
+  height: 0.4rem;
+  background: var(--ark-ink);
+  box-shadow: 0.2rem 0.2rem 0 var(--ark-signal);
+}
+
+.mu-container h2::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--ark-signal) 0 4rem, var(--ark-ink) 4rem);
+}
+
+.mu-container h3,
+.mu-container h4,
+.mu-container h5,
+.mu-container h6 {
+  padding-left: 1rem;
+}
+
+.mu-container h3 {
+  box-shadow: inset 3px 0 var(--ark-signal);
+}
+
+.mu-container h4 {
+  box-shadow: inset 3px 0 var(--ark-ink);
+}
+
+.mu-container h5 {
+  box-shadow: inset 2px 0 var(--ark-signal);
+}
+
+.mu-container h6 {
+  box-shadow: inset 2px 0 var(--ark-ink);
+}
+
+.mu-container h4 {
+  margin: 1.25rem 0 0.6rem;
+  font-size: 1.08rem;
+}
+
+.mu-container h5 {
+  margin: 1.25rem 0 0.6rem;
+  font-size: 1.08rem;
+  letter-spacing: 0.01em;
+}
+
+.mu-container h6 {
+  margin: 1.25rem 0 0.6rem;
+  font-size: 1.04rem;
+  letter-spacing: 0.02em;
+}
+
+/* 连续标题之间收缩间距，避免堆叠出过大留白 */
+.mu-container h1 + h1,
+.mu-container h2 + h2,
+.mu-container h3 + h3,
+.mu-container h4 + h4 {
+  margin-top: 1.1rem;
+}
+
+.mu-container p {
+  margin: 0.8rem 0;
+  line-height: 1.68;
+}
+
+.mu-container strong {
+  font-weight: 700;
+  color: var(--ark-ink);
+  background: linear-gradient(transparent 62%, rgba(255, 250, 0, 0.55) 62%);
+}
+
+.mu-container em {
+  color: var(--ark-soft);
+}
+
+.mu-container del {
+  color: var(--ark-muted);
+  text-decoration-thickness: 1px;
+}
+
+.mu-container a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(25, 25, 25, 0.42);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+.mu-container a:hover {
+  text-decoration-color: var(--ark-ink);
+  text-decoration-thickness: 2px;
+}
+
+.mu-container mark {
+  padding-inline: 0.15em;
+  color: var(--ark-ink);
+  background: var(--ark-signal);
+}
+
+.mu-container blockquote {
+  margin: 0.8rem 0;
+  padding: 0.8rem 1rem;
+  color: var(--blockquoteTextColor);
+  background: rgba(255, 250, 0, 0.05);
+  border-block: 1px solid var(--ark-rule);
+  border-radius: 0;
+}
+
+.mu-container blockquote::before {
+  left: 0;
+  width: 3px;
+  background: var(--ark-signal);
+}
+
+:not(pre) > code {
+  padding: 0.1em 0.35em;
+  color: var(--ark-ink);
+  background: var(--ark-paper);
+  border: 1px solid var(--ark-ink);
+  border-bottom-width: 2px;
+  border-radius: 2px;
+  font-family: 'Fira Code', 'Sarasa Mono SC', 'SFMono-Regular', Consolas, 'Liberation Mono',
+    'Noto Sans SC', 'Source Han Sans SC', monospace;
+  font-size: 0.875em;
+}
+
+/*
+ * 代码块与 HTML 块共用「顶部双段标尺线 + 细边框 + 无圆角」的图框造型，
+ * 与 Typora 版一致：不画上边框，由伪元素承担那 2px 标尺线。
+ */
+.mu-code-block,
+.mu-frontmatter,
+.mu-html-block {
+  position: relative;
+  margin: 0.8rem 0;
+  padding: 0.85rem 1rem 0.5rem;
+  background: var(--ark-paper);
+  border: 1px solid var(--ark-rule);
+  border-top: 0;
+  border-radius: 2px;
+}
+
+.mu-code-block::before,
+.mu-frontmatter::before,
+.mu-html-block::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: linear-gradient(90deg, var(--ark-signal) 0 4rem, var(--ark-ink) 4rem);
+  pointer-events: none;
+}
+
+.mu-code-block .mu-code,
+.mu-code-block .mu-code span,
+.mu-code-block .mu-language-input {
+  font-family: 'Fira Code', 'Sarasa Mono SC', 'SFMono-Regular', Consolas, 'Liberation Mono',
+    'Noto Sans SC', 'Source Han Sans SC', monospace;
+  font-size: 0.88rem;
+  line-height: 1.65;
+  color: var(--ark-ink);
+}
+
+.mu-language-input {
+  color: var(--ark-muted);
+  font-family: 'Space Grotesk', 'Noto Sans SC', 'Source Han Sans SC', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* 表格：thead 顶部 2px 墨线，其余细线，表头浅墨底，悬停荧光黄 */
+.mu-table-inner tr th,
+.mu-table-inner tr td {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--ark-rule);
+  text-align: left;
+  vertical-align: top;
+}
+
+.mu-table-inner tr th {
+  color: var(--ark-ink);
+  background: rgba(25, 25, 25, 0.05);
+  font-family: 'Space Grotesk', 'Noto Sans SC', 'Source Han Sans SC', sans-serif;
+  font-weight: 700;
+}
+
+.mu-table-inner thead tr {
+  border-top: 2px solid var(--ark-ink);
+}
+
+.mu-table-inner tbody tr:nth-child(even) {
+  background: rgba(25, 25, 25, 0.03);
+}
+
+.mu-table-inner tbody tr:hover {
+  background: rgba(255, 250, 0, 0.16);
+}
+
+.mu-container figure:not(.mu-table) img {
+  border: 1px solid var(--ark-rule);
+  border-radius: 0;
+}
+
+/* 分割线：前 2rem 荧光黄、其余墨色的短标尺 */
+.mu-thematic-break:not(.mu-active)::before {
+  height: 1px;
+  border: 0;
+  background: linear-gradient(90deg, var(--ark-signal) 0 2rem, var(--ark-ink) 2rem);
+}
+
+.mu-container ul li::marker,
+.mu-container ol li::marker {
+  color: var(--ark-ink);
+  font-family: 'Space Grotesk', 'Noto Sans SC', 'Source Han Sans SC', sans-serif;
+  font-weight: 700;
+}
+
+/* 任务列表：方形勾选框，勾选后填充荧光黄 */
+.mu-container .mu-task-list-item input[type='checkbox'] {
+  border: 1px solid var(--ark-ink);
+  border-radius: 0;
+  background: var(--ark-paper);
+}
+
+.mu-container .mu-task-list-item input[type='checkbox']:checked {
+  background: var(--ark-signal);
+}

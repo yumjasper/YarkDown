@@ -10,15 +10,18 @@
   --themeColor30: rgba(64, 158, 255, 0.3);
   --themeColor20: rgba(64, 158, 255, 0.2);
   --themeColor10: rgba(64, 158, 255, 0.1);
+  --highlightThemeColor: #409eff;
 
   --highlightColor: rgba(102, 177, 255, 0.6);
   --selectionColor: rgba(102, 177, 255, 0.3);
   --editorColor: rgba(255, 255, 255, 0.7);
   --editorColor80: rgba(255, 255, 255, 0.8);
   --editorColor60: rgba(255, 255, 255, 0.6);
+  --editorColor70: rgba(255, 255, 255, 0.7);
   --editorColor50: rgba(255, 255, 255, 0.5);
   --editorColor40: rgba(255, 255, 255, 0.4);
   --editorColor30: rgba(255, 255, 255, 0.3);
+  --editorColor20: rgba(255, 255, 255, 0.2);
   --editorColor10: rgba(255, 255, 255, 0.1);
   --editorColor04: rgba(255, 255, 255, 0.04);
   --editorBgColor: #282828;
@@ -42,6 +45,7 @@
   --buttonFontColorActive: var(--buttonFontColor);
   --buttonBgColorActive: #333434;
   --buttonBorderActive: var(--buttonBorder);
+  --buttonFocusBorder: 1px solid #409eff;
 
   --buttonPrimaryFontColor: #ffffff;
   --buttonPrimaryBgColor: var(--themeColor);
@@ -88,6 +92,20 @@
   --floatBorderColor: rgba(0, 0, 0, 0.05);
   --floatShadow: rgba(0, 0, 0, 0.2);
   --maskColor: rgba(0, 0, 0, 0.7);
+
+  /* Status + notification colours (previously only in base styles) */
+  --successColor: #56d364;
+  --successBgColor: rgba(86, 211, 100, 0.12);
+  --warningColor: #e3b341;
+  --warningBgColor: rgba(227, 179, 65, 0.12);
+  --notificationPrimaryColor: #1b1f23;
+  --notificationPrimaryBg: #409eff;
+  --notificationInfoColor: #ffffff;
+  --notificationInfoBg: #54606b;
+  --notificationWarningColor: #1b1f23;
+  --notificationWarningBg: #e3b341;
+  --notificationErrorColor: #1b1f23;
+  --notificationErrorBg: #409eff;
   --editorAreaWidth: 1000px;
 
   /* @muyajs/core (kebab-case) editor variables

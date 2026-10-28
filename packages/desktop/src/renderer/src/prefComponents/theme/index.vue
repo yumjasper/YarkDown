@@ -163,6 +163,9 @@ const onSelectChange = (type: keyof PreferencesState, value: unknown): void => {
     &.dark {
       color: rgba(255, 255, 255, 0.7);
       background: #282828;
+      & h3 {
+        color: rgba(255, 255, 255, 0.92);
+      }
       & a {
         color: #409eff;
       }
@@ -174,39 +177,15 @@ const onSelectChange = (type: keyof PreferencesState, value: unknown): void => {
         color: rgba(33, 181, 111, 1);
       }
     }
-    &.graphite {
-      color: rgba(43, 48, 50, 0.7);
-      background: #f7f7f7;
-      & a {
-        color: rgb(104, 134, 170);
-      }
-    }
-    &.material-dark {
-      color: rgba(171, 178, 191, 0.8);
-      background: #34393f;
-      & a {
-        color: #f48237;
-      }
-    }
-    &.one-dark {
-      color: #9da5b4;
-      background: #282c34;
-      & a {
-        color: rgba(226, 192, 141, 1);
-      }
-    }
-    &.ulysses {
-      color: rgba(101, 101, 101, 0.7);
-      background: #f3f3f3;
-      & a {
-        color: rgb(12, 139, 186);
-      }
-    }
 
     /* Typora 风格主题 —— Light */
     &.typora-github {
       color: #24292f;
       background: #ffffff;
+      & h3 {
+        padding-bottom: 6px;
+        border-bottom: 1px solid #d0d7de;
+      }
       & a {
         color: #0969da;
       }
@@ -237,7 +216,7 @@ const onSelectChange = (type: keyof PreferencesState, value: unknown): void => {
       background: #ffffff;
       & h3 {
         padding: 0.05em 0.35em;
-        background: rgba(65, 184, 131, 0.12);
+        background: color-mix(in srgb, #41b883 12%, transparent);
         border-radius: 4px;
       }
       & a {
@@ -257,6 +236,10 @@ const onSelectChange = (type: keyof PreferencesState, value: unknown): void => {
     &.typora-solarized-light {
       color: #657b83;
       background: #fdf6e3;
+      & h3 {
+        color: #268bd2;
+        letter-spacing: 0.02em;
+      }
       & a {
         color: #268bd2;
       }
@@ -276,6 +259,10 @@ const onSelectChange = (type: keyof PreferencesState, value: unknown): void => {
     &.typora-github-dark {
       color: #e6edf3;
       background: #0d1117;
+      & h3 {
+        padding-bottom: 6px;
+        border-bottom: 1px solid #30363d;
+      }
       & a {
         color: #2f81f7;
       }
@@ -319,6 +306,260 @@ const onSelectChange = (type: keyof PreferencesState, value: unknown): void => {
       }
       & a {
         color: #7aa2ff;
+      }
+    }
+    &.typora-nord {
+      color: #d8dee9;
+      background: #2e3440;
+      & h3 {
+        color: #eceff4;
+        letter-spacing: -0.01em;
+      }
+      & a {
+        color: #88c0d0;
+      }
+    }
+    &.typora-dracula {
+      color: #f8f8f2;
+      background: #282a36;
+      & h3 {
+        padding-bottom: 4px;
+        color: #bd93f9;
+        border-bottom: 2px solid rgba(189, 147, 249, 0.35);
+      }
+      & a {
+        color: #8be9fd;
+      }
+    }
+    &.typora-catppuccin {
+      color: #cdd6f4;
+      background: #1e1e2e;
+      & h3 {
+        color: #cba6f7;
+        letter-spacing: -0.015em;
+      }
+      & a {
+        color: #89b4fa;
+      }
+    }
+    &.typora-ayu-light {
+      color: #5c6166;
+      background: #fcfcfc;
+      border: 1px solid #e2e2e0;
+      & h3 {
+        color: #3d4248;
+        letter-spacing: -0.012em;
+      }
+      & a {
+        color: #22a4e6;
+      }
+    }
+    &.typora-one-light {
+      color: #383a42;
+      background: #fafafa;
+      border: 1px solid #dcdcdd;
+      & h3 {
+        color: #202126;
+        font-weight: 400;
+        letter-spacing: -0.018em;
+      }
+      & a {
+        color: #4078f2;
+      }
+    }
+    &.typora-pixyll {
+      color: #313131;
+      background: #ffffff;
+      border: 1px solid #e0e0e0;
+      & h3 {
+        font-family: Menlo, Consolas, monospace;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+      }
+      & a {
+        color: #2a7ae2;
+      }
+    }
+    &.typora-whitey {
+      color: #333333;
+      background: #ffffff;
+      border: 1px solid #ebebeb;
+      & h3 {
+        padding-bottom: 4px;
+        font-weight: 300;
+        border-bottom: 1px solid rgba(30, 136, 229, 0.28);
+      }
+      & a {
+        color: #1e88e5;
+      }
+    }
+    &.typora-one-dark {
+      color: #abb2bf;
+      background: #282c34;
+      & h3 {
+        color: #d1d7e0;
+        font-weight: 400;
+        letter-spacing: -0.018em;
+      }
+      & a {
+        color: #61afef;
+      }
+    }
+    &.typora-gruvbox {
+      color: #ebdbb2;
+      background: #282828;
+      & h3 {
+        padding-bottom: 4px;
+        color: #fabd2f;
+        border-bottom: 2px solid rgba(250, 189, 47, 0.35);
+      }
+      & a {
+        color: #83a598;
+      }
+    }
+    &.typora-ia-light {
+      color: #2b2b2b;
+      background: #fafafa;
+      border: 1px solid #e3e3e3;
+      & h3 {
+        font-weight: 600;
+        letter-spacing: -0.008em;
+      }
+      & a {
+        color: #4a7fbf;
+      }
+    }
+    &.typora-typo {
+      color: #3d3a34;
+      background: #f7f1e6;
+      border: 1px solid #ded2bd;
+      & h3 {
+        font-family: 'Noto Serif SC', 'Songti SC', Georgia, serif;
+        text-align: center;
+        letter-spacing: 0.02em;
+      }
+      & a {
+        color: #9e4b3f;
+      }
+    }
+    &.typora-tokyo-night {
+      color: #c0caf5;
+      background: #24283b;
+      & h3 {
+        color: #bb9af7;
+        letter-spacing: -0.02em;
+      }
+      & a {
+        color: #7dcfff;
+      }
+    }
+    &.typora-rose-pine {
+      color: #e0def4;
+      background: #191724;
+      & h3 {
+        color: #c4a7e7;
+        font-weight: 500;
+        letter-spacing: 0.008em;
+      }
+      & a {
+        color: #9ccfd8;
+      }
+    }
+    &.typora-inkwell-blue {
+      color: #23364d;
+      background: #ffffff;
+      border: 1px solid #dbe3ee;
+      & h3 {
+        color: #1f6fd0;
+        letter-spacing: -0.01em;
+      }
+      & a {
+        color: #1f6fd0;
+      }
+    }
+    &.typora-lucid-light {
+      color: #3b4148;
+      background: #ffffff;
+      border: 1px solid #e3e6ea;
+      & h3 {
+        color: #1c2024;
+        font-weight: 600;
+        letter-spacing: -0.015em;
+      }
+      & a {
+        color: #4a6cf7;
+      }
+    }
+    &.typora-lucid-dark {
+      color: #d0d3d4;
+      background: #131416;
+      & h3 {
+        color: #eff0f2;
+        font-weight: 600;
+        letter-spacing: -0.015em;
+      }
+      & a {
+        color: #5b7cf5;
+      }
+    }
+    &.typora-arkfield {
+      color: #2f2f2d;
+      background: #fafaf8;
+      border: 1px solid #e6e6e0;
+      & h3 {
+        padding-bottom: 4px;
+        color: #191919;
+        border-bottom: 2px solid #f5e400;
+      }
+      & a {
+        color: #191919;
+        text-decoration: underline;
+        text-decoration-color: #f5e400;
+        text-decoration-thickness: 2px;
+        text-underline-offset: 3px;
+      }
+    }
+    &.typora-vlook-owl {
+      color: #1c1e1f;
+      background: #ffffff;
+      border: 1px solid #e4e7ea;
+      & h3 {
+        padding: 3px 0;
+        color: #04b1cc;
+        text-align: center;
+        background: linear-gradient(90deg, rgba(4, 177, 204, 0.16), rgba(154, 78, 230, 0.16));
+        border-radius: 5px;
+      }
+      & a {
+        color: #04b1cc;
+      }
+    }
+    &.typora-vlook-note {
+      color: #1c1e1f;
+      background: #ffffff;
+      border: 1px solid #e4e7ea;
+      & h3 {
+        padding-bottom: 4px;
+        color: #0075de;
+        border-bottom: 2px solid #0075de;
+      }
+      & a {
+        color: #0075de;
+      }
+    }
+    &.typora-vlook-joint {
+      color: #1c1e1f;
+      background: #ffffff;
+      border: 1px solid #e4e7ea;
+      & h3 {
+        padding: 3px 0;
+        color: #6464d1;
+        text-align: center;
+        background: linear-gradient(90deg, rgba(250, 187, 12, 0.18), rgba(100, 100, 209, 0.18));
+        border-radius: 5px;
+      }
+      & a {
+        color: #6464d1;
       }
     }
 

@@ -1,0 +1,286 @@
+/*
+ * Gruvbox Dark
+ * 迁移自 https://github.com/morhetz/gruvbox 官方 dark 变体配色（MIT）。
+ * 复古暖调暗色：底 #282828、正文 #ebdbb2、主强调暖黄 #fabd2f。
+ * 排版特征：标题暖黄配下划基线，引用块米黄底，表格用复古粗边框。
+ */
+
+:root {
+  /*editor*/
+  --themeColor: #fabd2f;
+  --themeColor90: rgba(250, 189, 47, 0.9);
+  --themeColor80: rgba(250, 189, 47, 0.8);
+  --themeColor70: rgba(250, 189, 47, 0.7);
+  --themeColor60: rgba(250, 189, 47, 0.6);
+  --themeColor50: rgba(250, 189, 47, 0.5);
+  --themeColor40: rgba(250, 189, 47, 0.4);
+  --themeColor30: rgba(250, 189, 47, 0.3);
+  --themeColor20: rgba(250, 189, 47, 0.2);
+  --themeColor10: rgba(250, 189, 47, 0.1);
+  --highlightThemeColor: #fabd2f;
+
+  --highlightColor: rgba(250, 189, 47, 0.28);
+  --selectionColor: rgba(131, 165, 152, 0.28);
+  --editorColor: #ebdbb2;
+  --editorColor80: #fbf1c7;
+  --editorColor70: rgba(235, 219, 178, 0.7);
+  --editorColor60: rgba(235, 219, 178, 0.6);
+  --editorColor50: rgba(235, 219, 178, 0.5);
+  --editorColor40: rgba(235, 219, 178, 0.4);
+  --editorColor30: rgba(235, 219, 178, 0.3);
+  --editorColor20: rgba(235, 219, 178, 0.2);
+  --editorColor10: rgba(235, 219, 178, 0.1);
+  --editorColor04: rgba(235, 219, 178, 0.04);
+  --editorBgColor: #282828;
+  --deleteColor: #fb4934;
+  --iconColor: rgba(235, 219, 178, 0.55);
+  --codeBgColor: rgba(235, 219, 178, 0.09);
+  --codeBlockBgColor: #1d2021;
+  --codeBlockColor: #ebdbb2;
+  --footnoteBgColor: rgba(235, 219, 178, 0.06);
+  --inputBgColor: #1d2021;
+
+  --focusColor: var(--themeColor);
+
+  --buttonFontColor: #ebdbb2;
+  --buttonBgColor: #32302f;
+  --buttonBorder: 2px solid #504945;
+  --buttonShadow: none;
+  --buttonFontColorHover: #fbf1c7;
+  --buttonBgColorHover: #3c3836;
+  --buttonBorderHover: 2px solid #665c54;
+  --buttonFontColorActive: #fbf1c7;
+  --buttonBgColorActive: #45403d;
+  --buttonBorderActive: var(--buttonBorder);
+  --buttonFocusBorder: 2px solid #fabd2f;
+
+  --buttonPrimaryFontColor: #282828;
+  --buttonPrimaryBgColor: #fabd2f;
+  --buttonPrimaryBorder: none;
+  --buttonPrimaryShadow: none;
+  --buttonPrimaryFontColorHover: var(--buttonPrimaryFontColor);
+  --buttonPrimaryBgColorHover: #fbc94f;
+  --buttonPrimaryBorderHover: var(--buttonPrimaryBorder);
+  --buttonPrimaryFontColorActive: var(--buttonPrimaryFontColor);
+  --buttonPrimaryBgColorActive: #e5aa22;
+  --buttonPrimaryBorderActive: var(--buttonPrimaryBorder);
+  --buttonPrimaryFocusBorder: none;
+  --buttonPrimaryFocusShadow: 0 0 0 3px rgba(250, 189, 47, 0.32);
+  --tableBorderColor: #504945;
+
+  /* Markdown element colors */
+  --headingColor: #fabd2f;
+  --h1Color: #fabd2f;
+  --h2Color: #fabd2f;
+  --h3Color: #fbf1c7;
+  --h4Color: #ebdbb2;
+  --h5Color: #ebdbb2;
+  --h6Color: #a89984;
+  --blockquoteTextColor: #ebdbb2;
+  --blockquoteBorderColor: #fabd2f;
+  --hrColor: rgba(235, 219, 178, 0.24);
+  --linkColor: #83a598;
+  --strongColor: #fe8019;
+  --emColor: #d3869b;
+  --listMarkerColor: #fabd2f;
+
+  /*marktext*/
+  --sideBarColor: rgba(235, 219, 178, 0.65);
+  --sideBarIconColor: var(--iconColor);
+  --sideBarTitleColor: #fabd2f;
+  --sideBarTextColor: rgba(235, 219, 178, 0.45);
+  --sideBarBgColor: #1d2021;
+  --sideBarItemHoverBgColor: rgba(250, 189, 47, 0.13);
+  --itemBgColor: #32302f;
+
+  --floatFontColor: #ebdbb2;
+  --floatBgColor: #32302f;
+  --floatHoverColor: #3c3836;
+  --floatBorderColor: #504945;
+  --floatShadow: rgba(0, 0, 0, 0.5);
+  --maskColor: rgba(0, 0, 0, 0.45);
+
+  /* Status + notification colours */
+  --successColor: #b8bb26;
+  --successBgColor: rgba(184, 187, 38, 0.15);
+  --warningColor: #fabd2f;
+  --warningBgColor: rgba(250, 189, 47, 0.15);
+  --notificationPrimaryColor: #282828;
+  --notificationPrimaryBg: #fabd2f;
+  --notificationInfoColor: #fbf1c7;
+  --notificationInfoBg: #504945;
+  --notificationWarningColor: #282828;
+  --notificationWarningBg: #fabd2f;
+  --notificationErrorColor: #282828;
+  --notificationErrorBg: #fb4934;
+  --editorAreaWidth: 1000px;
+
+  --theme-color: var(--themeColor);
+  --highlight-color: var(--highlightColor);
+  --selection-color: var(--selectionColor);
+  --editor-color: var(--editorColor);
+  --editor-color-80: var(--editorColor80);
+  --editor-color-50: var(--editorColor50);
+  --editor-color-30: var(--editorColor30);
+  --editor-color-10: var(--editorColor10);
+  --editor-color-04: var(--editorColor04);
+  --editor-bg-color: var(--editorBgColor);
+  --editor-area-width: var(--editorAreaWidth);
+  --delete-color: var(--deleteColor);
+  --icon-color: var(--iconColor);
+  --code-block-bg-color: var(--codeBlockBgColor);
+  --code-block-color: var(--codeBlockColor);
+  --table-border-color: var(--tableBorderColor);
+  --input-bg-color: var(--inputBgColor);
+  --button-font-color: var(--buttonFontColor);
+  --button-bg-color: var(--buttonBgColor);
+  --button-border: var(--buttonBorder);
+  --button-bg-color-hover: var(--buttonBgColorHover);
+  --button-border-hover: var(--buttonBorderHover);
+  --button-bg-color-active: var(--buttonBgColorActive);
+  --button-border-active: var(--buttonBorderActive);
+  --button-border-focus: var(--button-border);
+  --float-bg-color: var(--floatBgColor);
+  --float-hover-color: var(--floatHoverColor);
+  --float-border-color: var(--floatBorderColor);
+  --float-shadow: rgba(0, 0, 0, 0.4) 0 1px 3px, rgba(0, 0, 0, 0.55) 0 8px 24px;
+  --link-color: var(--linkColor);
+  --h1-color: var(--h1Color);
+  --h2-color: var(--h2Color);
+  --h3-color: var(--h3Color);
+  --h4-color: var(--h4Color);
+  --h5-color: var(--h5Color);
+  --h6-color: var(--h6Color);
+  --blockquote-text-color: var(--blockquoteTextColor);
+  --blockquote-border-color: var(--blockquoteBorderColor);
+  --strong-color: var(--strongColor);
+  --em-color: var(--emColor);
+  --list-marker-color: var(--listMarkerColor);
+  --hr-color: var(--hrColor);
+}
+
+::-webkit-scrollbar {
+  background: var(--editorBgColor);
+}
+
+.title-bar .frameless-titlebar-button > div > svg {
+  fill: #ebdbb2;
+}
+
+.side-bar {
+  border-right: 1px solid #1d2021 !important;
+}
+
+.editor-tabs {
+  box-shadow: none !important;
+}
+
+/* ---------------- Markdown 排版 ---------------- */
+
+.mu-container h1 {
+  margin-top: 1.5em;
+  margin-bottom: 0.6em;
+  padding-bottom: 0.28em;
+  font-size: 1.9em;
+  font-weight: 700;
+  line-height: 1.35;
+  border-bottom: 2px solid rgba(250, 189, 47, 0.35);
+}
+
+.mu-container h2 {
+  margin-top: 1.6em;
+  padding-bottom: 0.22em;
+  font-size: 1.45em;
+  font-weight: 700;
+  border-bottom: 1px solid rgba(235, 219, 178, 0.18);
+}
+
+.mu-container h3 {
+  margin-top: 1.45em;
+  font-size: 1.24em;
+  font-weight: 700;
+  color: #fbf1c7;
+}
+
+.mu-container h4 {
+  font-size: 1.08em;
+  font-weight: 700;
+}
+
+.mu-container h5 {
+  font-size: 1em;
+  font-weight: 700;
+}
+
+.mu-container h6 {
+  font-size: 0.9em;
+  font-weight: 700;
+  color: #a89984;
+}
+
+.mu-container blockquote {
+  margin: 1.1em 0;
+  padding: 0.45em 1em;
+  color: var(--blockquoteTextColor);
+  background: rgba(235, 219, 178, 0.055);
+  border-radius: 3px;
+}
+
+.mu-container blockquote::before {
+  left: 0;
+  width: 4px;
+  background: var(--themeColor);
+}
+
+.mu-container a {
+  color: var(--linkColor);
+  text-decoration: none;
+}
+
+.mu-container a:hover {
+  text-decoration: underline;
+}
+
+.mu-container strong {
+  color: var(--strongColor);
+  font-weight: 700;
+}
+
+.mu-container em {
+  color: var(--emColor);
+}
+
+:not(pre) > code {
+  padding: 0.15em 0.4em;
+  font-size: 85%;
+  color: #8ec07c;
+  background: rgba(235, 219, 178, 0.09);
+  border-radius: 2px;
+}
+
+.mu-container table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.mu-container table th {
+  padding: 7px 12px;
+  font-weight: 700;
+  color: #fbf1c7;
+  background: rgba(235, 219, 178, 0.08);
+  border: 1px solid #504945;
+}
+
+.mu-container table td {
+  padding: 7px 12px;
+  border: 1px solid #504945;
+}
+
+.mu-container table tr:nth-child(2n) {
+  background: rgba(235, 219, 178, 0.04);
+}
+
+.mu-thematic-break:not(.mu-active)::before {
+  height: 0;
+  border-top: 1px solid rgba(235, 219, 178, 0.24);
+}

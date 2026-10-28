@@ -13,13 +13,33 @@ export const themes: ReadonlyArray<ThemeDescriptor> = [
   { name: 'typora-orange-heart' },
   { name: 'typora-solarized-light' },
   { name: 'typora-newsprint' },
+  { name: 'typora-ayu-light' },
+  { name: 'typora-one-light' },
+  { name: 'typora-pixyll' },
+  { name: 'typora-whitey' },
+  { name: 'typora-ia-light' },
+  { name: 'typora-typo' },
+  { name: 'typora-inkwell-blue' },
+  { name: 'typora-lucid-light' },
+  { name: 'typora-arkfield' },
+  { name: 'typora-vlook-owl' },
+  { name: 'typora-vlook-note' },
+  { name: 'typora-vlook-joint' },
   // Dark themes
   { name: 'dark' },
   { name: 'typora-github-dark' },
   { name: 'typora-notion-dark' },
   { name: 'typora-drake-dark' },
   { name: 'typora-cobalt' },
-  { name: 'typora-lapis' }
+  { name: 'typora-lapis' },
+  { name: 'typora-nord' },
+  { name: 'typora-dracula' },
+  { name: 'typora-catppuccin' },
+  { name: 'typora-one-dark' },
+  { name: 'typora-gruvbox' },
+  { name: 'typora-tokyo-night' },
+  { name: 'typora-rose-pine' },
+  { name: 'typora-lucid-dark' }
 ]
 
 // getAutoSwitchThemeOptions removed - no longer needed

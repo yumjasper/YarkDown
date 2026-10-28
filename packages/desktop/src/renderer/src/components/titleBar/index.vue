@@ -441,7 +441,7 @@ div.title > span > .path > bdi > span {
 }
 .frameless-titlebar-minimize:hover,
 .frameless-titlebar-toggle:hover {
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: color-mix(in srgb, var(--editorColor) 10%, transparent);
 }
 .frameless-titlebar-button svg {
   fill: currentColor;

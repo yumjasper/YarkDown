@@ -161,11 +161,11 @@ onBeforeUnmount(() => {
   }
 }
 .pref-text-box-item .el-input.error input {
-  color: #f56c6c;
+  color: var(--deleteColor);
 }
 .pref-text-box-item .error-message {
   margin: 8px 0 0;
   font-size: 12px;
-  color: #f56c6c;
+  color: var(--deleteColor);
 }
 </style>

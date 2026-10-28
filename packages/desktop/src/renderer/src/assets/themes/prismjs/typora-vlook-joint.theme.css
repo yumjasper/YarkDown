@@ -1,0 +1,92 @@
+/*
+ * Prism 语法高亮 — VLOOK Joint
+ * 与 Owl 共用 VLOOK 的代码色板，仅标题标记改用本主题的琥珀强调色。
+ */
+
+.mu-code-block .token.comment,
+.mu-code-block .token.prolog,
+.mu-code-block .token.doctype,
+.mu-code-block .token.cdata {
+  color: #7d868a;
+  font-style: italic;
+}
+
+.mu-code-block .token.punctuation {
+  color: #4a4f52;
+}
+
+.mu-code-block .token.namespace {
+  opacity: 0.7;
+}
+
+.mu-code-block .token.property,
+.mu-code-block .token.tag,
+.mu-code-block .token.constant,
+.mu-code-block .token.symbol,
+.mu-code-block .token.deleted {
+  color: #2082f0;
+}
+
+.mu-code-block .token.boolean,
+.mu-code-block .token.number {
+  color: #f38019;
+}
+
+.mu-code-block .token.selector,
+.mu-code-block .token.attr-name,
+.mu-code-block .token.string,
+.mu-code-block .token.char,
+.mu-code-block .token.builtin,
+.mu-code-block .token.inserted {
+  color: #29a953;
+}
+
+.mu-code-block .token.operator,
+.mu-code-block .token.entity,
+.mu-code-block .token.url,
+.mu-code-block .language-css .token.string,
+.mu-code-block .style .token.string {
+  color: #10a0a8;
+}
+
+.mu-code-block .token.atrule,
+.mu-code-block .token.attr-value,
+.mu-code-block .token.keyword {
+  color: #6464d1;
+  font-weight: 700;
+}
+
+.mu-code-block .token.function,
+.mu-code-block .token.class-name {
+  color: #9420b0;
+}
+
+.mu-code-block .token.regex,
+.mu-code-block .token.important,
+.mu-code-block .token.variable {
+  color: #d01010;
+}
+
+.mu-code-block .token.important,
+.mu-code-block .token.bold {
+  font-weight: 700;
+}
+
+.mu-code-block .token.italic {
+  font-style: italic;
+}
+
+.mu-code-block .token.entity {
+  cursor: help;
+}
+
+.mu-code-block .token.title,
+.mu-code-block .token.title .token.punctuation {
+  color: #c79215;
+  font-weight: 700;
+}
+
+.mu-code-block .token.macro,
+.mu-code-block .token.macro-name {
+  color: #901050;
+}
