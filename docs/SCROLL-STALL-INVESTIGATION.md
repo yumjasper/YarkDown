@@ -985,3 +985,115 @@ features: {
 - 测试长期报「找不到 id」时，先怀疑 id 漂移，不要怀疑被测功能。
 - 断言 `a !== b` 失败且两边相等，要先查这个值到底来自哪张样式表，而不是放宽断言。
 - 用 `@layer` 解决覆盖问题后必须检查构建产物。stage 0 的 polyfill 会把层级悄悄抹平，源码正确不等于运行正确。
+
+## 第十二轮：外壳几何断言、UI 字体被覆盖与测试稳定性
+
+### 上一轮的结论需要更正
+
+上一轮我把 `window-shell.spec.ts` 的失败描述成「编辑器居中偏差 4px」，并且认为「用 stash 回退后同样失败，属既有布局问题」。这两点都不准确。
+
+真实失败点是第 62 行：
+
+```ts
+expect(Math.abs(expanded.editorLeft - expanded.sidebarRight)).toBeLessThan(1)
+// Expected: < 1
+// Received:   4
+```
+
+`centered()` 里的居中断言是通过的。量的是编辑器左边界与侧边栏右边界的间距，不是居中。上一轮只看摘要就下了结论。
+
+### 4px 是设计，不是缺陷
+
+实测三种布局（探针脚本）：
+
+| 状态       | sidebar.right | editor.left | 间隙 | 编辑器右侧间隙 |
+| ---------- | ------------- | ----------- | ---- | -------------- |
+| 侧边栏隐藏 | 0             | 4           | 4    | 6              |
+| 侧边栏 240 | 285           | 289         | 4    | 6              |
+| 侧边栏 320 | 365           | 369         | 4    | 6              |
+
+间隙恒定 4px，右侧恒定 6px，来源是 [editorWithTabs/index.vue:200](/data/../D:/Tools/YarkDown/packages/desktop/src/renderer/src/components/editorWithTabs/index.vue#L200)：
+
+```css
+.editor-with-tabs {
+  margin: 4px 6px 6px 4px;
+  border: 1px solid var(--editorColor10);
+  border-radius: var(--shell-panel-radius);
+}
+```
+
+这是 1.0.9（`59629e4`）卡片化外壳引入的，`git show 59629e4^` 确认之前 `.editor-with-tabs` 没有 margin。截图确认编辑器和侧边栏是两个圆角卡片，中间留缝是视觉设计。
+
+所以是断言过期，不是布局错位。改成断言「按设计保留固定 gutter」，并把 gutter 从计算样式读取，不再硬编码 4：
+
+```ts
+gutter: parseFloat(getComputedStyle(editorEl).marginLeft)
+...
+expect(expanded.editorLeft - expanded.sidebarRight).toBeCloseTo(expanded.gutter, 1)
+expect(expanded.gutter).toBeGreaterThan(0)
+expect(expanded.gutter).toBeLessThan(8)
+```
+
+### 顺带查出一个真实缺陷：UI 字体被 muya 覆盖
+
+修正上面那条后，下一个失败浮出来：
+
+```
+Expected substring: "Segoe UI"
+Received string:    "Open Sans", "Clear Sans", "Helvetica Neue", …
+```
+
+这条断言原本是对的。`--uiFontFamily` 的值正确（实测 `"Segoe UI Variable Text", "Segoe UI", …`），但 `body` 的计算字体是 `Open Sans`。根因在 muya 的 [index.css:219](/data/../D:/Tools/YarkDown/packages/muya/src/assets/styles/index.css#L219)：
+
+```css
+html,
+body {
+  font-family: 'Open Sans', 'Clear Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+```
+
+桌面应用在 [index.css:149](/data/../D:/Tools/YarkDown/packages/desktop/src/renderer/src/assets/styles/index.css#L149) 也写了 `html, body { font-family: var(--uiFontFamily) }`，选择器完全相同，muya 那份加载更晚，于是整个 UI（菜单栏、标题栏、侧边栏）都在用编辑器的字体。
+
+这是第三次撞上同一个根因了（表格白底、Prism 配色、现在字体）。按同一机制修复，把 muya 的 body 兜底也放进 `@layer muya-defaults`。修完 `body` 计算字体回到 `Segoe UI`，那条断言自然通过，无需改测试。
+
+### 测试稳定性问题
+
+修完断言后跑回归，出现随机失败，每次失败的用例不同。逐个查下来是四个独立问题：
+
+`dark-theme-surfaces.spec.ts` 与 `themes.spec.ts` 用 `body.dark` 作为「主题已切换」的信号。但浅色主题之间（`light` → `typora-github`）、暗色主题之间（dracula → nord）这个 class 不变，等待条件立刻为真，随即读到的是上一个主题的样式。改成比对注入样式表 `#ag-theme` 的文本内容，等它真的变了再断言：
+
+```ts
+const readThemeStylesheet = async (): Promise<string> =>
+  await page.evaluate(() => document.getElementById('ag-theme')?.textContent ?? '')
+
+const before = await readThemeStylesheet()
+await clickMenuById(app, theme)
+await expect.poll(readThemeStylesheet, { timeout: 10000 }).not.toBe(before)
+```
+
+`themes.spec.ts` 的 `afterAll` 偶发报 `afterAll hook timeout`，而测试本身是过的。`app.close()` 在拆编辑器窗口时偶尔卡住。新增 `closeApp()`，先销毁窗口再 `quit()`，并用 `Promise.race` 兜底，避免一个卡住的窗口把无关用例拖成失败。
+
+`window-shell.spec.ts` 的 `centered()` 原来用 `expect.poll` 默认 5s 窗口。改为显式轮询并携带几何快照，失败时能看到是哪个盒子动了：
+
+```ts
+expect(last.error, `toolbar off centre: ${JSON.stringify(last)}`).toBeLessThan(1)
+```
+
+排查中还确认了一件事：`.bottom-toolbar-host` 有 `padding: 12px 18px 10px`，左右对称，并不会让工具栏偏心。稳定态下误差恒为 0，所以 18px 那次同样是切换过程中的瞬时读数。
+
+### 验收
+
+连续 6 轮组合运行（window-shell + themes + theme-menu-ids + dark-theme-surfaces），全部通过，此前约三分之一的失败率消失。
+
+- `typecheck` 通过
+- `test:quick` 138 文件 1317 项全通过
+- 改动文件 ESLint 无新增告警（`window-shell.spec.ts` 的 non-null 告警是既有的）
+
+版本 1.0.25。
+
+### 方法论
+
+- 失败摘要里的「4px」不等于失败原因。上一轮就是没看具体行号和断言对象，把「居中断言」和「左边界贴合断言」混为一谈。
+- 断言过期和产品缺陷必须分清。`Segoe UI` 那条是产品缺陷，`editorLeft === sidebarRight` 那条是断言过期，判别方法是去看该样式是什么时候、因为什么改动引入的，以及视觉上是否成立。
+- 用状态类（`body.dark`）当异步信号只在该状态能区分前后时有效。两个主题共享同一状态时就退化成空等待。
+- `afterAll` 超时要怀疑拆解挂起，而不是断言超时。

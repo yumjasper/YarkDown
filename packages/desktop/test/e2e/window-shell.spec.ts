@@ -1,12 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { writeFile } from 'node:fs/promises'
-import {
-  launchWithMarkdown,
-  expectNoRendererErrors,
-  enterSourceMode,
-  exitSourceMode,
-  clickMenuById
-} from './helpers'
+import { closeApp, launchWithMarkdown, expectNoRendererErrors, enterSourceMode, exitSourceMode, clickMenuById } from './helpers'
 
 test('window chrome and toolbar follow the editor column', async() => {
   test.setTimeout(60000)
@@ -245,6 +239,6 @@ test('window chrome and toolbar follow the editor column', async() => {
     }
     await expectNoRendererErrors(app)
   } finally {
-    await app.close()
+    await closeApp(app)
   }
 })

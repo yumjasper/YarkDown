@@ -143,26 +143,92 @@ export const clearRendererErrors = async(app: ElectronApplication): Promise<void
   })
 }
 
-// `app.close()` occasionally hangs while tearing down editor windows, which
-// surfaces as an opaque "afterAll hook timeout" on a test that actually passed.
-// Tear down via `app.quit()` first and fall back to a forced close, so a stuck
-// window cannot fail an unrelated spec.
-export const closeApp = async(app: ElectronApplication, timeoutMs = 15000): Promise<void> => {
-  if (!app) return
-  try {
-    await app.evaluate(({ app: electronApp }) => {
-      for (const win of electronApp.getWindows?.() ?? []) {
-        if (!win.isDestroyed()) win.destroy()
+// Closing an editor window with unsaved tabs opens the native "保存 / 放弃保存 /
+// 取消" message box (windows/editor.ts preventDefaults `close`, the renderer
+// answers via `mt::close-window-confirm`). That box is modal and invisible to
+// Playwright, so the process never exits and the run stalls until somebody
+// clicks it by hand.
+//
+// Teardown therefore does what a user does: close the editor window through the
+// normal path (the renderer still flushes its buffered state), then answer every
+// unsaved-change confirmation with "放弃保存" over the same IPC the dialog button
+// sends. Only if the app has still not exited within the timeout do we destroy
+// the windows and kill the process.
+const forceDestroyWindows = async(app: ElectronApplication): Promise<void> => {
+  await app.evaluate(({ app: electronApp, BrowserWindow }) => {
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (!win.isDestroyed()) win.destroy()
+    }
+    electronApp.quit()
+  })
+}
+
+const closeMainWindow = async(app: ElectronApplication): Promise<void> => {
+  await app.evaluate(({ BrowserWindow }) => {
+    const wins = BrowserWindow.getAllWindows().filter((win) => !win.isDestroyed())
+    if (!wins.length) return
+    // The editor window carries `type=editor` in its URL (WindowType in
+    // windows/base.ts). Settings and about windows hold no unsaved state, so they
+    // are torn down first and cannot keep `window-all-closed` pending.
+    const isEditor = (win: Electron.BrowserWindow): boolean => {
+      if (win.webContents.isDestroyed()) return false
+      try {
+        return new URL(win.webContents.getURL()).searchParams.get('type') === 'editor'
+      } catch {
+        return false
       }
-      electronApp.quit()
+    }
+    const main = wins.find(isEditor) ?? wins[0]
+    for (const win of wins) {
+      if (win === main) continue
+      win.destroy()
+    }
+    main.close()
+  })
+}
+
+const discardUnsavedChanges = async(app: ElectronApplication): Promise<void> => {
+  try {
+    await app.evaluate(({ BrowserWindow }) => {
+      for (const win of BrowserWindow.getAllWindows()) {
+        if (win.isDestroyed() || win.webContents.isDestroyed()) continue
+        // "放弃保存": the renderer drops unsaved tabs and then sends
+        // `mt::close-window` itself.
+        win.webContents.send('mt::close-confirmed', true)
+      }
     })
   } catch {
-    /* the app may already be gone */
+    /* the window tree may already be gone */
+  }
+}
+
+export const closeApp = async(app: ElectronApplication, timeoutMs = 8000): Promise<void> => {
+  if (!app) return
+  try {
+    await closeMainWindow(app)
+    // The renderer answers `mt::ask-for-close` asynchronously — it flushes the
+    // active editor and buffered state first — so keep declining the dialog until
+    // the app actually exits.
+    const deadline = Date.now() + timeoutMs
+    while (Date.now() < deadline) {
+      await discardUnsavedChanges(app)
+      const exited = await Promise.race([
+        app
+          .waitForEvent('close')
+          .then(() => true)
+          .catch(() => true),
+        new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 150))
+      ])
+      if (exited) return
+    }
+  } catch {
+    /* fall through to the forced teardown below */
   }
   try {
+    await forceDestroyWindows(app)
     await Promise.race([
       app.close(),
-      new Promise((resolve) => setTimeout(resolve, timeoutMs))
+      new Promise((resolve) => setTimeout(resolve, Math.min(timeoutMs, 5000)))
     ])
   } catch {
     /* ignored: the window tree is already torn down above */
