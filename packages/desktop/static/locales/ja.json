@@ -243,7 +243,9 @@
     "invalidRegex": "無効な正規表現 \"{pattern}\"",
     "regexMatchEmpty": "正規表現が空文字列 \"{pattern}\" に一致",
     "searchResultInfo": "{fileCount} 個のファイルで {matchCount} 件一致",
-    "searchLimited": "最初の {count} 件まで表示しています"
+    "searchLimited": "最初の {count} 件まで表示しています",
+    "onlyMatches": "一致する行のみを表示",
+    "hiddenLines": "非表示行: {count}"
   },
   "sideBar": {
     "search": {

@@ -42,7 +42,8 @@ const defaultFileStateWithoutId = {
   searchMatches: {
     index: -1,
     matches: [],
-    value: ''
+    value: '',
+    hiddenCount: 0
   },
   scrollTop: 0,
   muyaIndexCursor: null,

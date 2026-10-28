@@ -59,6 +59,9 @@ export interface FileSearchMatches {
   index: number
   matches: unknown[]
   value: string
+  // Count of lines/blocks hidden by the "show only matching lines" filter.
+  // Optional so legacy persisted tab state without the field stays valid.
+  hiddenCount?: number
 }
 
 /**

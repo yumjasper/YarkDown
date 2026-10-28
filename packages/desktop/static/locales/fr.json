@@ -243,7 +243,9 @@
     "invalidRegex": "Expression régulière invalide \"{pattern}\"",
     "regexMatchEmpty": "L'expression régulière correspond à une chaîne vide \"{pattern}\"",
     "searchResultInfo": "{matchCount} correspondances dans {fileCount} fichiers",
-    "searchLimited": "Recherche limitée aux {count} premiers résultats"
+    "searchLimited": "Recherche limitée aux {count} premiers résultats",
+    "onlyMatches": "Afficher uniquement les lignes correspondantes",
+    "hiddenLines": "Lignes masquées : {count}"
   },
   "sideBar": {
     "search": {

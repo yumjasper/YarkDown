@@ -243,7 +243,9 @@
     "invalidRegex": "Expressão regular inválida \"{pattern}\"",
     "regexMatchEmpty": "Expressão regular corresponde à string vazia \"{pattern}\"",
     "searchResultInfo": "{matchCount} correspondências em {fileCount} arquivos",
-    "searchLimited": "Pesquisa limitada aos primeiros {count} resultados"
+    "searchLimited": "Pesquisa limitada aos primeiros {count} resultados",
+    "onlyMatches": "Mostrar apenas as linhas correspondentes",
+    "hiddenLines": "Linhas ocultas: {count}"
   },
   "sideBar": {
     "search": {

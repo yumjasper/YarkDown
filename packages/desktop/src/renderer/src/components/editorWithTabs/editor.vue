@@ -1194,12 +1194,14 @@ const toSearchMatches = (result: unknown) => {
   const r = (result ?? {}) as {
     index?: number
     value?: string
+    hiddenCount?: number
     matches?: Array<{ start: number; end: number; match: string }>
   }
   return {
     index: r.index ?? -1,
     matches: (r.matches ?? []).map((m) => ({ start: m.start, end: m.end, match: m.match })),
-    value: r.value ?? ''
+    value: r.value ?? '',
+    hiddenCount: r.hiddenCount ?? 0
   }
 }
 

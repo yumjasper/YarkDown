@@ -243,7 +243,9 @@
     "invalidRegex": "Недопустимое регулярное выражение \"{pattern}\"",
     "regexMatchEmpty": "Регулярное выражение соответствует пустой строке \"{pattern}\"",
     "searchResultInfo": "{matchCount} совпадений в {fileCount} файлах",
-    "searchLimited": "Поиск ограничен первыми {count} результатами"
+    "searchLimited": "Поиск ограничен первыми {count} результатами",
+    "onlyMatches": "Показывать только совпадающие строки",
+    "hiddenLines": "Скрытых строк: {count}"
   },
   "sideBar": {
     "search": {

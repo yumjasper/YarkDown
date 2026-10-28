@@ -33,6 +33,13 @@
               {{ highlightCount }}
             </span>
             <span
+              v-if="hiddenCount > 0"
+              class="search-result hidden-count"
+              :title="t('search.hiddenLines', { count: hiddenCount })"
+            >
+              {{ t('search.hiddenLines', { count: hiddenCount }) }}
+            </span>
+            <span
               :title="t('search.caseSensitive')"
               class="is-case-sensitive"
               :class="{ active: isCaseSensitive }"
@@ -55,6 +62,14 @@
               @click="toggleCtrl('isRegexp')"
             >
               <FindRegexIcon aria-hidden="true" />
+            </span>
+            <span
+              :title="t('search.onlyMatches')"
+              class="is-only-matches"
+              :class="{ active: onlyMatches }"
+              @click="toggleCtrl('onlyMatches')"
+            >
+              <FindFilterLinesIcon aria-hidden="true" />
             </span>
           </div>
           <div
@@ -142,6 +157,7 @@ import bus from '../../bus'
 import FindCaseIcon from '@/assets/icons/searchIcons/iconCase.svg'
 import FindWordIcon from '@/assets/icons/searchIcons/iconWord.svg'
 import FindRegexIcon from '@/assets/icons/searchIcons/iconRegex.svg'
+import FindFilterLinesIcon from '@/assets/icons/searchIcons/iconFilterLines.svg'
 import { useEditorStore } from '@/store/editor'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
@@ -156,6 +172,7 @@ const showSearch = ref(false)
 const isCaseSensitive = ref(false)
 const isWholeWord = ref(false)
 const isRegexp = ref(false)
+const onlyMatches = ref(false)
 const type = ref('search')
 const searchValue = ref('')
 const replaceValue = ref('')
@@ -201,6 +218,12 @@ const highlightCount = computed(() => {
   return searchMatches.value ? searchMatches.value.matches.length : 0
 })
 
+// Notepad3-style feedback: while "show only matching lines" is on, show how
+// many lines are hidden next to the match counter.
+const hiddenCount = computed(() => {
+  return searchMatches.value?.hiddenCount ?? 0
+})
+
 onMounted(() => {
   bus.on('find', listenFind)
   bus.on('replace', listenReplace)
@@ -221,7 +244,7 @@ onBeforeUnmount(() => {
   bus.off('search-blur', blurSearch)
 })
 
-const toggleCtrl = (ctrl: 'isCaseSensitive' | 'isWholeWord' | 'isRegexp') => {
+const toggleCtrl = (ctrl: 'isCaseSensitive' | 'isWholeWord' | 'isRegexp' | 'onlyMatches') => {
   switch (ctrl) {
     case 'isCaseSensitive':
       isCaseSensitive.value = !isCaseSensitive.value
@@ -231,6 +254,9 @@ const toggleCtrl = (ctrl: 'isCaseSensitive' | 'isWholeWord' | 'isRegexp') => {
       break
     case 'isRegexp':
       isRegexp.value = !isRegexp.value
+      break
+    case 'onlyMatches':
+      onlyMatches.value = !onlyMatches.value
       break
   }
   searchFn()
@@ -326,7 +352,8 @@ const searchFn = () => {
     opt: {
       isCaseSensitive: isCaseSensitive.value,
       isWholeWord: isWholeWord.value,
-      isRegexp: isRegexp.value
+      isRegexp: isRegexp.value,
+      onlyMatches: onlyMatches.value
     }
   })
 }
@@ -340,7 +367,8 @@ const replace = (isSingle = true) => {
       isSingle,
       isCaseSensitive: isCaseSensitive.value,
       isWholeWord: isWholeWord.value,
-      isRegexp: isRegexp.value
+      isRegexp: isRegexp.value,
+      onlyMatches: onlyMatches.value
     }
   })
 }
@@ -443,6 +471,12 @@ const replace = (isSingle = true) => {
     margin-right: 5px;
     line-height: 17px;
   }
+  & > span.search-result.hidden-count {
+    margin-right: 8px;
+    color: var(--sideBarIconColor);
+    opacity: 0.85;
+    cursor: default;
+  }
   & > span:not(.search-result) {
     cursor: pointer;
     width: 20px;
@@ -462,6 +496,13 @@ const replace = (isSingle = true) => {
       fill: var(--highlightThemeColor);
     }
   }
+}
+
+/* Notepad3-style filter toggle: the active funnel reads as a pressed state
+   with a themed chip background, not just an icon tint. */
+.input-wrapper .controls > span.is-only-matches.active {
+  background: var(--highlightThemeColor, rgb(64 158 255 / 15%));
+  border-radius: 3px;
 }
 
 .input-wrapper .error-msg {

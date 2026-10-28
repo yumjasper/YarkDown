@@ -10,15 +10,40 @@ function fixture(initial = 'word and WORD') {
   const events = new Map<string, () => void>()
   const cleared = vi.fn()
   const SEARCH = vi.fn()
+  const wrapperClasses = new Set<string>()
+  const addedLines: number[] = []
+  const hiddenLines = new Set<number>()
   const editor = {
     getValue: () => text,
     getSelection: () => '',
     getCursor: () => ({ line: 0, ch: caret }),
-    indexFromPos: (position: CodeMirror.Position) => position.ch,
-    posFromIndex: (ch: number) => ({ line: 0, ch }),
+    indexFromPos: (position: { line: number; ch: number }) => {
+      const lines = text.split('\n')
+      let index = 0
+      for (let i = 0; i < position.line; i++) index += lines[i].length + 1
+      return index + position.ch
+    },
+    posFromIndex: (ch: number) => {
+      const lines = text.split('\n')
+      let line = 0
+      let remaining = ch
+      while (line < lines.length && remaining > lines[line].length) {
+        remaining -= lines[line].length + 1
+        line++
+      }
+      return { line, ch: remaining }
+    },
     setSelection: (from: CodeMirror.Position) => { caret = from.ch },
     operation: (run: () => void) => run(),
     markText: () => ({ clear: cleared }),
+    lineCount: () => text.split('\n').length,
+    getDoc: () => ({ getLineHandle: (line: number) => line }),
+    addLineClass: (line: number, _where: string, _cls: string) => {
+      hiddenLines.add(line)
+      if (!addedLines.includes(line)) addedLines.push(line)
+    },
+    removeLineClass: (line: number, _where: string, _cls: string) => { hiddenLines.delete(line) },
+    getWrapperElement: () => ({ classList: { toggle: (cls: string, on: boolean) => { if (on) wrapperClasses.add(cls); else wrapperClasses.delete(cls) }, remove: (cls: string) => wrapperClasses.delete(cls) } }),
     replaceRange: (value: string, start: CodeMirror.Position, end: CodeMirror.Position) => {
       text = text.slice(0, start.ch) + value + text.slice(end.ch)
       events.get('changes')?.()
@@ -27,7 +52,7 @@ function fixture(initial = 'word and WORD') {
     off: (event: string) => events.delete(event)
   } as unknown as CodeMirror.Editor
   const dispose = bindSourceSearch(editor, { SEARCH }, () => active)
-  return { SEARCH, cleared, events, dispose, text: () => text, deactivate: () => { active = false } }
+  return { SEARCH, cleared, events, dispose, text: () => text, deactivate: () => { active = false }, addedLines, hiddenLines, wrapperClasses }
 }
 
 describe('independent source search', () => {
@@ -70,5 +95,31 @@ describe('independent source search', () => {
     f.SEARCH.mockClear()
     bus.emit('searchValue', { value: 'word' })
     expect(f.SEARCH).not.toHaveBeenCalled()
+  })
+  it('hides unmatched lines while onlyMatches is on and restores them when off', () => {
+    const f = fixture('alpha\nbeta\ngamma beta\ndelta')
+    try {
+      bus.emit('searchValue', { value: 'beta', opt: { onlyMatches: true } })
+      expect(f.SEARCH.mock.lastCall?.[0].matches).toHaveLength(2)
+      // Line 0 holds the caret (fixture pins the cursor there), so Notepad3's
+      // caret-line-kept-visible rule leaves only line 3 hidden.
+      expect([...f.addedLines].sort()).toEqual([3])
+      expect(f.SEARCH.mock.lastCall?.[0].hiddenCount).toBe(1)
+      expect(f.wrapperClasses.has('cm-filtering-search')).toBe(true)
+
+      bus.emit('searchValue', { value: 'beta', opt: {} })
+      expect(f.hiddenLines.size).toBe(0)
+      expect(f.SEARCH.mock.lastCall?.[0].hiddenCount).toBe(0)
+      expect(f.wrapperClasses.has('cm-filtering-search')).toBe(false)
+    } finally { f.dispose() }
+  })
+  it('clears line filter classes on dispose', () => {
+    const f = fixture('alpha\nbeta\ngamma beta\ndelta')
+    bus.emit('searchValue', { value: 'beta', opt: { onlyMatches: true } })
+    // Only line 3 hides: line 0 is the caret line and stays visible.
+    expect(f.addedLines).toHaveLength(1)
+    f.dispose()
+    expect(f.hiddenLines.size).toBe(0)
+    expect(f.wrapperClasses.has('cm-filtering-search')).toBe(false)
   })
 })

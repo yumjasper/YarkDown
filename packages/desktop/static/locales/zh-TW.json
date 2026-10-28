@@ -243,7 +243,9 @@
     "invalidRegex": "無效的正規表示式 \"{pattern}\"",
     "regexMatchEmpty": "正規表示式 \"{pattern}\" 符合空字串",
     "searchResultInfo": "在 {fileCount} 個檔案中找到 {matchCount} 個符合項目",
-    "searchLimited": "搜尋僅限前 {count} 個結果"
+    "searchLimited": "搜尋僅限前 {count} 個結果",
+    "onlyMatches": "僅顯示匹配行",
+    "hiddenLines": "已隱藏 {count} 行"
   },
   "sideBar": {
     "search": {

@@ -15,3 +15,20 @@
 .source-code .CodeMirror div.CodeMirror-selected {
   background: var(--selection-color, rgb(45 170 219 / 30%)) !important;
 }
+/* Notepad++-style "show only matching lines": bindSourceSearch adds
+   cm-search-hidden-line (on the line wrap) to lines without a match and
+   cm-filtering-search on the wrapper while the filter is on. display:none on
+   a line wrapper is purely visual — CodeMirror keeps the document intact. */
+.cm-filtering-search .cm-search-hidden-line {
+  display: none !important;
+}
+/* Notepad3 marks the caret line with a subtle accent so the "line kept
+   visible even without a match" rule reads as intentional, not as a missed
+   filter. Scoped to filter mode so normal editing is unaffected. */
+.cm-filtering-search .CodeMirror-activeline-background {
+  background: var(--highlightThemeColor, rgb(64 158 255 / 12%)) !important;
+}
+.cm-filtering-search .CodeMirror-activeline .CodeMirror-linenumber {
+  color: var(--highlightThemeColor, rgb(64 158 255 / 100%));
+  font-weight: 600;
+}

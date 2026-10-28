@@ -31,6 +31,7 @@
     "build:linux": "pnpm --filter marktext build:linux",
     "perf:inspect": "pnpm --filter marktext perf:inspect",
     "perf:inspect-brk": "pnpm --filter marktext perf:inspect-brk",
+    "bench:search": "node scripts/bench-only-matches.mjs",
     "test": "pnpm --filter marktext test",
     "test:unit": "pnpm --filter marktext test:unit",
     "test:quick": "node scripts/verify.mjs quick",

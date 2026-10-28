@@ -243,7 +243,9 @@
     "invalidRegex": "Expresión regular inválida \"{pattern}\"",
     "regexMatchEmpty": "La expresión regular coincide con la cadena vacía \"{pattern}\"",
     "searchResultInfo": "{matchCount} coincidencias en {fileCount} archivos",
-    "searchLimited": "Búsqueda limitada a los primeros {count} resultados"
+    "searchLimited": "Búsqueda limitada a los primeros {count} resultados",
+    "onlyMatches": "Mostrar solo las líneas coincidentes",
+    "hiddenLines": "Líneas ocultas: {count}"
   },
   "sideBar": {
     "search": {

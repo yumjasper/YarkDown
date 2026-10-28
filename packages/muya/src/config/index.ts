@@ -465,6 +465,7 @@ export const DEFAULT_SEARCH_OPTIONS = {
     isRegexp: false,
     selectHighlight: false,
     highlightIndex: -1,
+    onlyMatches: false,
 };
 
 export const LINE_BREAK = '\n';

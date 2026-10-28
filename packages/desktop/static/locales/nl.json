@@ -243,7 +243,9 @@
     "invalidRegex": "Ongeldige reguliere expressie \"{pattern}\"",
     "regexMatchEmpty": "Reguliere expressie matcht lege tekenreeks \"{pattern}\"",
     "searchResultInfo": "{matchCount} resultaten in {fileCount} bestanden",
-    "searchLimited": "Zoeken beperkt tot eerste {count} resultaten"
+    "searchLimited": "Zoeken beperkt tot eerste {count} resultaten",
+    "onlyMatches": "Alleen overeenkomende regels weergeven",
+    "hiddenLines": "Verborgen regels: {count}"
   },
   "sideBar": {
     "search": {

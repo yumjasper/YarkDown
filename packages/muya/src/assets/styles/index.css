@@ -250,6 +250,35 @@ body {
     animation-duration: 0.25s;
 }
 
+/* Notepad++-style "show only matching lines": the search module toggles
+   `mu-search-hidden` on top-level blocks without a match and `mu-filtering-search`
+   on the editor root while the filter is active. Blocks with the active match
+   are never hidden, so the cursor stays visible. Blocks fading back in get a
+   short reveal so re-typing a query doesn't make surviving blocks pop. */
+.mu-filtering-search .mu-search-hidden {
+    display: none !important;
+}
+
+.mu-filtering-search .mu-block-reveal {
+    animation: mu-block-reveal 0.15s ease-out;
+}
+
+@keyframes mu-block-reveal {
+    from {
+        opacity: 0.35;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mu-filtering-search .mu-block-reveal {
+        animation: none;
+    }
+}
+
 *:not(.mu-hide)::selection,
 .mu-selection {
     padding: 0 0.2em;

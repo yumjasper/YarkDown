@@ -137,12 +137,83 @@ const clearMarks = () => {
   marks = []
 }
 
+// Notepad++-style "show only matching lines" for plain-text files. Same
+// approach and performance notes as sourceSearch: hide unmatched line wraps,
+// never touch the doc; stale handles no-op in CodeMirror; index→line uses a
+// shared offset walk; the apply loop only touches lines that change state.
+let hiddenLines = new Set<CodeMirror.LineHandle>()
+const applyLineFilter = () => {
+  if (!cm) return
+  const onlyMatches = (searchOptions as { onlyMatches?: boolean }).onlyMatches === true
+  cm.getWrapperElement().classList.toggle('cm-filtering-search', onlyMatches)
+  if (!onlyMatches) {
+    if (hiddenLines.size) {
+      cm.operation(() => {
+        for (const line of hiddenLines) cm!.removeLineClass(line, 'wrap', 'cm-search-hidden-line')
+      })
+      hiddenLines = new Set()
+    }
+    return
+  }
+  const text = cm.getValue()
+  const matched = new Set<number>()
+  // Notepad3 keeps the caret line visible even without a match.
+  matched.add(cm.getCursor().line)
+  let lastLine = 0
+  let lastOffset = 0
+  const lineOf = (index: number) => {
+    if (index < lastOffset) {
+      lastLine = 0
+      lastOffset = 0
+    }
+    while (true) {
+      const nextBreak = text.indexOf('\n', lastOffset)
+      if (nextBreak === -1 || nextBreak >= index) break
+      lastLine++
+      lastOffset = nextBreak + 1
+    }
+    return lastLine
+  }
+  for (const match of matches) {
+    const from = lineOf(match.start)
+    const to = lineOf(match.end)
+    for (let line = from; line <= to; line++) matched.add(line)
+  }
+  const nextHidden = new Set<CodeMirror.LineHandle>()
+  const lineCount = cm.lineCount()
+  const cmInstance = cm
+  cm.operation(() => {
+    let line = 0
+    let offset = 0
+    const doc = cmInstance.getDoc()
+    while (line < lineCount) {
+      const handle = doc.getLineHandle(line)
+      const keep = matched.has(line)
+      if (keep) {
+        if (hiddenLines.delete(handle)) cmInstance.removeLineClass(handle, 'wrap', 'cm-search-hidden-line')
+      } else if (!hiddenLines.has(handle)) {
+        cmInstance.addLineClass(handle, 'wrap', 'cm-search-hidden-line')
+        nextHidden.add(handle)
+      } else {
+        hiddenLines.delete(handle)
+        nextHidden.add(handle)
+      }
+      const breakAt = text.indexOf('\n', offset)
+      offset = breakAt === -1 ? text.length : breakAt + 1
+      line++
+    }
+    for (const line of hiddenLines) cmInstance.removeLineClass(line, 'wrap', 'cm-search-hidden-line')
+  })
+  hiddenLines = nextHidden
+}
+
 const publishMatches = (reveal = true) => {
   if (!cm || !isActive()) return
   store.SEARCH({
     value: query,
     index: matchIndex,
-    matches: matches.map(({ start, end }) => ({ start, end }))
+    matches: matches.map(({ start, end }) => ({ start, end })),
+    hiddenCount: (searchOptions as { onlyMatches?: boolean }).onlyMatches === true ? hiddenLines.size : 0
   })
   if (reveal && matchIndex >= 0) {
     const match = matches[matchIndex]
@@ -166,6 +237,9 @@ const search = (payload: unknown) => {
         className: 'plain-text-match'
       })
     )
+    // Filter first, then publish so the SEARCH payload reports the fresh
+    // hiddenLines count and the reveal scroll sees the filtered layout.
+    applyLineFilter()
     publishMatches()
   })
 }
@@ -210,6 +284,7 @@ const loadFile = (payload?: unknown) => {
   if (change?.id && change.id !== file.id) return
   loading = true
   clearMarks()
+  applyLineFilter()
   query = ''
   matches = []
   matchIndex = -1
@@ -375,6 +450,9 @@ onBeforeUnmount(() => {
   commit()
   for (const [event, handler] of Object.entries(handlers)) bus.off(event, handler)
   clearMarks()
+  cm?.getWrapperElement().classList.remove('cm-filtering-search')
+  for (const line of hiddenLines) cm?.removeLineClass(line, 'wrap', 'cm-search-hidden-line')
+  hiddenLines = new Set()
   stopResize?.()
   for (const view of documents.values()) props.pool.release(view)
   documents.clear()

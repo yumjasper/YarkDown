@@ -243,7 +243,9 @@
     "invalidRegex": "Geçersiz düzenli ifade \"{pattern}\"",
     "regexMatchEmpty": "Düzenli ifade boş dizeyle eşleşiyor \"{pattern}\"",
     "searchResultInfo": "{fileCount} dosyada {matchCount} eşleşme",
-    "searchLimited": "Arama ilk {count} sonuçla sınırlandırıldı"
+    "searchLimited": "Arama ilk {count} sonuçla sınırlandırıldı",
+    "onlyMatches": "Yalnızca eşleşen satırları göster",
+    "hiddenLines": "Gizli satır: {count}"
   },
   "sideBar": {
     "search": {
