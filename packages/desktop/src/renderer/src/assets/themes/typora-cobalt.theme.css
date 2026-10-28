@@ -274,3 +274,15 @@
   height: 0;
   border-top: 1px solid rgba(216, 227, 234, 0.15);
 }
+
+/* 图表块容器：与代码块统一的卡片语言。仅作用于非激活态——
+   激活态下 .mu-diagram-preview 会变为带边框与阴影的浮层，
+   在此叠加会形成双重边框。 */
+figure.mu-diagram-block:not(.mu-active) > div.mu-diagram-preview {
+  box-sizing: border-box;
+  max-width: 100%;
+  padding: 0.75em 1em;
+  background: var(--editor-color-04);
+  border: 1px solid var(--editor-color-10);
+  border-radius: 6px;
+}
