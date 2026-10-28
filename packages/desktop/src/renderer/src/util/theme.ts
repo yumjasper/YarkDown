@@ -18,7 +18,20 @@ import {
   typoraDrakeDark,
   typoraCobalt,
   typoraLapis,
-  typoraSolarizedLight
+  typoraSolarizedLight,
+  typoraNord,
+  typoraDracula,
+  typoraCatppuccin,
+  typoraAyuLight,
+  typoraOneLight,
+  typoraPixyll,
+  typoraWhitey,
+  typoraOneDark,
+  typoraGruvbox,
+  typoraIaLight,
+  typoraTypo,
+  typoraTokyoNight,
+  typoraRosePine
 } from './themeColor'
 import { isLinux } from './index'
 
@@ -40,7 +53,20 @@ const THEME_BUILDERS: Record<string, () => string> = {
   'typora-drake-dark': typoraDrakeDark,
   'typora-cobalt': typoraCobalt,
   'typora-lapis': typoraLapis,
-  'typora-solarized-light': typoraSolarizedLight
+  'typora-solarized-light': typoraSolarizedLight,
+  'typora-nord': typoraNord,
+  'typora-dracula': typoraDracula,
+  'typora-catppuccin': typoraCatppuccin,
+  'typora-ayu-light': typoraAyuLight,
+  'typora-one-light': typoraOneLight,
+  'typora-pixyll': typoraPixyll,
+  'typora-whitey': typoraWhitey,
+  'typora-one-dark': typoraOneDark,
+  'typora-gruvbox': typoraGruvbox,
+  'typora-ia-light': typoraIaLight,
+  'typora-typo': typoraTypo,
+  'typora-tokyo-night': typoraTokyoNight,
+  'typora-rose-pine': typoraRosePine
 }
 
 // Themes rendered on a dark background. Drives the `dark` body class that
@@ -51,11 +77,29 @@ const DARK_THEME_IDS = new Set([
   'typora-notion-dark',
   'typora-drake-dark',
   'typora-cobalt',
-  'typora-lapis'
+  'typora-lapis',
+  'typora-nord',
+  'typora-dracula',
+  'typora-catppuccin',
+  'typora-one-dark',
+  'typora-gruvbox',
+  'typora-tokyo-night',
+  'typora-rose-pine'
 ])
 
+/**
+ * Wrap a theme stylesheet for the editor window.
+ *
+ * `@muyajs/core` ships light defaults for the kebab-case editor variables
+ * (`--editor-bg-color: #fff`, `--editor-color-04: #f7f7f7`, `--table-border-color:
+ * #e5e5e5`, …) in its own `:root` block. That stylesheet arrives as a lazy chunk
+ * link, i.e. after this `<style>` is appended, so on equal specificity the
+ * defaults win and every dark theme keeps light table rows, white math surfaces
+ * and a dark-on-light table header. Doubling the `:root` specificity keeps the
+ * theme authoritative regardless of chunk load order.
+ */
 const patchTheme = (css: string): string => {
-  return `@media not print {\n${css}\n}`
+  return `@media not print {\n${css.replace(/:root(?![\w-])/g, ':root:root')}\n}`
 }
 
 const getEmojiPickerPatch = (): string => {

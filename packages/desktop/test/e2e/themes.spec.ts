@@ -17,7 +17,7 @@ test.describe('Theme switching', () => {
   })
 
   test('Switch to a dark theme adds body.dark', async() => {
-    await clickMenuById(app, 'dracula')
+    await clickMenuById(app, 'typora-dracula')
     await expect(page.locator('body')).toHaveClass(/(^|\s)dark(\s|$)/)
   })
 
@@ -30,7 +30,7 @@ test.describe('Theme switching', () => {
   })
 
   test('Switch back to dark theme re-applies body.dark', async() => {
-    await clickMenuById(app, 'nord')
+    await clickMenuById(app, 'typora-nord')
     await expect(page.locator('body')).toHaveClass(/(^|\s)dark(\s|$)/)
   })
 
@@ -63,8 +63,8 @@ test.describe('Theme switching', () => {
       })
     }
 
-    // Dark theme: dracula colors `.token.keyword` #ff79c6 -> rgb(255, 121, 198).
-    await clickMenuById(app, 'dracula')
+    // Dark theme: typora-dracula colors `.token.keyword` #ff79c6 -> rgb(255, 121, 198).
+    await clickMenuById(app, 'typora-dracula')
     await expect(page.locator('body')).toHaveClass(/(^|\s)dark(\s|$)/)
     let darkColor = ''
     await expect

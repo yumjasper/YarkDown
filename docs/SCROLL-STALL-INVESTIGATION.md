@@ -782,3 +782,89 @@ mountFrame = requestAnimationFrame(() => {
 - 单 `requestAnimationFrame` 不等于"下一帧"。rAF 回调在样式重算和布局之前跑，想把重活从欠布局的帧里挪走，需要双 rAF。
 - 微基准的结论不能直接外推：`pointer-events` 单独写入测出 30.5 ms，放进真实切换里被布局完全掩盖。任何优化都要在真实路径上复测。
 - 判断"某次同步布局该不该省"，先看它是不是设计本身（这里是"拖拽时不重排、松手补一次"），否则只是在移动成本。
+
+## 第十轮：暗色主题下表格与公式仍是白底
+
+### 现象
+
+暗色主题下正文是暗的、文字是浅的，但表格整块仍是白底配深色文字，公式（KaTeX）也是深色字，在暗背景上几乎看不见。
+
+### 根因
+
+`@muyajs/core` 自带一份 `:root` 默认变量，取值是浅色：
+
+```css
+:root {
+  --editor-bg-color: rgb(255 255 255 / 100%);
+  --editor-color-04: #f7f7f7;
+  --editor-color: #4d4d4d;
+  --table-border-color: #e5e5e5;
+}
+```
+
+主题用的是 `--editorBgColor` 等 camelCase 变量，并在 `addThemeStyle()` 里同步映射了一份 kebab-case 给新引擎（`--editor-bg-color: var(--editorBgColor)`）。问题在于两者的加载顺序：
+
+| 顺序 | 样式表                             | 声明内容                            |
+| ---- | ---------------------------------- | ----------------------------------- |
+| 4    | `<style id="ag-theme">`            | 主题变量，kebab-case 指向 camelCase |
+| 7    | `src-DwQir6Ea.css`（懒加载 chunk） | muyajs 自带 `:root`，写死浅色       |
+
+两者选择器都是 `:root`，优先级相同，后加载的赢。结果主题映射被 muya 的浅色默认值覆盖，`--editor-bg-color` 解析成 `#fff`、`--editor-color-04` 解析成 `#f7f7f7`、`--table-border-color` 解析成 `#e5e5e5`、`--editor-color` 解析成 `#4d4d4d`。于是表格斑马纹、表头底色、单元格文字、公式字形全部回到浅色主题的外观。
+
+这个 bug 只在暗色主题下显形，因为浅色主题的默认值本来就等于正确值。它也与 `body.dark` 无关，所以既有的主题切换测试一直是绿的。
+
+实测对照（`typora-dracula`）：
+
+| 变量                   | 修复前    | 修复后      |
+| ---------------------- | --------- | ----------- |
+| `--editor-bg-color`    | `#fff`    | `#282a36`   |
+| `--editor-color-04`    | `#f7f7f7` | `#f8f8f20a` |
+| `--editor-color`       | `#4d4d4d` | `#f8f8f2`   |
+| `--table-border-color` | `#e5e5e5` | `#44475a`   |
+
+### 修复
+
+在 `patchTheme()` 里把主题的 `:root` 提权为 `:root:root`，用优先级而不是加载顺序来保证主题权威：
+
+```ts
+const patchTheme = (css: string): string => {
+  return `@media not print {\n${css.replace(/:root(?![\w-])/g, ':root:root')}\n}`
+}
+```
+
+不改 muya 的默认值本身，因为那些默认值在脱离桌面的场景（独立构建、导出）仍是合理的兜底；也不去动 chunk 加载顺序，那条路依赖打包器的输出细节，容易再被破坏。
+
+负向断言用的正则 `(?![\w-])` 是必要的：主题文件里还有 `:root` 之外的变量引用写法，直接替换`/:root/g` 会误伤。
+
+### 验收
+
+新增 [dark-theme-surfaces.spec.ts](/data/../D:/Tools/YarkDown/packages/desktop/test/e2e/dark-theme-surfaces.spec.ts)，对 4 个暗色主题与 2 个浅色主题双向断言：
+
+- 暗色：单元格文字与公式亮度 > 150，奇偶行合成亮度 < 90
+- 浅色：单元格文字亮度 < 150，奇数行合成亮度 > 200
+
+行底色是半透明叠加，必须先合成到编辑器实际背景才可比，否则 `rgba(36,41,47,0.04)` 这种浅色主题的淡叠会被误判成暗色。
+
+实测亮度（0-255）：
+
+| 主题               | 编辑器背景 | 单元格文字 | 奇数行 | 偶数行 | 公式 |
+| ------------------ | ---------- | ---------- | ------ | ------ | ---- |
+| light              | 255        | 77         | 247    | 255    | 77   |
+| typora-github      | 255        | 40         | 246    | 248    | 40   |
+| dark               | 40         | 255        | 49     | 40     | 255  |
+| typora-dracula     | 40,42,54   | 247        | 51     | 52     | 247  |
+| typora-nord        | 46,52,64   | 221        | 58     | 56     | 221  |
+| typora-github-dark | 13,17,23   | 236        | 25     | 16     | 236  |
+| typora-one-dark    | 40,44,52   | 177        | 49     | 48     | 177  |
+
+### 顺带修正
+
+`themes.spec.ts` 里有三处仍在用旧的主题菜单 id（`dracula`、`nord`），而菜单 id 早已是 `typora-dracula`、`typora-nord`，这三条用例一直在报 `Menu id not found`。已修正。
+
+同文件里 Prism 断言 `lightColor !== darkColor` 仍然失败，但用 `git stash` 回退本次改动后复测同样失败，属于既有问题，与主题提权无关，本轮不动。
+
+### 方法论
+
+- CSS 变量的"主题不生效"要先查计算值，不能只查声明值。这里 `--editorBgColor` 是对的、`--editor-bg-color` 是错的，两个名字看着几乎一样。
+- 同优先级 `:root` 冲突只由加载顺序决定，而懒加载 chunk 的顺序不写在源码里，需要打印 `document.styleSheets` 才能看到。
+- 判断"半透明颜色深浅"必须合成到底层背景，直接乘 alpha 会得出相反的结论。
