@@ -140,7 +140,7 @@ import {
 } from '@/util/tocNavigation'
 import { findActiveHeadingSlug, type HeadingPosition } from '@/util/findActiveHeading'
 import { scheduleMarkdownMathWarmup } from '@/codeMirror/warmMode'
-import { addCommonStyle, setEditorWidth } from '@/util/theme'
+import { addCommonStyle, isDarkTheme, setEditorWidth } from '@/util/theme'
 import { mountVlookEnhance, type VlookEnhanceHandle } from '@/util/vlookEnhance'
 import { usePreferencesStore } from '@/store/preferences'
 import { useEditorStore } from '@/store/editor'
@@ -568,8 +568,8 @@ watch(tabSize, (value, oldValue) => {
 
 watch(theme, (value, oldValue) => {
   if (value !== oldValue && editor.value) {
-    // Agreement：Any black series theme needs to contain dark `word`.
-    if (/dark/i.test(value)) {
+    // Charts must track the same dark signal as the UI, not the theme id shape.
+    if (isDarkTheme(value)) {
       editor.value.setOptions(
         {
           mermaidTheme: 'dark',
@@ -1973,7 +1973,7 @@ onMounted(() => {
     getPathForFile: (file: File) => window.electron.webUtils.getPathForFile(file)
   }
 
-  if (/dark/i.test(theme.value)) {
+  if (isDarkTheme(theme.value)) {
     Object.assign(options, {
       mermaidTheme: 'dark',
       vegaTheme: 'dark'

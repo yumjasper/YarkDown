@@ -103,6 +103,17 @@ const DARK_THEME_IDS = new Set([
 ])
 
 /**
+ * Whether a theme renders on a dark background.
+ *
+ * Chart themes (Mermaid/Vega) and the `dark` body class must agree, so both read
+ * this instead of re-deriving from the theme id — a dark theme whose id omits
+ * `dark` would otherwise get light charts on a dark canvas.
+ */
+export const isDarkTheme = (theme: string): boolean => {
+  return railscastsThemes.includes(theme) || oneDarkThemes.includes(theme) || DARK_THEME_IDS.has(theme)
+}
+
+/**
  * Wrap a theme stylesheet for the editor window.
  *
  * The theme must outrank `@muyajs/core`'s built-in light defaults, which cover
@@ -122,9 +133,7 @@ const getEmojiPickerPatch = (): string => {
 }
 
 export const addThemeStyle = (theme: string): void => {
-  const isCmRailscasts = railscastsThemes.includes(theme)
-  const isCmOneDark = oneDarkThemes.includes(theme)
-  const isDarkTheme = isCmOneDark || isCmRailscasts || DARK_THEME_IDS.has(theme)
+  const isDark = isDarkTheme(theme)
   let themeStyleEle = document.querySelector(`#${THEME_STYLE_ID}`) as HTMLStyleElement | null
   if (!themeStyleEle) {
     themeStyleEle = document.createElement('style')
@@ -145,7 +154,7 @@ export const addThemeStyle = (theme: string): void => {
 
   // workaround: use dark icons
   document.body.classList.remove('dark')
-  if (isDarkTheme) {
+  if (isDark) {
     document.body.classList.add('dark')
   }
 
@@ -155,9 +164,9 @@ export const addThemeStyle = (theme: string): void => {
     cm.classList.remove('cm-s-default')
     cm.classList.remove('cm-s-one-dark')
     cm.classList.remove('cm-s-railscasts')
-    if (isCmOneDark) {
+    if (oneDarkThemes.includes(theme)) {
       cm.classList.add('cm-s-one-dark')
-    } else if (isCmRailscasts) {
+    } else if (railscastsThemes.includes(theme)) {
       cm.classList.add('cm-s-railscasts')
     } else {
       cm.classList.add('cm-s-default')

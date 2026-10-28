@@ -1,6 +1,9 @@
 /*
- * VLOOK Note锛堢Щ妞嶈嚜 https://theme.typora.io/theme/VLOOK-Note/锛? * VLOOK 瀹舵棌涓亸銆屾竻鐖界瑪璁般€嶇殑涓€濂楋細涓昏壊鎹㈡垚钃濊壊 #0075de / #005bab锛? * 鏍囬淇濇寔澧ㄨ壊 #000000f2锛屽渾瑙掓敹鍒?12px/8px锛岀暀鐧芥瘮鍏朵粬涓ゅ鏇村厠鍒讹紝
- * 寮曠敤涓庝唬鐮佸潡鐨勯潰鏉跨伆涔熺暐娣变竴妗ｏ紝鏁翠綋鏇村儚绾歌川绗旇鏈殑妯嚎椤点€? */
+ * VLOOK Note（移植自 https://theme.typora.io/theme/VLOOK-Note/）
+ * VLOOK 家族中偏「清爽笔记」的一套：主色换成蓝色 #0075de / #005bab，
+ * 标题保持墨色 #000000f2，圆角收到 12px/8px，留白比其他两套更克制，
+ * 引用与代码块的面板灰也略深一档，整体更像纸质笔记本的横线页。
+ */
 
 :root {
   /* VLOOK 鍩虹鑹叉澘 */
@@ -137,6 +140,9 @@
   --editor-color-04: var(--editorColor04);
   --editor-bg-color: var(--editorBgColor);
   --editor-area-width: var(--editorAreaWidth);
+  --mu-code-font-family: 'JetBrains Mono', 'Cascadia Code', 'SFMono-Regular', Consolas, monospace !important;
+  --mu-code-font-size: 14px !important;
+
   --delete-color: var(--deleteColor);
   --icon-color: var(--iconColor);
   --code-block-bg-color: var(--codeBlockBgColor);
@@ -216,7 +222,7 @@
   color: var(--headingColor);
 }
 
-/* Note 鐨?h1 涓嶉摵鑹插潡锛屽彧鐣欎竴鏉¤摑鑹蹭笅杈圭嚎锛屽厠鍒跺緢澶?*/
+/* 移植自 Typora 主题的排版细节 */
 .mu-container h1 {
   margin: 1.2em 0 0.9em;
   padding-bottom: 0.45em;
@@ -319,8 +325,8 @@
 .mu-code-block .mu-code,
 .mu-code-block .mu-code span,
 .mu-code-block .mu-language-input {
-  font-family: 'JetBrains Mono', 'Cascadia Code', 'SFMono-Regular', Consolas, monospace;
-  font-size: 0.87em;
+  font-family: 'JetBrains Mono', 'Cascadia Code', 'SFMono-Regular', Consolas, monospace !important;
+  font-size: 14px !important;
   line-height: 1.6;
   color: var(--codeBlockColor);
 }

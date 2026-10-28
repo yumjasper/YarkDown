@@ -1,6 +1,10 @@
 /*
- * VLOOK Owl锛堢Щ妞嶈嚜 https://theme.typora.io/theme/VLOOK-Owl-V2/锛? * VLOOK 绯诲垪鍏辩敤涓€濂?`--v-*` 鍙橀噺浣撶郴锛岃繖閲屾妸鍏朵腑涓庢帓鐗堛€侀厤鑹茬浉鍏崇殑閮ㄥ垎
- * 鍥哄寲涓?YarkText 鐨勫彉閲忓绾︼紝骞惰ˉ涓?Muya 鐨勯€夋嫨鍣ㄦ槧灏勩€? * Owl 鐨勮瘑鍒壒寰佹槸銆岄潚鈫掔传銆嶅弻鑹叉笎鍙樻爣棰橈紙#04b1cc 鈫?#9a4ee6锛夈€? * 鐧界焊 + 娴呯伆闈㈡澘锛?ebedef锛夊眰娆°€?8px/10px 澶у渾瑙掑崱鐗囧紡瀹瑰櫒銆? */
+ * VLOOK Owl（移植自 https://theme.typora.io/theme/VLOOK-Owl-V2/）
+ * VLOOK 系列共用一套 `--v-*` 变量体系，这里把其中与排版、配色相关的部分
+ * 固化为 YarkText 的变量契约，并补上 Muya 的选择器映射。
+ * Owl 的识别特征是「青→紫」双色渐变标题（#04b1cc → #9a4ee6）。
+ * 白纸 + 浅灰面板（#ebedef）层次、18px/10px 大圆角卡片式容器。
+ */
 
 :root {
   /* VLOOK 鍩虹鑹叉澘锛堝彇鑷富棰樻簮鐮佺殑 -lg / -dk 涓ゆ。锛?*/
@@ -137,6 +141,9 @@
   --editor-color-04: var(--editorColor04);
   --editor-bg-color: var(--editorBgColor);
   --editor-area-width: var(--editorAreaWidth);
+  --mu-code-font-family: 'JetBrains Mono', 'Cascadia Code', 'SFMono-Regular', Consolas, monospace !important;
+  --mu-code-font-size: 14px !important;
+
   --delete-color: var(--deleteColor);
   --icon-color: var(--iconColor);
   --code-block-bg-color: var(--codeBlockBgColor);
@@ -216,9 +223,7 @@
   color: var(--headingColor);
 }
 
-/*
- * VLOOK 鐨?h1 鏄暣鍧楁笎鍙樺簳 + 灞呬腑鏂囨湰锛堥潚鑹插湪涓娿€佺传鈫掗潚妯悜閾哄紑锛夈€? * Muya 鐨勬爣棰樺潡娌℃湁 wrap 鍏冪礌鍙姞鑳屾櫙灞傦紝杩欓噷鏀圭敤
- * 銆屼笂涓嬪弻灞傛笎鍙樿儗鏅?+ 鏂囧瓧娓愬彉瑁佸垏銆嶅鐜板悓鏍风殑瑙傛劅銆? */
+/* 移植自 Typora 主题的排版细节 */
 .mu-container h1 {
   margin: 1.4em 0 1em;
   padding: 0.7em 1.2em;
@@ -313,7 +318,7 @@
   border-radius: 4px;
 }
 
-/* 琛屽唴浠ｇ爜锛歏LOOK 鐢ㄦ祬鐏拌兌鍥?*/
+/* 移植自 Typora 主题的排版细节 */
 :not(pre) > code {
   padding: 0.12em 0.45em;
   color: #c7254e;
@@ -335,13 +340,13 @@
 .mu-code-block .mu-code,
 .mu-code-block .mu-code span,
 .mu-code-block .mu-language-input {
-  font-family: 'JetBrains Mono', 'Cascadia Code', 'SFMono-Regular', Consolas, monospace;
-  font-size: 0.88em;
+  font-family: 'JetBrains Mono', 'Cascadia Code', 'SFMono-Regular', Consolas, monospace !important;
+  font-size: 14px !important;
   line-height: 1.65;
   color: var(--codeBlockColor);
 }
 
-/* 琛ㄦ牸锛歏LOOK 鐢ㄥ渾瑙掑妗?+ 缁嗙伆绾?+ 琛ㄥご娴呯伆搴?*/
+/* 移植自 Typora 主题的排版细节 */
 .mu-table-inner {
   border: 1px solid var(--v-pn);
   border-radius: var(--v-r-s);

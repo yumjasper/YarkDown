@@ -174,6 +174,9 @@
   --editor-color-04: var(--editorColor04);
   --editor-bg-color: var(--editorBgColor);
   --editor-area-width: var(--editorAreaWidth);
+  --mu-code-font-family: 'Fira Code', 'Sarasa Mono SC', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace !important;
+  --mu-code-font-size: 15px !important;
+
   --delete-color: var(--deleteColor);
   --icon-color: var(--iconColor);
   --code-block-bg-color: var(--codeBlockBgColor);
@@ -454,9 +457,8 @@
 .mu-code-block .mu-code,
 .mu-code-block .mu-code span,
 .mu-code-block .mu-language-input {
-  font-family: 'Fira Code', 'Sarasa Mono SC', 'SFMono-Regular', Consolas, 'Liberation Mono',
-    'Noto Sans SC', 'Source Han Sans SC', monospace;
-  font-size: 0.88rem;
+  font-family: 'Fira Code', 'Sarasa Mono SC', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace !important;
+  font-size: 15px !important;
   line-height: 1.65;
   color: var(--ark-ink);
 }

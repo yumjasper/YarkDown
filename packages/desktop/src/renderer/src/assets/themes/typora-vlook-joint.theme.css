@@ -1,5 +1,9 @@
 /*
- * VLOOK Joint锛堢Щ妞嶈嚜 https://theme.typora.io/theme/VLOOK-Joint-V2/锛? * 涓?Owl 鍚屾簮锛岄厤鑹叉敼鐢ㄣ€岀惀鐝€ #fabb0c 鈫?闈涜摑 #6464d1銆嶇殑瀵规挒娓愬彉锛? * 姝ｆ枃涓昏壊 #1c1e1f锛屾爣棰樿蛋澧ㄨ壊锛屽己璋冧氦缁欓粍鑹蹭笌闈涜摑锛? * 鍦嗚鍚屼负 18px/10px锛屽鍣ㄦ洿鎺ヨ繎鎵佸钩鎻掔敾椋庛€? */
+ * VLOOK Joint（移植自 https://theme.typora.io/theme/VLOOK-Joint-V2/）
+ * 与 Owl 同源，配色改用「琥珀 #fabb0c → 靛蓝 #6464d1」的对撞渐变。
+ * 正文主色 #1c1e1f，标题走墨色，强调交给黄色与靛蓝，
+ * 圆角同为 18px/10px，容器更接近扁平插画风。
+ */
 
 :root {
   /* VLOOK 鍩虹鑹叉澘 */
@@ -136,6 +140,9 @@
   --editor-color-04: var(--editorColor04);
   --editor-bg-color: var(--editorBgColor);
   --editor-area-width: var(--editorAreaWidth);
+  --mu-code-font-family: 'JetBrains Mono', 'Cascadia Code', 'SFMono-Regular', Consolas, monospace !important;
+  --mu-code-font-size: 14px !important;
+
   --delete-color: var(--deleteColor);
   --icon-color: var(--iconColor);
   --code-block-bg-color: var(--codeBlockBgColor);
@@ -215,8 +222,7 @@
   color: var(--headingColor);
 }
 
-/*
- * Joint 鐨?h1 鏄€岀惀鐝€鈫掗潧钃濄€嶆í鍚戞笎鍙樼殑閫氭爮鑹插潡锛屾枃瀛椾繚鎸佸ⅷ鑹层€? * 杩欓噷鍚屾牱鐢ㄥ弻灞傝儗鏅繕鍘燂細涓婄櫧涓嬮€忕殑缃╁眰璁╄壊鍧楄繃娓℃煍鍜屻€? */
+/* 移植自 Typora 主题的排版细节 */
 .mu-container h1 {
   margin: 1.4em 0 1em;
   padding: 0.7em 1.2em;
@@ -329,8 +335,8 @@
 .mu-code-block .mu-code,
 .mu-code-block .mu-code span,
 .mu-code-block .mu-language-input {
-  font-family: 'JetBrains Mono', 'Cascadia Code', 'SFMono-Regular', Consolas, monospace;
-  font-size: 0.88em;
+  font-family: 'JetBrains Mono', 'Cascadia Code', 'SFMono-Regular', Consolas, monospace !important;
+  font-size: 14px !important;
   line-height: 1.65;
   color: var(--codeBlockColor);
 }
