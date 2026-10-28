@@ -126,7 +126,12 @@ export default defineConfig({
               // natively. Leave them untouched so `padding-inline-start` /
               // `inset-inline-start` mirror correctly under `dir="rtl"` instead
               // of being down-compiled to hard-coded LTR physical props (#4673).
-              'logical-properties-and-values': false
+              'logical-properties-and-values': false,
+              // Chromium supports cascade layers natively. The stage-0 polyfill
+              // flattens `@layer` back into plain rules in source order, which
+              // silently reverts `@muyajs/core`'s built-in light defaults to
+              // competing with the injected theme on load order again (#4831).
+              'cascade-layers': false
             }
           })
         ]

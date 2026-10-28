@@ -117,7 +117,7 @@ test('window chrome and toolbar follow the editor column', async() => {
       await centered()
     })
     await test.step('keep dark-theme chrome readable and return to the light theme', async() => {
-      await clickMenuById(app, 'dracula')
+      await clickMenuById(app, 'typora-dracula')
       await expect(page.locator('body')).toHaveClass(/dark/)
       const colors = await page.evaluate(() => {
         const button = document.querySelector('.frameless-titlebar-button svg')!

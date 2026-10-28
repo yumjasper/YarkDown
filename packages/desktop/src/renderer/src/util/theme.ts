@@ -90,16 +90,14 @@ const DARK_THEME_IDS = new Set([
 /**
  * Wrap a theme stylesheet for the editor window.
  *
- * `@muyajs/core` ships light defaults for the kebab-case editor variables
- * (`--editor-bg-color: #fff`, `--editor-color-04: #f7f7f7`, `--table-border-color:
- * #e5e5e5`, …) in its own `:root` block. That stylesheet arrives as a lazy chunk
- * link, i.e. after this `<style>` is appended, so on equal specificity the
- * defaults win and every dark theme keeps light table rows, white math surfaces
- * and a dark-on-light table header. Doubling the `:root` specificity keeps the
- * theme authoritative regardless of chunk load order.
+ * The theme must outrank `@muyajs/core`'s built-in light defaults, which cover
+ * both the kebab-case editor variables (`--editor-bg-color`, `--table-border-color`,
+ * …) and the Prism token palette. Those defaults live inside `@layer
+ * muya-defaults`, so any unlayered rule wins regardless of load order and no
+ * specificity juggling is needed here.
  */
 const patchTheme = (css: string): string => {
-  return `@media not print {\n${css.replace(/:root(?![\w-])/g, ':root:root')}\n}`
+  return `@media not print {\n${css}\n}`
 }
 
 const getEmojiPickerPatch = (): string => {

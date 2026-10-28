@@ -99,4 +99,42 @@ test.describe('Theme switching', () => {
     // The whole point: the keyword token is colored differently per theme.
     expect(lightColor).not.toBe(darkColor)
   })
+
+  // `@muyajs/core` ships its own light Prism palette and imports it from
+  // muya.ts, so it previously won over the theme's palette at equal
+  // specificity and every dark theme rendered `#07a` keywords. Checking several
+  // dark themes proves the fallback palette no longer outranks the theme.
+  test('Prism token color differs across dark themes', async() => {
+    await setSourceMarkdown(page, app, '```js\nconst answer = 42\n```\n')
+    await page.waitForFunction(
+      () => !!document.querySelector('.editor-component span.token.keyword'),
+      null,
+      { timeout: 15000 }
+    )
+
+    const readKeywordColor = async(): Promise<string> => {
+      return await page.evaluate(() => {
+        const element = document.querySelector(
+          '.editor-component span.token.keyword'
+        ) as HTMLElement | null
+        return element ? getComputedStyle(element).color : ''
+      })
+    }
+
+    const observed = new Map<string, string>()
+    for (const theme of ['typora-dracula', 'typora-nord', 'typora-github-dark']) {
+      await clickMenuById(app, theme)
+      await expect(page.locator('body')).toHaveClass(/(^|\s)dark(\s|$)/)
+      await expect
+        .poll(async() => await readKeywordColor(), { timeout: 10000 })
+        // The muya fallback palette's keyword colour; if it shows up, the
+        // built-in stylesheet is outranking the theme again.
+        .not.toBe('rgb(7, 122, 170)')
+      observed.set(theme, await readKeywordColor())
+    }
+
+    const colors = [...observed.values()]
+    expect(new Set(colors).size, `dark themes share one token colour: ${colors.join(' | ')}`)
+      .toBeGreaterThan(1)
+  })
 })

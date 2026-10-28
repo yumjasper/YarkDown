@@ -868,3 +868,120 @@ const patchTheme = (css: string): string => {
 - CSS 变量的"主题不生效"要先查计算值，不能只查声明值。这里 `--editorBgColor` 是对的、`--editor-bg-color` 是错的，两个名字看着几乎一样。
 - 同优先级 `:root` 冲突只由加载顺序决定，而懒加载 chunk 的顺序不写在源码里，需要打印 `document.styleSheets` 才能看到。
 - 判断"半透明颜色深浅"必须合成到底层背景，直接乘 alpha 会得出相反的结论。
+
+## 第十一轮：Prism 配色不随主题切换，以及主题测试的过期 id
+
+### 现象
+
+`themes.spec.ts` 里两条用例长期失败：
+
+- 三条主题切换用例报 `Menu id not found: dracula` / `Menu id not found: nord`
+- Prism 用例报 `expect(lightColor).not.toBe(darkColor)`，两边都是 `rgb(0, 119, 170)`
+
+第一条看着像测试写错，第二条看着像断言写错。实际上第二条是产品缺陷：代码块语法配色根本不随主题变化。
+
+### 根因一：Prism 配色被内置浅色主题压住
+
+`@muyajs/core` 在 [muya.ts:40](/data/../D:/Tools/YarkDown/packages/muya/src/muya.ts#L40) 静态导入了自带的浅色 Prism 主题：
+
+```css
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+  color: #07a;
+}
+```
+
+`#07a` 就是实测的 `rgb(0, 119, 170)`。主题侧的 Prism 配色由 `themeColor.ts` 拼接进同一份 CSS，规则形如：
+
+```css
+.token.keyword {
+  color: #ff79c6; /* dracula */
+}
+```
+
+两边选择器完全一样、特异性相同，而 muya 的那份是 import 进来的，注入顺序靠后，于是它赢。结果是所有主题（包括 dracula、nord）的 `keyword` 都是 `#07a`，只有字号和背景跟着主题变，token 颜色一律停留在浅色主题的取值上。
+
+这与第十轮的表格白底是同一类问题：内置默认值在特异性相同的情况下靠加载顺序压过主题。
+
+### 根因二：测试里用的是历史菜单 id
+
+主题菜单 id 早已从 `dracula`、`nord`、`material-dark` 之类的旧名统一成 `typora-*` 前缀，但三份测试文件没跟着改。`clickMenuById` 在 id 不存在时会抛 `Menu id not found`，所以这些用例从改名那天起就没再验证过任何东西，只是持续报错。
+
+### 修复
+
+改用 CSS 级联层把内置默认值降为兜底，而不是继续在特异性上做文章：
+
+```css
+@layer muya-defaults {
+:root { … 浅色变量 … }
+}
+```
+
+```css
+@layer muya-defaults {
+  .token.keyword {
+    color: #07a;
+  }
+}
+```
+
+分层之后，未分层的主题样式永远优先于分层的兜底样式，与加载顺序无关。这也让第十轮在 `patchTheme()` 里的 `:root:root` 特异性 hack 不再需要，已经回退，主题侧回到最朴素的形式：
+
+```ts
+const patchTheme = (css: string): string => {
+  return `@media not print {\n${css}\n}`
+}
+```
+
+### 一个必须记住的坑
+
+`@layer` 第一次改完并没有生效，产物里根本找不到 `muya-defaults`。原因是 `electron.vite.config.ts` 里启用了 `postcssPresetEnv({ stage: 0 })`，stage 0 包含 `cascade-layers` 的降级实现，它会把 `@layer` 展开成普通规则并丢掉层级信息，于是又回到按加载顺序竞争的局面。
+
+Electron 用的是 Chromium，原生支持级联层，这个降级纯属有害，已显式关闭：
+
+```ts
+features: {
+  'logical-properties-and-values': false,
+  'cascade-layers': false
+}
+```
+
+如果不检查产物、只看源码，会误以为已经修好。验证方式是在 `out/renderer/assets/*.css` 里搜 `muya-defaults`。
+
+### 修复后实测
+
+| 主题               | keyword token 颜色                        |
+| ------------------ | ----------------------------------------- |
+| typora-dracula     | `rgb(255, 121, 198)` #ff79c6              |
+| typora-nord        | 主题自有取值                              |
+| typora-github-dark | 主题自有取值                              |
+| light              | `rgb(0, 119, 170)` #07a（兜底，符合预期） |
+
+`light` 主题本身不带 Prism 调色板，回落到内置浅色配色是正确行为，不是缺陷。
+
+### 验收
+
+`themes.spec.ts` 由 4 项扩到 5 项，新增跨三个暗色主题的 token 颜色断言，并显式排除兜底值 `rgb(7, 122, 170)`，一旦内置样式重新压过主题就会立刻失败。
+
+新增 [theme-menu-ids.spec.ts](/data/../D:/Tools/YarkDown/packages/desktop/test/e2e/theme-menu-ids.spec.ts)：从运行中的 Theme 菜单读出全部主题 id，校验测试引用的 id 都真实存在，并反过来断言 `clickMenuById(app, 'dracula')` 会抛出带 id 名的错误。以后再改主题 id，会在这里一次性报出来，而不是散落在无关用例里。
+
+修正的过期 id：
+
+| 文件                           | 旧             | 新                           |
+| ------------------------------ | -------------- | ---------------------------- |
+| themes.spec.ts                 | dracula / nord | typora-dracula / typora-nord |
+| window-shell.spec.ts           | dracula        | typora-dracula               |
+| issue-5094-toc-theming.spec.ts | material-dark  | typora-dracula               |
+
+全量扫描 `test/e2e` 后，除负向断言外无其它非法主题 id。
+
+### 一个不属于本轮的问题
+
+`window-shell.spec.ts` 的「编辑器居中」断言仍失败（偏差 4px）。用 `git stash` 回退本轮全部改动后复测同样失败，属既有布局问题，与主题无关，本轮不动。
+
+### 方法论
+
+- 测试长期报「找不到 id」时，先怀疑 id 漂移，不要怀疑被测功能。
+- 断言 `a !== b` 失败且两边相等，要先查这个值到底来自哪张样式表，而不是放宽断言。
+- 用 `@layer` 解决覆盖问题后必须检查构建产物。stage 0 的 polyfill 会把层级悄悄抹平，源码正确不等于运行正确。

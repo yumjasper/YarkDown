@@ -3,6 +3,15 @@
  * Prism.js light theme
  */
 
+/*
+ * Fallback token palette, used when the active theme does not carry its own
+ * Prism colours (the plain `light` theme). It must never override a theme's
+ * palette: `muya.ts` imports this file, so it lands after the theme
+ * stylesheet the desktop injects, and at equal specificity `.token.keyword`
+ * here would win. The layer makes unlayered theme rules outrank it.
+ */
+@layer muya-defaults {
+
 /* Inline Code */
 :not(pre) > code {
     padding: 0.1em;
@@ -105,4 +114,6 @@ pre.mu-code-block {
 
 .token.entity {
     cursor: help;
+}
+
 }

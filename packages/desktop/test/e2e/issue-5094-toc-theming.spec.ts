@@ -72,7 +72,7 @@ test.describe('#5094 TOC follows the active theme', () => {
   test('heading labels and expand arrows use the theme colors, not Element defaults', async() => {
     const seen: string[] = []
 
-    for (const theme of ['material-dark', 'light']) {
+    for (const theme of ['typora-dracula', 'light']) {
       await clickMenuById(app, theme)
       await expect
         .poll(async() => (await readColors(page)).themedColor, { timeout: 5000 })
