@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The configuration page: the only page a user actually fills in.
+
+  Layout rules that fix the previous revision:
+    - no container declares a vertical padding; a container only ever declares the
+      horizontal inset, and the vertical rhythm is made of explicit spacer rows, so
+      a child's declared height is the height it gets;
+    - one row per interactive element, and the row is exactly as tall as the
+      control inside it;
+    - the licence row is a single checkbox that spans the full width, instead of a
+      checkbox plus two labels plus an invisible button competing for one line.
+
+  The hero keeps the brand mark and now also carries the product name, so the
+  window identifies itself before the user reads anything else.
+-->
+<Windows>
+  <VerticalLayout>
+    <VerticalLayout height="196" bkimage="file='images/hero.png'">
+      <Control />
+      <HorizontalLayout height="36">
+        <Control />
+        <Label name="lblVersionConfig" font="4" textcolor="#B23A3A42" align="right" width="140" padding="0,0,20,0" />
+      </HorizontalLayout>
+    </VerticalLayout>
+
+    <VerticalLayout bkcolor="#FFFFFFFF">
+      <Control height="24" />
+
+      <VerticalLayout height="22" padding="32,0,32,0">
+        <Label font="2" textcolor="#FF0F0F11" text="安装 YarkText" />
+      </VerticalLayout>
+      <Control height="8" />
+      <VerticalLayout height="18" padding="32,0,32,0">
+        <Label font="3" textcolor="#FF8A8A90" text="确认安装位置后即可开始，整个过程只需几秒。" />
+      </VerticalLayout>
+
+      <Control height="20" />
+
+      <!-- Row height equals the control height: 40, not 38 padded down to 22. -->
+      <HorizontalLayout height="40" padding="32,0,32,0">
+        <RichEdit name="editDir" height="40" font="0" textcolor="#FF20202A" bkcolor="#FFF6F6F8" bordercolor="#FFE4E4E8" focusbordercolor="#FF0F0F11" wantreturn="false" wantctrlreturn="false" multiline="false" autohscroll="false" inset="12,0,12,0" borderround="6,6" />
+        <Control width="10" />
+        <Button name="btnSelectDir" width="84" height="40" font="0" textcolor="#FF20202A" hottextcolor="#FF0F0F11" text="浏览" bkcolor="#FFFFFFFF" hotbkcolor="#FFF2F2F4" pushedbkcolor="#FFE8E8EC" bordersize="1" bordercolor="#FFDCDCE0" borderround="6,6" />
+      </HorizontalLayout>
+
+      <Control height="10" />
+      <VerticalLayout height="18" padding="32,0,32,0">
+        <Label name="local_space" font="3" textcolor="#FF9A9AA0" />
+      </VerticalLayout>
+
+      <!-- 36 rather than 18: the fixed rows plus this gap must sum to 340, the height
+           left over by the 196 hero, otherwise the surplus shows up as a blank band
+           below the action bar. -->
+      <Control height="36" />
+
+      <!--
+        The PDF option is a row, not a paragraph: the two labels sit after the tick
+        so they line up with the checkbox, and the trailing <Control /> absorbs the
+        rest of the width rather than letting the labels stretch.
+      -->
+      <HorizontalLayout height="40" padding="32,0,32,0">
+        <CheckBox name="chkPdf" width="18" height="20" normalimage="file='images/check_off.png' dest='0,2,16,18'" selectedimage="file='images/check_on.png' dest='0,2,16,18'" />
+        <Control width="10" />
+        <Label font="0" textcolor="#FF20202A" text="同时安装 PDF 阅读器" width="150" valign="vcenter" />
+        <Label font="3" textcolor="#FF9A9AA0" text="含批注、目录与缩略图" width="190" valign="vcenter" />
+        <Control />
+      </HorizontalLayout>
+
+      <Control height="4" />
+
+      <!--
+        One checkbox, full width: clicking anywhere on the line toggles it, and the
+        agreement link is plain accent-coloured text rather than a button, because a
+        button inside a checkbox row is what made this line read as two controls.
+      -->
+      <HorizontalLayout height="40" padding="32,0,32,0">
+        <CheckBox name="chkAgree" width="18" height="20" normalimage="file='images/check_off.png' dest='0,2,16,18'" selectedimage="file='images/check_on.png' dest='0,2,16,18'" />
+        <Control width="10" />
+        <Label font="0" textcolor="#FF20202A" text="我已阅读并同意" width="120" valign="vcenter" />
+        <Button name="btnAgreement" width="212" height="24" font="0" textcolor="#FF0F0F11" hottextcolor="#FF6A6A72" pushedtextcolor="#FF000000" text="《YarkText 软件许可协议》" bkcolor="#00000000" hotbkcolor="#00000000" pushedbkcolor="#00000000" valign="vcenter" />
+        <Control />
+      </HorizontalLayout>
+
+
+      <!--
+        The action bar. 36 is the button height and the row is 36 plus the bottom
+        margin, so nothing overlaps: this row previously declared 42 with an 18px
+        bottom padding, which left 24 for a 42px button.
+      -->
+      <VerticalLayout height="60" padding="32,0,32,0">
+        <HorizontalLayout height="36">
+          <Control />
+          <Button name="btnInstall" width="120" height="36" font="1" text="一键安装" textcolor="#FFFFFFFF" disabledtextcolor="#FFB4B4BA" hottextcolor="#FFFFFFFF" pushedtextcolor="#FFFFFFFF" bkcolor="#FF0F0F11" hotbkcolor="#FF26262E" pushedbkcolor="#FF000000" disabledbkcolor="#FFE6E6E9" borderround="8,8" />
+        </HorizontalLayout>
+        <Control height="24" />
+      </VerticalLayout>
+    </VerticalLayout>
+  </VerticalLayout>
+</Windows>

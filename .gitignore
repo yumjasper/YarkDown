@@ -21,6 +21,7 @@ playwright-report/
 .playwright-mcp/
 .cod-analysis/
 .tmp-shot/
+.tmp-skin/
 *.min.json
 .claude/settings.local.json
 .claude/

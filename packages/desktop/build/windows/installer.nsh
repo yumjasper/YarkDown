@@ -36,9 +36,19 @@
   Var YtRecoveredLeftovers
 !endif
 
+; The wizard is drawn by the nsNiuniuSkin Duilib plugin rather than by MUI.
+; installer-ui.nsh still ships the restyled stock pages the uninstaller keeps,
+; and it drops its own welcome/confirm pages while the flag below is set.
+!define YT_SKIN_PAGES
+
+!include "${BUILD_RESOURCES_DIR}\windows\installer-skin.nsh"
 !include "${BUILD_RESOURCES_DIR}\windows\installer-ui.nsh"
 
 !macro customInit
+  ; Unpacked here rather than on the progress page: extracting a file prints its
+  ; own status line, which would overwrite the row that page is showing.
+  !insertmacro ytReserveWatermark
+
   StrCpy $YtInstallPdf 1
   StrCpy $YtPreviousInstallDir ""
   StrCpy $YtRecoveredLeftovers 0
@@ -212,6 +222,10 @@
 ;======================================================================
 ; customInstall macro is invoked by electron-builder after files are in $INSTDIR
 !macro customInstall
+  ; The payload is unpacked by this point, so the progress page can move past the
+  ; file-writing step while the shell registration below runs.
+  !insertmacro ytSkinStageRegistering
+
   !insertmacro ytPruneStaleUninstallEntry SHELL_CONTEXT
   !insertmacro ytPruneForeignScopeEntry
   !insertmacro ytPurgeOrphanFolder "$YtPreviousInstallDir"
@@ -297,6 +311,12 @@
 ;======================================================================
 ; customUnInstall macro cleans up on uninstall
 !macro customUnInstall
+  ; In the uninstaller pass electron-builder has no hook between the page
+  ; declarations and the section, unlike the installer's customPageAfterChangeDir,
+  ; so the styling runs from the section itself - the progress page is already on
+  ; screen by then.
+  Call un.YtStyleProgress
+
   ; An update reaches here through the old uninstaller, right before the new
   ; version registers the association again.
   ${ifNot} ${isUpdated}

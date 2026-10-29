@@ -24,11 +24,23 @@ const PAPER = '#FFFFFF'
 const MUTED = '#8A8A90'
 
 /**
+ * The wizard body is painted by the shared #32770 window class in the system
+ * dialog grey, and MUI cannot recolour it, so the header strip is matched to
+ * that same face instead of being left white. Must stay in sync with
+ * MUI_BGCOLOR in packages/desktop/build/windows/installer-ui.nsh, or the
+ * header bitmap shows up as a white block against the page.
+ */
+const HEADER_BG = '#F0F0F0'
+
+/**
  * Rebuilds the "Y" mark as a monochrome stencil. The logo master is a dark
  * glyph on white, which cannot sit on the dark sidebar as-is, so coverage is
  * taken from luminance: dark pixels stay opaque, the white plate is dropped.
+ * `opacity` scales that coverage, which is how the faint watermark on the page
+ * backdrop is produced - BMP has no alpha channel, so translucency has to be
+ * baked in before the pixels reach NSIS.
  */
-async function logoMark (size, color) {
+async function logoMark (size, color, opacity = 1) {
   const { data } = await sharp(largeSource)
     .resize(size, size, { fit: 'contain', background: PAPER })
     .flatten({ background: PAPER })
@@ -43,7 +55,7 @@ async function logoMark (size, color) {
     rgba[i * 4] = rgb[0]
     rgba[i * 4 + 1] = rgb[1]
     rgba[i * 4 + 2] = rgb[2]
-    rgba[i * 4 + 3] = Math.max(0, Math.min(255, 255 - data[i]))
+    rgba[i * 4 + 3] = Math.round(Math.max(0, Math.min(255, 255 - data[i])) * opacity)
   }
 
   return sharp(rgba, { raw: { width: size, height: size, channels: 4 } }).png().toBuffer()
@@ -127,9 +139,15 @@ function sidebarBackground (width, height) {
   return Buffer.from(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">` +
       '<defs><linearGradient id="g" x1="0" y1="0" x2="0.35" y2="1">' +
-      '<stop offset="0" stop-color="#17171A"/><stop offset="0.55" stop-color="#0E0E10"/><stop offset="1" stop-color="#1C1C20"/>' +
-      '</linearGradient></defs>' +
+      '<stop offset="0" stop-color="#1B1B1F"/><stop offset="0.55" stop-color="#0E0E10"/><stop offset="1" stop-color="#202025"/>' +
+      '</linearGradient>' +
+      // A single off-centre glow lifts the plate out of flat black without
+      // introducing a second hue; it is the only lighting in the artwork.
+      '<radialGradient id="glow" cx="0.5" cy="0.33" r="0.62">' +
+      '<stop offset="0" stop-color="#FFFFFF" stop-opacity="0.16"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>' +
+      '</radialGradient></defs>' +
       `<rect width="${width}" height="${height}" fill="url(#g)"/>` +
+      `<rect width="${width}" height="${height}" fill="url(#glow)"/>` +
       '</svg>'
   )
 }
@@ -152,8 +170,25 @@ async function composeSidebar (width, height) {
   const wordTop = markTop + markSize + Math.round(height * 0.05)
   const ruleTop = wordTop + 24
 
+  // Oversized, near-transparent repeat of the mark bleeding off the lower edge.
+  // BMP carries no alpha channel and NSIS cannot composite at run time, so the
+  // translucency is resolved here, against the plate, before encoding. The
+  // buffer is clipped to the plate: sharp rejects a composite that would extend
+  // past the canvas instead of cropping it.
+  const ghostSize = Math.round(width * 1.12)
+  const ghost = await logoMark(ghostSize, '#FFFFFF', 0.06)
+  const ghostLeft = Math.round(width * 0.28)
+  const ghostTop = Math.round(height * 0.63)
+  const ghostWidth = Math.min(ghostSize, width - ghostLeft)
+  const ghostHeight = Math.min(ghostSize, height - ghostTop)
+  const ghostClipped = await sharp(ghost)
+    .extract({ left: 0, top: 0, width: ghostWidth, height: ghostHeight })
+    .png()
+    .toBuffer()
+
   return sharp(sidebarBackground(width, height))
     .composite([
+      { input: ghostClipped, left: ghostLeft, top: ghostTop },
       { input: mark, left: Math.round((width - markSize) / 2), top: markTop },
       { input: wordmark, left: Math.round((width - word.width) / 2), top: wordTop },
       { input: rule, left: Math.round((width - ruleWidth) / 2), top: ruleTop },
@@ -179,11 +214,27 @@ async function composeHeader (width, height) {
   const left = Math.round((width - (markSize + gap + word.width)) / 2)
   const top = Math.round((height - markSize) / 2)
 
-  return sharp({ create: { width, height, channels: 4, background: PAPER } })
+  return sharp({ create: { width, height, channels: 4, background: HEADER_BG } })
     .composite([
       { input: mark, left, top },
       { input: wordmark, left: left + markSize + gap, top: top + Math.round((markSize - 11) / 2) }
     ])
+    .png()
+    .toBuffer()
+}
+
+/**
+ * Watermark for the stock pages, which have no plate to carry the mark. Page
+ * bodies are painted by the dialog class in HEADER_BG and cannot hold a
+ * translucent layer, so the mark is resolved against that same face here and the
+ * bitmap is dropped straight onto the page: at this coverage it reads as ink
+ * soaked into the paper rather than as a separate image.
+ */
+async function composeWatermark (size) {
+  const mark = await logoMark(Math.round(size * 0.86), INK, 0.05)
+
+  return sharp({ create: { width: size, height: size, channels: 4, background: HEADER_BG } })
+    .composite([{ input: mark, left: Math.round(size * 0.07), top: Math.round(size * 0.07) }])
     .png()
     .toBuffer()
 }
@@ -202,10 +253,11 @@ function stage (file, png, size) {
 stage(path.join(buildDir, 'installerSidebar.bmp'), await composeSidebar(164, 314), { width: 164, height: 314 })
 stage(path.join(buildDir, 'uninstallerSidebar.bmp'), await composeSidebar(164, 314), { width: 164, height: 314 })
 stage(path.join(buildDir, 'installerHeader.bmp'), await composeHeader(150, 57), { width: 150, height: 57 })
+stage(path.join(buildDir, 'installerWatermark.bmp'), await composeWatermark(150), { width: 150, height: 150 })
 
 for (const { file, png, size } of outputs) {
   await writeBmp(file, png, size)
   if (previewDir) await writeFile(path.join(previewDir, `${path.parse(file).name}.png`), png)
 }
 
-console.log('已生成安装器位图：installerSidebar.bmp、uninstallerSidebar.bmp、installerHeader.bmp。')
+console.log('已生成安装器位图：installerSidebar.bmp、uninstallerSidebar.bmp、installerHeader.bmp、installerWatermark.bmp。')

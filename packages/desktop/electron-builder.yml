@@ -134,7 +134,10 @@ nsis:
   createDesktopShortcut: true
   createStartMenuShortcut: true
   oneClick: false
-  allowToChangeInstallationDirectory: true
+  # The install path is chosen inside the Duilib skin page (build/windows/installer-skin.nsh),
+  # so MUI's directory page is not used. Turning this off also removes the
+  # instFilesPre step that appended the app folder, which the skin now does itself.
+  allowToChangeInstallationDirectory: false
   perMachine: false
   include: windows/installer.nsh
 mac:

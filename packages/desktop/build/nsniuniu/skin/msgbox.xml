@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The plugin's own message box. Kept to the same tokens as the pages: 36 tall
+  buttons, 8px radius, ink primary and outlined secondary.
+-->
+<Window size="440,232" sizebox="0,0,0,0" mininfo="440,232" maxinfo="440,232" caption="0,0,0,40" showshadow="false">
+  <Font id="0" name="Segoe UI Variable Text" size="13" bold="false" default="true" />
+  <Font id="1" name="Segoe UI Variable Text" size="13" bold="true" />
+  <Font id="2" name="Segoe UI Variable Text" size="11" bold="false" />
+
+  <VerticalLayout bkcolor="#FFFFFFFF" inset="1,1,1,1" bordersize="1" bordercolor="#FFE4E4E8">
+    <HorizontalLayout height="40">
+      <Label name="lblTitle" font="1" textcolor="#FF0F0F11" text="提示" inset="24,0,0,0" valign="vcenter" />
+      <Control />
+      <Button name="btnClose" width="40" height="36" font="2" text="&#x2715;" textcolor="#FF9A9AA0" hottextcolor="#FFFFFFFF" bkcolor="#00000000" hotbkcolor="#FFE0443E" pushedbkcolor="#FFC13A34" />
+    </HorizontalLayout>
+
+    <HorizontalLayout height="104" inset="24,0,24,0">
+      <Text name="lblMsg" valign="vcenter" align="left" font="0" textcolor="#FF3A3A42" showhtml="true" />
+    </HorizontalLayout>
+
+    <Control />
+
+    <HorizontalLayout height="60" inset="24,0,24,0">
+      <Control />
+      <HorizontalLayout name="hlCancel" visible="false" width="104">
+        <Button name="btnCancel" width="96" height="36" font="0" text="取消" textcolor="#FF5B5B62" hottextcolor="#FF0F0F11" bkcolor="#FFFFFFFF" hotbkcolor="#FFF2F2F4" pushedbkcolor="#FFE8E8EC" bordersize="1" bordercolor="#FFDCDCE0" borderround="8,8" />
+        <Control width="10" />
+      </HorizontalLayout>
+      <Button name="btnOK" width="96" height="36" font="1" text="确定" textcolor="#FFFFFFFF" hottextcolor="#FFFFFFFF" pushedtextcolor="#FFFFFFFF" bkcolor="#FF0F0F11" hotbkcolor="#FF26262E" pushedbkcolor="#FF000000" borderround="8,8" />
+    </HorizontalLayout>
+
+    <Control height="24" />
+  </VerticalLayout>
+</Window>

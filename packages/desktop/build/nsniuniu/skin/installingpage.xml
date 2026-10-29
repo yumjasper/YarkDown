@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Progress page. Shares the tokens from install.xml: 32px side margin, 22px title,
+  18px subtitle, and a 4px rail with the percentage right-aligned on the same line
+  as the phase text.
+-->
+<Windows>
+  <VerticalLayout>
+    <VerticalLayout height="196" bkimage="file='images/hero.png'">
+      <Control />
+      <HorizontalLayout height="36">
+        <Control />
+        <Label name="lblVersionInstalling" font="4" textcolor="#B23A3A42" align="right" width="140" padding="0,0,20,0" />
+      </HorizontalLayout>
+    </VerticalLayout>
+
+    <VerticalLayout bkcolor="#FFFFFFFF">
+      <Control height="28" />
+
+      <VerticalLayout height="22" padding="32,0,32,0">
+        <Label font="2" textcolor="#FF0F0F11" text="正在安装 YarkText" />
+      </VerticalLayout>
+      <Control height="8" />
+      <VerticalLayout height="18" padding="32,0,32,0">
+        <Label font="3" textcolor="#FF8A8A90" text="正在写入程序文件并注册文件关联，请稍候。" />
+      </VerticalLayout>
+
+      <Control height="24" />
+
+      <VerticalLayout height="44" padding="32,0,32,0">
+        <Slider name="slrProgress" height="4" mouse="false" thumbsize="0,0" bkimage="file='images/track.png'" foreimage="file='images/fill.png'" bkcolor="#FFE8E8EA" />
+        <Control height="12" />
+        <HorizontalLayout height="20">
+          <Label name="progress_tip" font="3" textcolor="#FF8A8A90" />
+          <Control />
+          <Label name="progress_pos" font="3" textcolor="#FF0F0F11" textalign="right" width="60" />
+        </HorizontalLayout>
+      </VerticalLayout>
+
+      <Control />
+
+      <VerticalLayout height="28" />
+    </VerticalLayout>
+  </VerticalLayout>
+</Windows>
