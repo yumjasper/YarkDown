@@ -36,6 +36,7 @@
         :platform="platform"
       />
       <command-palette />
+      <renderer-confirm />
       <lazy-event-panel
         event="aboutDialog"
         :loader="() => import('@/components/about/index.vue')"
@@ -68,6 +69,7 @@ import SideBar from '@/components/sideBar/index.vue'
 import LazyEventPanel from '@/components/lazyEventPanel.vue'
 import ArcadeLauncher from '@/components/arcade/launcher.vue'
 import CommandPalette from '@/components/commandPalette/index.vue'
+import RendererConfirm from '@/components/rendererConfirm/index.vue'
 import bus from '@/bus'
 import { DEFAULT_STYLE } from '@/config'
 import { useLayoutStore } from '@/store/layout'

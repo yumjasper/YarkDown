@@ -13,6 +13,43 @@
 Windows ICO 包含 16、20、24、32、40、48、64、96、128 和 256 像素版本，
 用于不同显示缩放比例。重新启动开发预览可加载窗口图标，安装包图标需重新打包。
 
+## 安装界面
+
+安装器沿用 NSIS Modern UI 2 的页面骨架，视觉全部落在黑白灰范围内：侧边栏是
+164×314 的近黑位图，页头是 150×57 的白底黑字标，正文字色 `#0F0F11`，次要
+说明 `#5B5B62`。欢迎页与卸载页用 `nsDialogs` 自绘同样的布局，把 MUI 自带的
+侧栏、页头与分隔线隐藏后重排，因此版式与侧边栏位图对齐。
+
+安装界面由三个文件构成：
+
+- `packages/desktop/build/windows/installer-ui.nsh`：品牌页、文案与复选框。
+- `packages/desktop/build/windows/installer.nsh`：初始化、安装、卸载与文件关联逻辑。
+- `scripts/generateInstallerArt.mjs`：从 `icon_YarkDown.png` 生成上述三张位图。
+
+位图不手工维护，`build:win`、`build:win:x64` 和 `build:win:arm64` 都会先运行
+生成脚本，改 LOGO 后重新打包即可。NSIS 只接受 BMP，且构建机上的 libvips 没有
+fontconfig，所以脚本把文字绘成矢量路径并自行写出 24 位自底向上 BMP。单独预览：
+
+```powershell
+node scripts/generateInstallerArt.mjs --preview .tmp-shot/art
+```
+
+含中文的 `.nsh` 必须以 UTF-8 BOM 保存，否则 makensis 会报 `Bad text encoding`。
+
+## 旧版残留恢复
+
+历史版本卸载失败时，electron-builder 默认弹窗提示后以退出码 2 中止安装，用户
+只能手动清理。安装器接管了这条失败分支：`customUnInstallCheck` 与
+`customUnInstallCheckCurrentUser` 在旧卸载器返回非零后清掉残留注册项和残留
+安装目录，再清除错误状态让流程继续。
+
+安装阶段还会做三项前置清理：删除指向不存在可执行文件的陈旧卸载项、删除另一
+用户作用域下的幽灵项、删除注册表记录但未被移除的孤儿目录。三者都校验目录名
+是否为 `YarkText`，避免误删用户自己选的目录。
+
+卸载页的「保留设置与最近编辑记录」是页面复选框，不再在文件删除循环里弹窗确认，
+因此脚本化卸载不会再卡在对话框上。
+
 ## 入口
 
 安装依赖后，从仓库根目录运行：

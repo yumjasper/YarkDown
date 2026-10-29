@@ -143,17 +143,13 @@ export const clearRendererErrors = async(app: ElectronApplication): Promise<void
   })
 }
 
-// Closing an editor window with unsaved tabs opens the native "保存 / 放弃保存 /
-// 取消" message box (windows/editor.ts preventDefaults `close`, the renderer
-// answers via `mt::close-window-confirm`). That box is modal and invisible to
-// Playwright, so the process never exits and the run stalls until somebody
-// clicks it by hand.
-//
-// Teardown therefore does what a user does: close the editor window through the
-// normal path (the renderer still flushes its buffered state), then answer every
-// unsaved-change confirmation with "放弃保存" over the same IPC the dialog button
-// sends. Only if the app has still not exited within the timeout do we destroy
-// the windows and kill the process.
+// Closing an editor window with unsaved tabs makes main ask the renderer to
+// draw the in-window "保存 / 放弃保存 / 取消" prompt (windows/editor.ts
+// preventDefaults `close`, the renderer answers over
+// `mt::renderer-confirm-result`). Teardown therefore does what a user does:
+// answer that prompt with "放弃保存" over `mt::close-confirmed`, the same IPC
+// the discard button leads to. Only if the app has still not exited within the
+// timeout do we destroy the windows and kill the process.
 const forceDestroyWindows = async(app: ElectronApplication): Promise<void> => {
   await app.evaluate(({ app: electronApp, BrowserWindow }) => {
     for (const win of BrowserWindow.getAllWindows()) {

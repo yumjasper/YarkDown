@@ -711,7 +711,7 @@ const addPageAppearance = (page: number, rect: PdfAnnotation['rect'], appearance
   selectedId.value = ''
   chooseTool('Select')
 }
-defineExpose({ chooseTool, addPageAppearance })
+defineExpose({ chooseTool, addPageAppearance, tool })
 const toggleTool = (value: Tool) => chooseTool(tool.value === value && value !== 'Select' ? 'Select' : value)
 const useMarker = (swatch: string) => {
   const active = tool.value === 'Highlight' && color.value.toLowerCase() === swatch.toLowerCase()

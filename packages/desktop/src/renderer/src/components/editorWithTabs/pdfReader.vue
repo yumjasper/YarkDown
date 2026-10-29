@@ -279,6 +279,7 @@
 
             :aria-label="labels.pages"
             tabindex="0"
+            @dblclick="openLightbox"
           >
             <div class="pdfViewer" />
           </div>
@@ -293,6 +294,13 @@
         @page="showTranslationPage"
       />
     </div>
+    <pdf-image-lightbox
+      :image="lightboxImage"
+      :exporting="lightboxExporting"
+      :message="lightboxMessage"
+      @close="closeLightbox"
+      @export="exportLightboxImage"
+    />
   </section>
 </template>
 
@@ -314,6 +322,15 @@ import { pdfFieldEntries } from '@/util/pdfFormFields'
 import { useLayoutStore } from '@/store/layout'
 import { usePdfNavigationStore } from '@/store/pdfNavigation'
 import PdfIcon from './pdfIcon.vue'
+import PdfImageLightbox, { type PdfLightboxImage } from './pdfImageLightbox.vue'
+import {
+  canvasToPngBytes,
+  hitTestPageImage,
+  probePageImages,
+  renderPageImageForExport,
+  renderPageImageRegion,
+  toDisplayCoordinates
+} from '@/util/pdfImageZoom'
 import { LocalPdfTransport } from '@/services/pdfTransport'
 import PdfDocumentActions from './pdfDocumentActions.vue'
 import PdfOpenCode from './pdfOpenCode.vue'
@@ -563,7 +580,111 @@ const submitPassword = () => {
   password.value = ''
   passwordRequired.value = false
 }
-const load = async () => {
+
+const lightboxImage = ref<PdfLightboxImage | null>(null)
+const lightboxExporting = ref(false)
+const lightboxMessage = ref('')
+let lightboxTarget: { page: number; quad: [number, number][] } | null = null
+
+const releaseLightbox = () => {
+  lightboxTarget = null
+  lightboxImage.value = null
+  lightboxMessage.value = ''
+}
+const closeLightbox = () => {
+  releaseLightbox()
+  lightboxExporting.value = false
+}
+
+/** Maps a double-click onto the page view that was actually clicked. */
+const resolveClickedPage = (event: MouseEvent) => {
+  const target = event.target as Element | null
+  const pageElement = target?.closest('.pdfViewer .page') as HTMLElement | null
+  if (!pageElement || !viewer) return null
+  const pageNumber = Number(pageElement.dataset.pageNumber)
+  const view = viewer.getPageView(pageNumber - 1)
+  if (!view?.viewport) return null
+  const rect = pageElement.getBoundingClientRect()
+  return {
+    pageNumber,
+    view,
+    // Both offsets use client coordinates so the page's own scroll cancels out.
+    x: ((event.clientX - rect.left) / rect.width) * view.viewport.width,
+    y: ((event.clientY - rect.top) / rect.height) * view.viewport.height
+  }
+}
+
+const openLightbox = async(event: MouseEvent) => {
+  if (!ready.value || !activeDocument.value || lightboxImage.value) return
+  // Annotation tools and hand mode own the pointer; only Select may zoom.
+  if (annotationWorkspace.value?.tool && annotationWorkspace.value.tool !== 'Select') return
+  const clicked = resolveClickedPage(event)
+  if (!clicked) return
+  const page = await activeDocument.value.getPage(clicked.pageNumber).catch(() => null)
+  if (!page) return
+  try {
+    const rotation = viewer?.pagesRotation || 0
+    // The quad is in display orientation, so the size thresholds must be too.
+    const unit = page.getViewport({ scale: 1, rotation: page.rotate + rotation })
+    const coordinates = toDisplayCoordinates(page, await probePageImages(page), rotation)
+    const hit = hitTestPageImage(
+      coordinates,
+      clicked.x / clicked.view.viewport.width,
+      clicked.y / clicked.view.viewport.height,
+      unit.width,
+      unit.height
+    )
+    if (!hit) return
+    event.preventDefault()
+    // Double-click would otherwise extend the text selection under the image.
+    window.getSelection()?.removeAllRanges()
+    const canvas = await renderPageImageRegion(page, hit.quad, rotation)
+    // The renderer CSP allows `data:` for images but not `blob:`, so the preview
+    // has to be inlined; a blob URL here shows as a broken image.
+    const url = canvas.toDataURL('image/png')
+    releaseLightbox()
+    lightboxTarget = { page: clicked.pageNumber, quad: hit.quad }
+    lightboxImage.value = {
+      url,
+      page: clicked.pageNumber,
+      width: canvas.width,
+      height: canvas.height
+    }
+  } catch (reason) {
+    // A failed probe must never break reading; just skip the preview.
+    console.warn('PDF image preview failed:', reason)
+  }
+}
+
+const exportLightboxImage = async() => {
+  if (lightboxExporting.value || !lightboxTarget || !activeDocument.value) return
+  lightboxExporting.value = true
+  lightboxMessage.value = ''
+  try {
+    const page = await activeDocument.value.getPage(lightboxTarget.page)
+    const canvas = await renderPageImageForExport(
+      page,
+      lightboxTarget.quad,
+      viewer?.pagesRotation || 0
+    )
+    const data = await canvasToPngBytes(canvas)
+    const saved = await window.electron.ipcRenderer.invoke('mt::pdf::export-image', {
+      pathname: props.file.pathname,
+      page: lightboxTarget.page,
+      data
+    })
+    lightboxMessage.value = saved
+      ? (zh.value ? `已保存到 ${saved}` : `Saved to ${saved}`)
+      : (zh.value ? '已取消保存。' : 'Save cancelled.')
+  } catch (reason) {
+    lightboxMessage.value = reason instanceof Error ? reason.message : String(reason)
+  } finally {
+    lightboxExporting.value = false
+  }
+}
+
+const load = async() => {
+  closeLightbox()
   bus.emit('flush-pdf-annotation', props.file.id)
   const request = ++generation
   saveView()
@@ -791,6 +912,7 @@ onMounted(async () => {
 })
 onBeforeUnmount(() => {
   pdfNavigation.clear(props.file.id)
+  closeLightbox()
   saveView()
   disposed = true
   generation++

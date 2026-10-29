@@ -1,4 +1,15 @@
-; installer.nsh — include via electron-builder's nsis.include
+﻿; installer.nsh - include via electron-builder's nsis.include
+;
+; Two things happen here:
+;   1. The wizard's pages come from installer-ui.nsh (branded welcome and
+;      uninstall confirmation).
+;   2. An upgrade that cannot complete the previous version's uninstaller is
+;      recovered instead of aborted. electron-builder's stock handler turns any
+;      non-zero exit of the old uninstaller into "uninstall failed" followed by
+;      a hard Quit, which is what made an upgrade impossible once a previous
+;      install was half-removed: a deleted uninstaller executable, leftovers in
+;      HKLM from an older per-machine build, or a folder locked by a crashed
+;      process.
 
 ; Windows remembers an "Open with" choice as a UserChoice naming this ProgId,
 ; and that pin outlives any reinstall, so the name must stay as it is.
@@ -6,39 +17,114 @@
 !define YT_PDF_PROGID "YarkText.PDF"
 !define YT_TEXT_PROGID "YarkText.Text"
 
-!include nsDialogs.nsh
 !include FileFunc.nsh
+!include LogicLib.nsh
+
+; Declared before the page include: NSIS resolves variable references when the
+; function body is defined, and those bodies live in installer-ui.nsh. Only the
+; installer pass references them, and an unused Var is a warning that
+; electron-builder escalates to an error.
 !ifndef BUILD_UNINSTALLER
-Var YtInstallPdf
-Var YtPdfCheckbox
+  ; Seeded before the pages are shown, so the welcome page can display the
+  ; registered choice without reading the registry itself.
+  Var YtInstallPdf
+
+  ; The previous install's folder, used to tell an upgrade-in-place from a
+  ; stale registration.
+  Var YtPreviousInstallDir
+
+  Var YtRecoveredLeftovers
+!endif
+
+!include "${BUILD_RESOURCES_DIR}\windows\installer-ui.nsh"
 
 !macro customInit
   StrCpy $YtInstallPdf 1
-!macroend
+  StrCpy $YtPreviousInstallDir ""
+  StrCpy $YtRecoveredLeftovers 0
 
-!macro customPageAfterChangeDir
-  Page custom YtPdfPage YtPdfPageLeave
-
-Function YtPdfPage
-  !insertmacro MUI_HEADER_TEXT "选择阅读组件" "Markdown 和 TXT 编辑器始终安装。"
-  nsDialogs::Create 1018
-  Pop $0
-  ${If} $0 == error
-    Abort
+  ClearErrors
+  ReadRegDWORD $0 SHELL_CONTEXT "Software\YarkText" "PdfReaderInstalled"
+  ${IfNot} ${Errors}
+    StrCpy $YtInstallPdf $0
   ${EndIf}
-  ${NSD_CreateCheckbox} 0 12u 100% 16u "同时安装 PDF 阅读器（推荐）"
-  Pop $YtPdfCheckbox
-  ${NSD_SetState} $YtPdfCheckbox $YtInstallPdf
-  ${NSD_CreateLabel} 0 36u 100% 42u "包含 PDF 阅读、多色标记、批注、目录和缩略图。取消勾选后，不保留 PDF 阅读组件文件，也不注册 PDF 打开方式。"
-  Pop $0
-  nsDialogs::Show
-FunctionEnd
 
-Function YtPdfPageLeave
-  ${NSD_GetState} $YtPdfCheckbox $YtInstallPdf
-FunctionEnd
+  ReadRegStr $YtPreviousInstallDir HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation
+  ${If} $YtPreviousInstallDir == ""
+    ReadRegStr $YtPreviousInstallDir HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation
+  ${EndIf}
 !macroend
-!endif
+
+;======================================================================
+; Leftover recovery
+
+/**
+ * Removes a registration whose folder no longer holds the executable, i.e. a
+ * record the previous uninstaller left behind after it had already deleted the
+ * files. Windows keeps showing such an entry in Apps & features, so the user
+ * ends up trying to uninstall a program that is not there.
+ */
+!macro ytPruneStaleUninstallEntry ROOT_KEY
+  Push $0
+  ReadRegStr $0 ${ROOT_KEY} "${INSTALL_REGISTRY_KEY}" InstallLocation
+  ${If} $0 != ""
+    ${IfNot} ${FileExists} "$0\${APP_EXECUTABLE_FILENAME}"
+      DeleteRegKey ${ROOT_KEY} "${UNINSTALL_REGISTRY_KEY}"
+      DeleteRegKey ${ROOT_KEY} "${INSTALL_REGISTRY_KEY}"
+      DetailPrint "Cleared stale install record for $0"
+    ${EndIf}
+  ${EndIf}
+  Pop $0
+!macroend
+
+/**
+ * A per-user install left behind by an older build that installed for all
+ * users. The old uninstaller runs elevated and writes to HKLM, so its HKLM
+ * record survives while the new install owns HKCU; the duplicate then makes
+ * both Apps & features and the next update act on the wrong one.
+ */
+!macro ytPruneForeignScopeEntry
+  ${If} $installMode == "CurrentUser"
+  ${AndIf} $YtPreviousInstallDir == ""
+    Push $0
+    ReadRegStr $0 HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation
+    ${If} $0 != ""
+      ${IfNot} ${FileExists} "$0\${APP_EXECUTABLE_FILENAME}"
+        DeleteRegKey HKLM "${UNINSTALL_REGISTRY_KEY}"
+        DeleteRegKey HKLM "${INSTALL_REGISTRY_KEY}"
+        StrCpy $YtRecoveredLeftovers 1
+        DetailPrint "Cleared stale per-machine registration for $0"
+      ${EndIf}
+    ${EndIf}
+    Pop $0
+  ${EndIf}
+!macroend
+
+/**
+ * Deletes a folder whose uninstaller gave up. The folder name is checked
+ * against the app's own folder name so a misread registry value cannot point
+ * the delete at the user's documents; "$INSTDIR" itself is never touched
+ * because the new files are being written there.
+ */
+!macro ytPurgeOrphanFolder FOLDER
+  Push $0
+  Push $1
+  ${If} "${FOLDER}" != ""
+  ${AndIf} "${FOLDER}" != "$INSTDIR"
+  ${AndIf} ${FileExists} "${FOLDER}\*.*"
+    ${GetFileName} "${FOLDER}" $0
+    ${If} $0 == "${APP_FILENAME}"
+      ${IfNot} ${FileExists} "${FOLDER}\${APP_EXECUTABLE_FILENAME}"
+        DetailPrint "Removing leftovers in ${FOLDER}"
+        SetOutPath $TEMP
+        RMDir /r "${FOLDER}"
+        StrCpy $YtRecoveredLeftovers 1
+      ${EndIf}
+    ${EndIf}
+  ${EndIf}
+  Pop $1
+  Pop $0
+!macroend
 
 ; PDF payloads are unpacked from ASAR so an editor-only installation can remove them without changing ASAR integrity.
 !macro ytConfigurePdfComponent
@@ -126,6 +212,10 @@ FunctionEnd
 ;======================================================================
 ; customInstall macro is invoked by electron-builder after files are in $INSTDIR
 !macro customInstall
+  !insertmacro ytPruneStaleUninstallEntry SHELL_CONTEXT
+  !insertmacro ytPruneForeignScopeEntry
+  !insertmacro ytPurgeOrphanFolder "$YtPreviousInstallDir"
+
   !insertmacro mtAssociateExtension ".md" "${MT_PROGID}"
   !insertmacro mtAssociateExtension ".markdown" "${MT_PROGID}"
   !insertmacro mtAssociateExtension ".mmd" "${MT_PROGID}"
@@ -158,6 +248,53 @@ FunctionEnd
 !macroend
 
 ;======================================================================
+; Old-version removal that cannot block the install.
+;
+; installUtil.nsh calls this *instead of* its own error branch, so a previous
+; uninstaller that exits non-zero, or that has lost its executable, no longer
+; turns into a modal error plus Quit. Whatever the stub managed to remove is
+; finished here: the stale record goes, and the leftover folder is only
+; deleted when it demonstrably still holds nothing worth keeping.
+!macro customUnInstallCheck
+  ${If} $R0 != 0
+    DetailPrint "Previous uninstaller exited with $R0, recovering."
+  ${EndIf}
+  !insertmacro ytRecoverPreviousInstall SHELL_CONTEXT
+  ClearErrors
+!macroend
+
+!macro customUnInstallCheckCurrentUser
+  ${If} $R0 != 0
+    DetailPrint "Previous per-user uninstaller exited with $R0, recovering."
+  ${EndIf}
+  !insertmacro ytRecoverPreviousInstall HKEY_CURRENT_USER
+  ClearErrors
+!macroend
+
+/**
+ * Drops the registration for the old folder and deals with the folder itself.
+ * Only ever runs before the new files are unpacked, so the folder cannot be
+ * the one this installer is about to write into.
+ */
+!macro ytRecoverPreviousInstall ROOT_KEY
+  Push $0
+  ReadRegStr $0 ${ROOT_KEY} "${INSTALL_REGISTRY_KEY}" InstallLocation
+  ${If} $0 != ""
+  ${AndIf} $0 != "$INSTDIR"
+    ${GetFileName} "$0" $1
+    ${If} $1 == "${APP_FILENAME}"
+      SetOutPath $TEMP
+      RMDir /r "$0"
+      DetailPrint "Removed leftover folder $0"
+      StrCpy $YtRecoveredLeftovers 1
+    ${EndIf}
+  ${EndIf}
+  DeleteRegKey ${ROOT_KEY} "${UNINSTALL_REGISTRY_KEY}"
+  DeleteRegKey ${ROOT_KEY} "${INSTALL_REGISTRY_KEY}"
+  Pop $0
+!macroend
+
+;======================================================================
 ; customUnInstall macro cleans up on uninstall
 !macro customUnInstall
   ; An update reaches here through the old uninstaller, right before the new
@@ -183,8 +320,21 @@ FunctionEnd
     System::Call 'shell32::SHChangeNotify(i, i, i, i) v (0x08000000, 0, 0, 0)'
   ${endIf}
 
-  MessageBox MB_YESNO "Do you want to delete user settings?" /SD IDNO IDNO SkipRemoval
-    SetShellVarContext current
-    RMDir /r "$APPDATA\YarkText"
-  SkipRemoval:
+  ; The page's checkbox decides this now. A silent uninstall - the mode an
+  ; update uses - never shows the page, so $un.YtKeepSettings keeps its
+  ; "keep" default there and only an explicit --delete-app-data removes data.
+  ${IfNot} ${isUpdated}
+    ClearErrors
+    ${GetParameters} $0
+    ${GetOptions} $0 "--delete-app-data" $1
+    ${If} ${Errors}
+      ${If} $un.YtKeepSettings == 1
+        DetailPrint "Keeping user settings."
+      ${Else}
+        SetShellVarContext current
+        RMDir /r "$APPDATA\YarkText"
+        RMDir /r "$APPDATA\marktext"
+      ${EndIf}
+    ${EndIf}
+  ${EndIf}
 !macroend

@@ -37,6 +37,7 @@ import pandoc, {
   shouldMirrorMedia
 } from '../../utils/pandoc'
 import { t, getCurrentLanguage } from '../../i18n'
+import { showRendererConfirm, confirmAction } from '../../utils/rendererConfirm'
 import type { PandocExportPayload, TabOptions, UnsavedFile } from '@shared/types/files'
 
 type Win = BrowserWindow | null | undefined
@@ -370,28 +371,22 @@ const showUnsavedFilesMessage = async(
   win: BrowserWindow,
   files: UnsavedFile[]
 ): Promise<{ needSave: boolean } | null> => {
-  const { response } = await dialog.showMessageBox(win, {
-    type: 'warning',
-    buttons: [t('dialog.save'), t('dialog.dontSave'), t('dialog.cancel')],
-    defaultId: 0,
-    message: t('dialog.saveChanges', {
-      count: files.length,
-      type: files.length === 1 ? t('dialog.file') : t('dialog.files'),
-      files: files.map((f) => f.filename).join('\n')
-    }),
+  const value = await showRendererConfirm(win, {
+    title: t('dialog.saveChanges'),
     detail: t('dialog.changesWillBeLost'),
-    cancelId: 2,
-    noLink: true
+    files: files.map((f) => f.filename),
+    cancelValue: 'cancel',
+    buttons: [
+      { label: t('dialog.cancel'), value: 'cancel' },
+      { label: t('dialog.dontSave'), value: 'discard' },
+      { label: t('dialog.save'), value: 'save', primary: true }
+    ]
   })
 
-  switch (response) {
-    case 0:
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve({ needSave: true })
-        })
-      })
-    case 1:
+  switch (value) {
+    case 'save':
+      return { needSave: true }
+    case 'discard':
       return { needSave: false }
     default:
       return null
@@ -641,16 +636,13 @@ ipcMain.on('mt::rename', async(e, { id, pathname, newPathname }: RenamePayload) 
   if (!(await exists(newPathname))) {
     doRename()
   } else {
-    const { response } = await dialog.showMessageBox(win, {
-      type: 'warning',
-      buttons: [t('dialog.replace'), t('dialog.cancel')],
-      defaultId: 1,
+    // Replacing an existing file is destructive, so cancel stays the default.
+    const replace = await confirmAction(win, {
+      title: t('dialog.replace'),
       message: t('dialog.fileExists', { filename: path.basename(newPathname) }),
-      cancelId: 1,
-      noLink: true
+      confirmLabel: t('dialog.replace')
     })
-
-    if (response === 0) {
+    if (replace) {
       doRename()
     }
   }
@@ -754,17 +746,15 @@ ipcMain.on('mt::format-link-click', async(e, { data, dirname }: FormatLinkPayloa
       // A link in an untrusted document could point at a co-located script or
       // executable; opening it via the OS shell would run code silently (#3575).
       if (isDangerousExecutableFile(pathname)) {
-        const { response } = await dialog.showMessageBox(win, {
-          type: 'warning',
-          buttons: [t('dialog.cancel'), t('dialog.openAnyway')],
-          defaultId: 0,
-          cancelId: 0,
-          noLink: true,
+        // Opening the file is the risky choice, so keep it non-primary and let
+        // cancel stay the default.
+        const openAnyway = await confirmAction(win, {
           title: t('dialog.unsafeFileTitle'),
           message: t('dialog.unsafeFileMessage'),
-          detail: t('dialog.unsafeFileDetail', { name: path.basename(pathname) })
+          detail: t('dialog.unsafeFileDetail', { name: path.basename(pathname) }),
+          confirmLabel: t('dialog.openAnyway')
         })
-        if (response !== 1) {
+        if (!openAnyway) {
           return
         }
       }

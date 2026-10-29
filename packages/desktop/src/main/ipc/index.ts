@@ -13,6 +13,7 @@ import { registerDialogHandlers } from './dialog'
 import { registerDiagramHandlers } from './diagram'
 import { registerPdfHandlers } from './pdf'
 import { registerOpenCodeHandlers } from './opencode'
+import { registerRendererConfirmHandlers } from '../utils/rendererConfirm'
 
 export const registerSandboxIpcHandlers = (): void => {
   registerBootInfo()
@@ -29,4 +30,5 @@ export const registerSandboxIpcHandlers = (): void => {
   registerDiagramHandlers()
   registerPdfHandlers()
   registerOpenCodeHandlers()
+  registerRendererConfirmHandlers()
 }

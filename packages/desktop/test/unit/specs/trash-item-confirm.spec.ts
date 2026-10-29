@@ -1,17 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { showMessageBox, trashItem, t } = vi.hoisted(() => ({
-  showMessageBox: vi.fn(),
+const { showRendererConfirm, trashItem, t } = vi.hoisted(() => ({
+  showRendererConfirm: vi.fn(),
   trashItem: vi.fn(),
   t: vi.fn((key: string) => key)
 }))
 
 vi.mock('electron', () => ({
   BrowserWindow: class {},
-  dialog: { showMessageBox },
   shell: { trashItem }
 }))
 vi.mock('main_renderer/i18n', () => ({ t }))
+vi.mock('main_renderer/utils/rendererConfirm', () => ({ showRendererConfirm }))
 
 import { confirmAndTrashItem } from 'main_renderer/filesystem/trash'
 
@@ -19,30 +19,36 @@ const fakeWindow = {} as never
 
 describe('confirmAndTrashItem', () => {
   beforeEach(() => {
-    showMessageBox.mockReset()
+    showRendererConfirm.mockReset()
     trashItem.mockReset()
     trashItem.mockResolvedValue(undefined)
   })
 
   it('trashes only after the confirm button, and never on cancel', async() => {
-    showMessageBox.mockResolvedValue({ response: 0 })
+    showRendererConfirm.mockResolvedValue('trash')
     await expect(confirmAndTrashItem(fakeWindow, '/docs/notes.md')).resolves.toBe(true)
     expect(trashItem).toHaveBeenCalledWith('/docs/notes.md')
 
-    // Cancel must be the default so Enter/Esc keep the file.
-    const [, options] = showMessageBox.mock.calls[0] as [unknown, Record<string, unknown>]
-    expect(options.defaultId).toBe(1)
+    // Cancel must be the prompt's cancel value so Esc and overlay clicks keep
+    // the file, and the confirm button must stay non-primary.
+    const [, options] = showRendererConfirm.mock.calls[0] as [
+      unknown,
+      { cancelValue: string; buttons: Array<{ value: string; primary?: boolean }> }
+    ]
+    expect(options.cancelValue).toBe('cancel')
+    expect(options.buttons.find((b) => b.value === 'trash')?.primary).toBeFalsy()
 
-    showMessageBox.mockResolvedValue({ response: 1 })
+    showRendererConfirm.mockResolvedValue('cancel')
     await expect(confirmAndTrashItem(fakeWindow, '/docs/notes.md')).resolves.toBe(false)
     expect(trashItem).toHaveBeenCalledTimes(1)
   })
 
-  it('shows a parent-less dialog when no window is available', async() => {
-    showMessageBox.mockResolvedValue({ response: 1 })
+  it('does not trash when no window can show the prompt', async() => {
+    showRendererConfirm.mockResolvedValue('cancel')
 
-    await confirmAndTrashItem(null, '/docs/notes.md')
+    await expect(confirmAndTrashItem(null, '/docs/notes.md')).resolves.toBe(false)
 
-    expect(showMessageBox.mock.calls[0]).toHaveLength(1)
+    expect(showRendererConfirm).toHaveBeenCalledWith(null, expect.anything())
+    expect(trashItem).not.toHaveBeenCalled()
   })
 })

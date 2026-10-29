@@ -44,6 +44,13 @@ export interface PdfSaveRequest {
 
 export type PdfSaveResult = { pathname: string; hash: string } | null
 
+export interface PdfImageExportRequest {
+  pathname: string
+  page: number
+  /** PNG bytes rendered by the viewer; the main process only validates and writes them. */
+  data: Uint8Array
+}
+
 export interface PdfTextBlock {
   id: number
   // Unrotated, top-left-origin coordinates in PDF points, as returned by the native engine.
@@ -75,13 +82,13 @@ export type PdfAdvancedRequest =
   | { action: 'ocr'; pathname: string }
   | { action: 'convert'; pathname: string; kind: 'docx' | 'xlsx' | 'pptx' }
   | {
-      action: 'edit'
-      pathname: string
-      page: number
-      blockId: number
-      text: string
-      fontSize: number
-      sourceHash: string
-    }
+    action: 'edit'
+    pathname: string
+    page: number
+    blockId: number
+    text: string
+    fontSize: number
+    sourceHash: string
+  }
 
 export type PdfAdvancedResult = { pathname: string; message: string } | null

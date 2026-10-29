@@ -35,6 +35,7 @@ import type { BufferedState as BufferedStateType } from './bufferedState'
 import type {
   PdfSaveRequest,
   PdfSaveResult,
+  PdfImageExportRequest,
   PdfCreateRequest,
   PdfAdvancedCapabilities,
   PdfBlockInspection,
@@ -50,6 +51,33 @@ export interface SaveDialogRequest {
   defaultPath?: string
   filters?: Array<{ name: string; extensions: string[] }>
 }
+
+/** One button in a renderer-drawn confirmation; `value` is echoed back to main. */
+export interface RendererConfirmButton {
+  label: string
+  value: string
+  /** Primary buttons get the accent fill; at most one per prompt. */
+  primary?: boolean
+}
+
+/**
+ * Payload for `mt::renderer-confirm`. Confirmations are drawn by the editor
+ * window so they follow the active theme; main sends the copy and button set,
+ * then waits for the chosen value over `mt::renderer-confirm-result`.
+ */
+export interface RendererConfirmRequest {
+  title: string
+  message?: string
+  detail?: string
+  buttons: RendererConfirmButton[]
+  /** Returned for Esc, overlay clicks and window teardown. */
+  cancelValue: string
+  /** Dirty tab names listed under the message, for the unsaved-changes prompt. */
+  files?: string[]
+}
+
+/** Chosen button value, or the request's `cancelValue`. */
+export type RendererConfirmResult = string
 
 export type PlantumlFetchResult =
   { ok: true; mime: string; data: Uint8Array } | { ok: false; error: string }
@@ -74,6 +102,7 @@ export interface IpcInvokeChannels {
   'mt::pdf::print': { args: [pathname: string]; ret: void }
   'mt::pdf::create': { args: [request: PdfCreateRequest]; ret: string | null }
   'mt::pdf::save': { args: [request: PdfSaveRequest]; ret: PdfSaveResult }
+  'mt::pdf::export-image': { args: [request: PdfImageExportRequest]; ret: string | null }
   'mt::pdf::confirm-close': { args: [filename: string]; ret: 'save' | 'discard' | 'cancel' }
   'mt::pdf::engine-capabilities': { args: []; ret: PdfAdvancedCapabilities }
   'mt::pdf::inspect-blocks': { args: [pathname: string, page: number]; ret: PdfBlockInspection }
@@ -140,6 +169,7 @@ export interface IpcInvokeChannels {
 // =================================================================
 
 export interface IpcSendChannels {
+  'mt::renderer-confirm-result': [id: string, value: RendererConfirmResult]
   'app-create-editor-window': [config?: unknown]
   'app-create-settings-window': []
   'app-open-directory-by-id': [windowId: number, dirPath: string]
@@ -340,6 +370,7 @@ export interface IpcMainEventChannels {
   'mt::tab-save-failure': [tabId: string, message: string]
   'mt::tab-saved': [tabId: string, savedMarkdown?: string]
   'mt::close-confirmed': [discard: boolean]
+  'mt::renderer-confirm': [request: RendererConfirmRequest & { id: string }]
   'mt::tabs-cycle-left': []
   'mt::tabs-cycle-right': []
   'mt::toggle-view-layout-entry': [entry: string]

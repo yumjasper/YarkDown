@@ -6,12 +6,14 @@ import { BrowserWindow, dialog, ipcMain } from 'electron'
 import {
   isPdfFile,
   type PdfCreateRequest,
+  type PdfImageExportRequest,
   type PdfSaveRequest,
   type PdfSaveResult
 } from '@shared/pdf'
 import { requirePdfReader } from '../utils/pdfComponent'
 import { writeFile } from '../filesystem'
 import { assertPdfWritable, writePdfWithRetry } from '../utils/pdfSave'
+import { showRendererConfirm, confirmAction } from '../utils/rendererConfirm'
 import { registerPdfAdvancedHandlers } from './pdfAdvanced'
 
 import log from 'electron-log'
@@ -89,6 +91,28 @@ export const registerPdfHandlers = (): void => {
     const { createPdf } = await import('../utils/pdfTools')
     const bytes = await createPdf(request)
     await writeFile(destination, Buffer.from(bytes), undefined, undefined)
+    return destination
+  })
+  ipcMain.handle('mt::pdf::export-image', async(event, request: PdfImageExportRequest) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    if (!win) throw new Error('PDF window is unavailable.')
+    if (!request || !isPdfFile(request.pathname) || !Number.isSafeInteger(request.page) || request.page < 1)
+      throw new Error('Invalid PDF image export request.')
+    const data = request.data
+    if (!(data instanceof Uint8Array) || data.byteLength < 8)
+      throw new Error('Empty PDF image export request.')
+    // The renderer encodes the PNG; the main process only accepts a real PNG stream.
+    const signature = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
+    if (signature.some((byte, index) => data[index] !== byte))
+      throw new Error('Unsupported image data. Only PNG export is supported.')
+    const parsed = path.parse(request.pathname)
+    const result = await dialog.showSaveDialog(win, {
+      defaultPath: path.join(parsed.dir, `${parsed.name}-p${request.page}.png`),
+      filters: [{ name: 'PNG', extensions: ['png'] }]
+    })
+    if (result.canceled || !result.filePath) return null
+    const destination = /\.png$/i.test(result.filePath) ? result.filePath : `${result.filePath}.png`
+    await writeFile(destination, Buffer.from(data.buffer, data.byteOffset, data.byteLength), undefined, undefined)
     return destination
   })
   ipcMain.handle('mt::pdf::print', async(event, pathname: string) => {
@@ -256,20 +280,17 @@ export const registerPdfHandlers = (): void => {
           throw error
         log.error('PDF atomic save failed:', { pathname: destination, code: (error as NodeJS.ErrnoException).code, syscall: (error as NodeJS.ErrnoException).syscall, error })
         const readOnly = (error as NodeJS.ErrnoException).code === 'EPDFREADONLY'
-        const { response } = await dialog.showMessageBox(win, {
-          type: 'warning',
-          message: readOnly
+        const saveCopy = await confirmAction(win, {
+          title: readOnly
             ? 'PDF 文件为只读，无法覆盖保存 / PDF file is read-only'
             : 'PDF 写入失败，尚未确定是否被占用 / PDF write failed',
           detail: readOnly
             ? '文件带有只读属性，未尝试覆盖，也没有修改原文件属性。请另存为副本；如确需覆盖，请先自行取消只读属性。批注草稿仍保留。'
             : `已等待并重试，但系统仍拒绝写入（${(error as NodeJS.ErrnoException).code}）。请关闭 Acrobat、资源管理器预览或同步软件，并检查文件/文件夹写入权限；也可另存为副本。原文件和批注草稿均保留。\nThe OS still denies writing after retries. Close other viewers/preview handlers or check file and folder permissions. You can save a copy without losing drafts.`,
-          buttons: ['另存为副本 / Save a copy', '取消 / Cancel'],
-          defaultId: 0,
-          cancelId: 1,
-          noLink: true
+          confirmLabel: '另存为副本 / Save a copy',
+          primary: true
         })
-        if (response !== 0) return null
+        if (!saveCopy) return null
         const parsed = path.parse(destination)
         const result = await dialog.showSaveDialog(win, {
           defaultPath: path.join(parsed.dir, `${parsed.name}_annotated.pdf`),
@@ -301,14 +322,16 @@ export const registerPdfHandlers = (): void => {
   ipcMain.handle('mt::pdf::confirm-close', async(event, filename: string) => {
     const win = BrowserWindow.fromWebContents(event.sender)
     if (!win) return 'cancel'
-    const { response } = await dialog.showMessageBox(win, {
-      type: 'question',
-      message: `保存 PDF 批注？ / Save PDF annotations?\n${path.basename(filename)}`,
-      buttons: ['保存 / Save', '不保存 / Discard', '取消 / Cancel'],
-      defaultId: 0,
-      cancelId: 2,
-      noLink: true
+    const value = await showRendererConfirm(win, {
+      title: '保存 PDF 批注？ / Save PDF annotations?',
+      message: path.basename(filename),
+      cancelValue: 'cancel',
+      buttons: [
+        { label: '取消 / Cancel', value: 'cancel' },
+        { label: '不保存 / Discard', value: 'discard' },
+        { label: '保存 / Save', value: 'save', primary: true }
+      ]
     })
-    return ['save', 'discard', 'cancel'][response] || 'cancel'
+    return value === 'save' || value === 'discard' ? value : 'cancel'
   })
 }
