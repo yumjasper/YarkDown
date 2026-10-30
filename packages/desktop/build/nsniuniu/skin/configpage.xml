@@ -16,68 +16,89 @@
   The hero keeps the brand mark and also carries the product name, so the window
   identifies itself before the user reads anything else.
 
-  Height arithmetic, so a change can be checked by reading: the hero is 196, the
-  fixed rows below it sum to 296, and the single flexible <Control /> above the
-  action bar absorbs the remaining 44 of the 536 declared in install.xml.
+  Height arithmetic, so a change can be checked by reading: the hero is 132, the
+  fixed rows below it sum to 206, the action bar is 56, and the single flexible
+  <Control /> above the action bar absorbs the remaining 10 of the 404 declared in
+  install.xml.
 -->
 <Windows>
   <VerticalLayout>
-    <VerticalLayout height="196" bkimage="file='images/hero.png'">
+    <VerticalLayout height="132" bkimage="file='images/hero.png'">
       <Control />
-      <HorizontalLayout height="36">
+      <HorizontalLayout height="32">
         <Control />
-        <Label name="lblVersionConfig" font="4" textcolor="#B23A3A42" align="right" width="140" padding="0,0,20,0" />
+        <Label name="lblVersionConfig" font="4" textcolor="#B23A3A42" align="right" width="140" padding="0,0,24,0" />
       </HorizontalLayout>
     </VerticalLayout>
 
     <VerticalLayout bkcolor="#FFFFFFFF">
-      <Control height="28" />
+      <Control height="20" />
 
-      <VerticalLayout height="22" padding="32,0,32,0">
+      <VerticalLayout height="22" padding="24,0,24,0">
         <Label font="2" textcolor="#FF0F0F11" text="安装 YarkText" />
       </VerticalLayout>
-      <Control height="8" />
-      <VerticalLayout height="18" padding="32,0,32,0">
+      <Control height="6" />
+      <VerticalLayout height="18" padding="24,0,24,0">
         <Label font="3" textcolor="#FF8A8A90" text="确认安装位置后即可开始，整个过程只需几秒。" />
       </VerticalLayout>
 
-      <Control height="24" />
+      <Control height="18" />
 
-      <!-- Row height equals the control height: 40, not 38 padded down to 22. -->
-      <HorizontalLayout height="40" padding="32,0,32,0">
-        <RichEdit name="editDir" height="40" font="0" textcolor="#FF20202A" bkcolor="#FFF6F6F8" bordercolor="#FFE4E4E8" focusbordercolor="#FF0F0F11" wantreturn="false" wantctrlreturn="false" multiline="false" autohscroll="false" inset="12,0,12,0" borderround="6,6" />
+      <!--
+        Row height equals the control height: 40, not 38 padded down to 22.
+
+        The top inset is what centres the text, not the row. A single-line RichEdit
+        draws its line at the top of its content rect, so with a 0 top inset the ink
+        sat 9px above the box centre, which reads as text stuck to the upper edge.
+        The inset only moves the text rect; the background still fills the full 40px.
+      -->
+      <HorizontalLayout height="40" padding="24,0,24,0">
+        <RichEdit name="editDir" height="40" font="0" textcolor="#FF20202A" bkcolor="#FFF6F6F8" bordercolor="#FFE4E4E8" focusbordercolor="#FF0F0F11" wantreturn="false" wantctrlreturn="false" multiline="false" autohscroll="false" inset="12,9,12,0" borderround="6,6" />
         <Control width="10" />
-        <Button name="btnSelectDir" width="84" height="40" font="0" textcolor="#FF20202A" hottextcolor="#FF0F0F11" text="浏览" bkcolor="#FFFFFFFF" hotbkcolor="#FFF2F2F4" pushedbkcolor="#FFE8E8EC" bordersize="1" bordercolor="#FFDCDCE0" borderround="6,6" />
+        <Button name="btnSelectDir" width="76" height="40" font="0" textcolor="#FF20202A" hottextcolor="#FF0F0F11" text="浏览" bkcolor="#FFFFFFFF" hotbkcolor="#FFF2F2F4" pushedbkcolor="#FFE8E8EC" bordersize="1" bordercolor="#FFDCDCE0" borderround="6,6" />
       </HorizontalLayout>
 
-      <Control height="10" />
-      <VerticalLayout height="18" padding="32,0,32,0">
+      <Control height="8" />
+      <VerticalLayout height="18" padding="24,0,24,0">
         <Label name="local_space" font="3" textcolor="#FF9A9AA0" />
       </VerticalLayout>
 
-      <Control height="28" />
+      <Control height="20" />
 
       <!--
         The PDF option is a row, not a paragraph: the two labels sit after the tick
         so they line up with the checkbox, and the trailing <Control /> absorbs the
         rest of the width rather than letting the labels stretch.
+
+        The tick is positioned by stretching the control to the full row height and
+        drawing the bitmap 10px down inside it. valign="vcenter" has no effect on a
+        CheckBox here - measured ink stayed level with the top of the row while the
+        centred labels sat 10px lower - so a short control sat against the top of a
+        taller row and the tick read as floating above its own label. A full-height
+        control puts the bitmap's centre on the row's centre line, the same line the
+        labels are centred on.
       -->
-      <HorizontalLayout height="40" padding="32,0,32,0">
-        <CheckBox name="chkPdf" width="18" height="20" normalimage="file='images/check_off.png' dest='0,2,16,18'" selectedimage="file='images/check_on.png' dest='0,2,16,18'" />
+      <HorizontalLayout height="36" padding="24,0,24,0">
+        <CheckBox name="chkPdf" width="16" height="36" normalimage="file='images/check_off.png' dest='0,10,16,26'" selectedimage="file='images/check_on.png' dest='0,10,16,26'" />
         <Control width="10" />
-        <Label font="0" textcolor="#FF20202A" text="同时安装 PDF 阅读器" width="150" valign="vcenter" />
-        <Label font="3" textcolor="#FF9A9AA0" text="含批注、目录与缩略图" width="190" valign="vcenter" />
+        <Label font="0" textcolor="#FF20202A" text="同时安装 PDF 阅读器" width="148" valign="vcenter" />
+        <!-- An explicit gap, not a wider first label: the two labels are separate
+             runs of text, and at 440 wide the primary label's own width ends only a
+             few pixels before the muted one starts, so without this they read as
+             one crowded line. -->
+        <Control width="8" />
+        <Label font="3" textcolor="#FF9A9AA0" text="含批注、目录与缩略图" width="164" valign="vcenter" />
         <Control />
       </HorizontalLayout>
 
-      <!-- Absorbs the 44px left over by the fixed rows; the action bar stays at the
+      <!-- Absorbs the 10px left over by the fixed rows; the action bar stays at the
            bottom edge whatever the hero height becomes. -->
       <Control />
 
       <!--
-        The action bar. 36 is the button height and the row is 36 plus the bottom
-        margin, so nothing overlaps: this row previously declared 42 with an 18px
-        bottom padding, which left 24 for a 42px button.
+        The action bar. 56 is the 36px button plus a 20px bottom margin, so nothing
+        overlaps: this row previously declared a height with a separate padding,
+        which left less room than the button needed for a 42px button.
 
         Cancel sits here rather than in a floating title bar. The floating ✕ that
         used to live in the top-right corner never received a click: the same row's
@@ -85,13 +106,13 @@
         difference, so the plugin is swallowing the hit on that specific cell. A
         button in the page body is both reachable and unambiguous.
       -->
-      <VerticalLayout height="60" padding="32,0,32,0">
+      <VerticalLayout height="56" padding="24,0,24,0">
         <HorizontalLayout height="36">
-          <Button name="btnCancel" width="96" height="36" font="0" text="取消" textcolor="#FF5B5B62" hottextcolor="#FF0F0F11" bkcolor="#FFFFFFFF" hotbkcolor="#FFF2F2F4" pushedbkcolor="#FFE8E8EC" bordersize="1" bordercolor="#FFDCDCE0" borderround="8,8" />
+          <Button name="btnCancel" width="88" height="36" font="0" text="取消" textcolor="#FF5B5B62" hottextcolor="#FF0F0F11" bkcolor="#FFFFFFFF" hotbkcolor="#FFF2F2F4" pushedbkcolor="#FFE8E8EC" bordersize="1" bordercolor="#FFDCDCE0" borderround="8,8" />
           <Control />
-          <Button name="btnInstall" width="120" height="36" font="1" text="一键安装" textcolor="#FFFFFFFF" hottextcolor="#FFFFFFFF" pushedtextcolor="#FFFFFFFF" bkcolor="#FF0F0F11" hotbkcolor="#FF26262E" pushedbkcolor="#FF000000" borderround="8,8" />
+          <Button name="btnInstall" width="112" height="36" font="1" text="一键安装" textcolor="#FFFFFFFF" hottextcolor="#FFFFFFFF" pushedtextcolor="#FFFFFFFF" bkcolor="#FF0F0F11" hotbkcolor="#FF26262E" pushedbkcolor="#FF000000" borderround="8,8" />
         </HorizontalLayout>
-        <Control height="24" />
+        <Control height="20" />
       </VerticalLayout>
     </VerticalLayout>
   </VerticalLayout>

@@ -80,18 +80,34 @@
 ; it is gone because the wizard no longer asks for consent, so there is no page to
 ; switch to and no index to reserve.
 
-; Window size per page. The configuration page carries the version, the path, the
-; PDF option and the licence row; the progress and finish pages need less, and
-; shrinking them removes a band of empty white under the last control.
+; Window size per page. Each height is the sum of the rows in that page file plus a
+; 10px slack before the last row, so no page carries a band of empty plate under its
+; last control. The brief pages are shorter than the configuration page because
+; they carry no path field and no PDF option: keeping them at the configuration
+; height left roughly 100px of blank white under the buttons.
 ;
 ; These must equal the <Window size> in install.xml and the sum of the rows in the
 ; matching page file, because the plugin lays the page out at this size and the
 ; flexible <Control /> rows absorb the difference. Changing one without the others
 ; leaves either a clipped button or a band of blank plate at the bottom.
-!define YT_SIZE_CONFIG_W 480
-!define YT_SIZE_CONFIG_H 536
-!define YT_SIZE_BRIEF_W 480
-!define YT_SIZE_BRIEF_H 400
+;
+; The window does change size when the wizard moves between pages. That is
+; invisible: ytSkinLayout hides the window, resizes and lays the page out, and only
+; ytSkinPresent shows it again.
+;
+; Row sums, so a height can be checked by reading the page file:
+;   configuration  132 hero + 20 + 22 + 6 + 18 + 18 + 40 + 8 + 18 + 20 + 36 + 56 = 394
+;   installing     132 hero + 20 + 22 + 6 + 18 + 20 + 44 + 24                   = 286
+;   finish         132 hero + 20 + 22 + 6 + 18 + 18 + 36 + 56                   = 308
+;   uninstall      132 hero + 20 + 22 + 6 + 18 + 18 + 36 + 56                   = 308
+!define YT_SIZE_CONFIG_W 440
+!define YT_SIZE_CONFIG_H 404
+!define YT_SIZE_INSTALLING_W 440
+!define YT_SIZE_INSTALLING_H 296
+!define YT_SIZE_FINISH_W 440
+!define YT_SIZE_FINISH_H 318
+!define YT_SIZE_UNCONFIG_W 440
+!define YT_SIZE_UNCONFIG_H 318
 
 ; SetWindowPos flags: move nothing, resize nothing, show the window. The insert
 ; position is HWND_TOP, not HWND_TOPMOST - a topmost installer would stay above
@@ -695,7 +711,7 @@ Function YtSkinInstFilesShow
   nsNiuniuSkin::SetControlAttribute $YtSkinHwnd "slrProgress" "min" "0"
   nsNiuniuSkin::SetControlAttribute $YtSkinHwnd "slrProgress" "max" "100"
   !insertmacro ytSkinProgress $YtSkinHwnd 45 "正在写入程序文件"
-  !insertmacro ytSkinCommit $YtSkinHwnd ${YT_PAGE_INSTALLING} ${YT_SIZE_BRIEF_W} ${YT_SIZE_BRIEF_H}
+  !insertmacro ytSkinCommit $YtSkinHwnd ${YT_PAGE_INSTALLING} ${YT_SIZE_INSTALLING_W} ${YT_SIZE_INSTALLING_H}
 FunctionEnd
 
 /**
@@ -707,7 +723,7 @@ FunctionEnd
 !macro ytSkinStageRegistering
   ${If} $YtSkinHwnd != 0
     !insertmacro ytSkinProgress $YtSkinHwnd 92 "正在注册文件关联"
-    !insertmacro ytSkinCommit $YtSkinHwnd ${YT_PAGE_INSTALLING} ${YT_SIZE_BRIEF_W} ${YT_SIZE_BRIEF_H}
+    !insertmacro ytSkinCommit $YtSkinHwnd ${YT_PAGE_INSTALLING} ${YT_SIZE_INSTALLING_W} ${YT_SIZE_INSTALLING_H}
   ${EndIf}
 !macroend
 
@@ -751,7 +767,7 @@ Function YtSkinInstFilesLeave
   nsNiuniuSkin::SetControlAttribute $YtSkinHwnd "lblVersionFinish" "text" "版本 ${VERSION}"
   nsNiuniuSkin::SetControlAttribute $YtSkinHwnd "chkRun" "selected" "true"
 
-  !insertmacro ytSkinCommit $YtSkinHwnd ${YT_PAGE_FINISH} ${YT_SIZE_BRIEF_W} ${YT_SIZE_BRIEF_H}
+  !insertmacro ytSkinCommit $YtSkinHwnd ${YT_PAGE_FINISH} ${YT_SIZE_FINISH_W} ${YT_SIZE_FINISH_H}
 
   GetFunctionAddress $0 YtSkinOnFinishRun
   nsNiuniuSkin::BindCallBack $YtSkinHwnd "btnRun" $0
@@ -864,7 +880,7 @@ Function un.YtSkinPageCreate
     nsNiuniuSkin::SetControlAttribute $YtSkinHwnd "chkbox_userdata" "selected" "true"
   ${EndIf}
 
-  !insertmacro ytSkinCommit $YtSkinHwnd ${YT_PAGE_UNCONFIG} ${YT_SIZE_CONFIG_W} ${YT_SIZE_CONFIG_H}
+  !insertmacro ytSkinCommit $YtSkinHwnd ${YT_PAGE_UNCONFIG} ${YT_SIZE_UNCONFIG_W} ${YT_SIZE_UNCONFIG_H}
   !insertmacro ytSkinHideWizard
 
   GetFunctionAddress $0 un.YtSkinOnUninstall

@@ -32,8 +32,14 @@ const INK = '#0F0F11'
 const PAPER = '#FFFFFF'
 const RAIL = '#E8E8EA'
 
-const HERO_WIDTH = 480
-const HERO_HEIGHT = 196
+/**
+ * The hero bitmap is baked at the window width and its declared height, so these
+ * two numbers have to match install.xml and the hero row in every page file. The
+ * plate is not stretched by the skin engine: changing the window without changing
+ * these leaves the brand mark off-centre in its band.
+ */
+const HERO_WIDTH = 440
+const HERO_HEIGHT = 132
 
 /**
  * Rebuilds the brand mark as a monochrome stencil. The master is dark ink on a
@@ -93,7 +99,7 @@ async function composeHero () {
     .png()
     .toBuffer()
 
-  const markSize = 72
+  const markSize = 56
   const mark = await logoMark(markSize, INK)
 
   const backdrop = Buffer.from(
@@ -109,18 +115,27 @@ async function composeHero () {
       '</svg>'
   )
 
-  const markLeft = 32
-  const markTop = Math.round((HERO_HEIGHT - markSize) / 2) - 10
-  const textLeft = markLeft + markSize + 18
+  const markLeft = 24
+  // Centred in the band: dropping the old -10 nudge matters here, because at 132px
+  // tall a 10px offset is 8% of the plate and the mark visibly rides high.
+  const markTop = Math.round((HERO_HEIGHT - markSize) / 2)
+  const textLeft = markLeft + markSize + 16
 
   // The wordmark is set in the same family the pages use, so the title and the
   // body copy share a skeleton. Sized by typographic units rather than pixel
   // nudging: 22px semibold for the name, 12px muted for the descriptor.
+  //
+  // The two baselines are derived from the band centre, not copied from the taller
+  // draft: the pair spans about 42px, so centring that block on 66 puts the name's
+  // baseline at 63 and the descriptor's 21px below it.
+  const wordmarkCentre = HERO_HEIGHT / 2
+  const nameBaseline = Math.round(wordmarkCentre - 3)
+  const descriptorBaseline = nameBaseline + 21
   const wordmark = Buffer.from(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${HERO_WIDTH - textLeft - 32}" height="${HERO_HEIGHT}">` +
-      '<text x="0" y="104" font-family="Segoe UI Variable Text, Segoe UI, Microsoft YaHei UI, sans-serif" ' +
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${HERO_WIDTH - textLeft - 24}" height="${HERO_HEIGHT}">` +
+      `<text x="0" y="${nameBaseline}" font-family="Segoe UI Variable Text, Segoe UI, Microsoft YaHei UI, sans-serif" ` +
       'font-size="24" font-weight="600" fill="#0F0F11" letter-spacing="0.2">YarkText</text>' +
-      '<text x="1" y="126" font-family="Segoe UI Variable Text, Segoe UI, Microsoft YaHei UI, sans-serif" ' +
+      `<text x="1" y="${descriptorBaseline}" font-family="Segoe UI Variable Text, Segoe UI, Microsoft YaHei UI, sans-serif" ` +
       'font-size="12" font-weight="400" fill="#8A8A90" letter-spacing="0.4">专注写作的 Markdown 编辑器</text>' +
       '</svg>'
   )
@@ -137,12 +152,12 @@ async function composeHero () {
 
 /**
  * Flat tile used for the slider rail and its fill. The width matches the content
- * column (480 - 32 * 2) rather than a small tile: the skin engine draws the fill
- * at the bitmap's own width instead of stretching a tiny source, so a 4px tile
+ * column (HERO_WIDTH - 24 * 2) rather than a small tile: the skin engine draws the
+ * fill at the bitmap's own width instead of stretching a tiny source, so a 4px tile
  * produced a rail with no visible progress at all.
  */
 async function flatTile (color) {
-  return sharp({ create: { width: HERO_WIDTH - 64, height: 4, channels: 4, background: color } }).png().toBuffer()
+  return sharp({ create: { width: HERO_WIDTH - 48, height: 4, channels: 4, background: color } }).png().toBuffer()
 }
 
 /**

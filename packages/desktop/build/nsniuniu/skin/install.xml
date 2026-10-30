@@ -15,12 +15,20 @@
   literally in the page files so a value can be checked by reading, and changing a
   rhythm means changing the same number everywhere:
 
-    side margin   32   gap between the window edge and any content
+    side margin   24   gap between the window edge and any content
+    hero         132   brand plate; the mark and wordmark are baked at this height
     title         22   page heading, 15pt semibold
     subtitle      18   one line of 10pt muted text
-    row           40   any single-line interactive row (edit box, checkbox row)
+    row           40   single-line edit row (the path field and its browse button)
+    row tick      36   a checkbox row; the tick is 16px, so 10px of air above it
     button        36   standard button height; 8px vertical padding + 18px line
-    button small  32   secondary buttons
+    bar           56   action bar: the 36px buttons plus a 20px bottom margin
+
+  The window is 440 wide, not the 480 of the first draft: at 480 the form was
+  mostly empty to the right of the path field, and the extra height pushed the
+  action bar far from the last control. Nothing below scales with the width, so
+  the two numbers that had to move with it are the hero bitmap and the slider
+  tile (see generateInstallerSkin.mjs) - both are baked at the window width.
 
   Nothing is padded on its container. Duilib subtracts a container's vertical
   padding from the row before laying children out, so a declared 42px button inside
@@ -30,7 +38,7 @@
   is what the renderer asks for first, and it ships with Windows 11, so it resolves
   on the machines that have it and the fallbacks keep older systems on Segoe UI.
 -->
-<Window size="480,536" sizebox="0,0,0,0" caption="0,0,0,536" showshadow="false">
+<Window size="440,404" sizebox="0,0,0,0" caption="0,0,0,404" showshadow="false">
   <Font id="0" name="Segoe UI Variable Text" size="13" bold="false" default="true" />
   <Font id="1" name="Segoe UI Variable Text" size="13" bold="true" />
   <Font id="2" name="Segoe UI Variable Text" size="15" bold="true" />

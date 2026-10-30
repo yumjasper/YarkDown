@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Finish page. Same tokens as configpage.xml: the checklist row is 40 tall and the
-  action row is exactly the button height plus a bottom margin.
+  Finish page. Same tokens as configpage.xml: a 132px hero, 24px side margin, a
+  36px tick row and a 56px action bar.
 
   The action bar carries a plain "关闭" button on the left. It replaces the floating
   ✕ that used to sit in the title bar: that cell never delivered a click to the
@@ -9,43 +9,43 @@
 -->
 <Windows>
   <VerticalLayout>
-    <VerticalLayout height="196" bkimage="file='images/hero.png'">
+    <VerticalLayout height="132" bkimage="file='images/hero.png'">
       <Control />
-      <HorizontalLayout height="36">
+      <HorizontalLayout height="32">
         <Control />
-        <Label name="lblVersionFinish" font="4" textcolor="#B23A3A42" align="right" width="140" padding="0,0,20,0" />
+        <Label name="lblVersionFinish" font="4" textcolor="#B23A3A42" align="right" width="140" padding="0,0,24,0" />
       </HorizontalLayout>
     </VerticalLayout>
 
     <VerticalLayout bkcolor="#FFFFFFFF">
-      <Control height="28" />
+      <Control height="20" />
 
-      <VerticalLayout height="22" padding="32,0,32,0">
+      <VerticalLayout height="22" padding="24,0,24,0">
         <Label font="2" textcolor="#FF0F0F11" text="安装完成" />
       </VerticalLayout>
-      <Control height="8" />
-      <VerticalLayout height="18" padding="32,0,32,0">
+      <Control height="6" />
+      <VerticalLayout height="18" padding="24,0,24,0">
         <Label font="3" textcolor="#FF8A8A90" text="YarkText 已就绪，随时可以开始写作。" />
       </VerticalLayout>
 
-      <Control height="20" />
+      <Control height="18" />
 
-      <HorizontalLayout height="40" padding="32,0,32,0">
-        <CheckBox name="chkRun" width="18" height="20" normalimage="file='images/check_off.png' dest='0,2,16,18'" selectedimage="file='images/check_on.png' dest='0,2,16,18'" />
+      <HorizontalLayout height="36" padding="24,0,24,0">
+        <CheckBox name="chkRun" width="16" height="36" normalimage="file='images/check_off.png' dest='0,10,16,26'" selectedimage="file='images/check_on.png' dest='0,10,16,26'" />
         <Control width="10" />
-        <Label font="0" textcolor="#FF20202A" text="立即运行 YarkText" width="220" valign="vcenter" />
+        <Label font="0" textcolor="#FF20202A" text="立即运行 YarkText" width="200" valign="vcenter" />
         <Control />
       </HorizontalLayout>
 
       <Control />
 
-      <VerticalLayout height="60" padding="32,0,32,0">
+      <VerticalLayout height="56" padding="24,0,24,0">
         <HorizontalLayout height="36">
-          <Button name="btnFinishClose" width="96" height="36" font="0" text="关闭" textcolor="#FF5B5B62" hottextcolor="#FF0F0F11" bkcolor="#FFFFFFFF" hotbkcolor="#FFF2F2F4" pushedbkcolor="#FFE8E8EC" bordersize="1" bordercolor="#FFDCDCE0" borderround="8,8" />
+          <Button name="btnFinishClose" width="88" height="36" font="0" text="关闭" textcolor="#FF5B5B62" hottextcolor="#FF0F0F11" bkcolor="#FFFFFFFF" hotbkcolor="#FFF2F2F4" pushedbkcolor="#FFE8E8EC" bordersize="1" bordercolor="#FFDCDCE0" borderround="8,8" />
           <Control />
-          <Button name="btnRun" width="120" height="36" font="1" text="开始使用" textcolor="#FFFFFFFF" hottextcolor="#FFFFFFFF" pushedtextcolor="#FFFFFFFF" bkcolor="#FF0F0F11" hotbkcolor="#FF26262E" pushedbkcolor="#FF000000" borderround="8,8" />
+          <Button name="btnRun" width="112" height="36" font="1" text="开始使用" textcolor="#FFFFFFFF" hottextcolor="#FFFFFFFF" pushedtextcolor="#FFFFFFFF" bkcolor="#FF0F0F11" hotbkcolor="#FF26262E" pushedbkcolor="#FF000000" borderround="8,8" />
         </HorizontalLayout>
-        <Control height="24" />
+        <Control height="20" />
       </VerticalLayout>
     </VerticalLayout>
   </VerticalLayout>

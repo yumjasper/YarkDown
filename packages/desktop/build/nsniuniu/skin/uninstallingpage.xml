@@ -5,28 +5,28 @@
 -->
 <Windows>
   <VerticalLayout>
-    <VerticalLayout height="196" bkimage="file='images/hero.png'">
+    <VerticalLayout height="132" bkimage="file='images/hero.png'">
       <Control />
-      <HorizontalLayout height="36">
+      <HorizontalLayout height="32">
         <Control />
-        <Label name="lblVersionUninstalling" font="4" textcolor="#B23A3A42" align="right" width="140" padding="0,0,20,0" />
+        <Label name="lblVersionUninstalling" font="4" textcolor="#B23A3A42" align="right" width="140" padding="0,0,24,0" />
       </HorizontalLayout>
     </VerticalLayout>
 
     <VerticalLayout bkcolor="#FFFFFFFF">
       <Control height="20" />
 
-      <VerticalLayout height="22" padding="32,0,32,0">
+      <VerticalLayout height="22" padding="24,0,24,0">
         <Label font="2" textcolor="#FF0F0F11" text="正在卸载 YarkText" />
       </VerticalLayout>
-      <Control height="8" />
-      <VerticalLayout height="18" padding="32,0,32,0">
+      <Control height="6" />
+      <VerticalLayout height="18" padding="24,0,24,0">
         <Label font="3" textcolor="#FF8A8A90" text="正在移除程序文件、快捷方式与文件关联，请稍候。" />
       </VerticalLayout>
 
-      <Control height="24" />
+      <Control height="20" />
 
-      <VerticalLayout height="44" padding="32,0,32,0">
+      <VerticalLayout height="44" padding="24,0,24,0">
         <Slider name="slrUnInstProgress" height="4" mouse="false" thumbsize="0,0" bkimage="file='images/track.png'" foreimage="file='images/fill.png'" bkcolor="#FFE8E8EA" />
         <Control height="12" />
         <HorizontalLayout height="20">
@@ -38,12 +38,12 @@
 
       <Control />
 
-      <VerticalLayout height="60" padding="32,0,32,0">
+      <VerticalLayout height="56" padding="24,0,24,0">
         <HorizontalLayout height="32">
           <Control />
-          <Button name="btnUninstallingCancel" width="96" height="32" font="0" text="取消" textcolor="#FF5B5B62" hottextcolor="#FF0F0F11" bkcolor="#FFFFFFFF" hotbkcolor="#FFF2F2F4" pushedbkcolor="#FFE8E8EC" bordersize="1" bordercolor="#FFDCDCE0" borderround="8,8" />
+          <Button name="btnUninstallingCancel" width="88" height="32" font="0" text="取消" textcolor="#FF5B5B62" hottextcolor="#FF0F0F11" bkcolor="#FFFFFFFF" hotbkcolor="#FFF2F2F4" pushedbkcolor="#FFE8E8EC" bordersize="1" bordercolor="#FFDCDCE0" borderround="8,8" />
         </HorizontalLayout>
-        <Control height="28" />
+        <Control height="24" />
       </VerticalLayout>
     </VerticalLayout>
   </VerticalLayout>

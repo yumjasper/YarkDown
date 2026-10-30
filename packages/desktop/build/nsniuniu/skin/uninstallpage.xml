@@ -5,45 +5,45 @@
 -->
 <Windows>
   <VerticalLayout>
-    <VerticalLayout height="196" bkimage="file='images/hero.png'">
+    <VerticalLayout height="132" bkimage="file='images/hero.png'">
       <Control />
-      <HorizontalLayout height="36">
+      <HorizontalLayout height="32">
         <Control />
-        <Label name="lblVersionUninstall" font="4" textcolor="#B23A3A42" align="right" width="140" padding="0,0,20,0" />
+        <Label name="lblVersionUninstall" font="4" textcolor="#B23A3A42" align="right" width="140" padding="0,0,24,0" />
       </HorizontalLayout>
     </VerticalLayout>
 
     <VerticalLayout bkcolor="#FFFFFFFF">
-      <Control height="28" />
+      <Control height="20" />
 
-      <VerticalLayout height="22" padding="32,0,32,0">
+      <VerticalLayout height="22" padding="24,0,24,0">
         <Label font="2" textcolor="#FF0F0F11" text="卸载 YarkText" />
       </VerticalLayout>
-      <Control height="8" />
-      <VerticalLayout height="18" padding="32,0,32,0">
+      <Control height="6" />
+      <VerticalLayout height="18" padding="24,0,24,0">
         <Label font="3" textcolor="#FF8A8A90" text="将移除程序文件、快捷方式与文件关联，你的文档不受影响。" />
       </VerticalLayout>
 
-      <Control height="20" />
+      <Control height="18" />
 
-      <HorizontalLayout height="40" padding="32,0,32,0">
-        <CheckBox name="chkbox_userdata" width="18" height="20" normalimage="file='images/check_off.png' dest='0,2,16,18'" selectedimage="file='images/check_on.png' dest='0,2,16,18'" />
+      <HorizontalLayout height="36" padding="24,0,24,0">
+        <CheckBox name="chkbox_userdata" width="16" height="36" normalimage="file='images/check_off.png' dest='0,10,16,26'" selectedimage="file='images/check_on.png' dest='0,10,16,26'" />
         <Control width="10" />
         <!-- Width is explicit: a Label with no width is clipped by whatever follows
              it, which cut this line at the last character. -->
-        <Label font="0" textcolor="#FF20202A" text="同时删除我的配置与文档数据" width="280" valign="vcenter" />
+        <Label font="0" textcolor="#FF20202A" text="同时删除我的配置与文档数据" width="260" valign="vcenter" />
         <Control />
       </HorizontalLayout>
 
       <Control />
 
-      <VerticalLayout height="60" padding="32,0,32,0">
+      <VerticalLayout height="56" padding="24,0,24,0">
         <HorizontalLayout height="36">
-          <Button name="btnUnCancel" width="96" height="36" font="0" text="取消" textcolor="#FF5B5B62" hottextcolor="#FF0F0F11" bkcolor="#FFFFFFFF" hotbkcolor="#FFF2F2F4" pushedbkcolor="#FFE8E8EC" bordersize="1" bordercolor="#FFDCDCE0" borderround="8,8" />
+          <Button name="btnUnCancel" width="88" height="36" font="0" text="取消" textcolor="#FF5B5B62" hottextcolor="#FF0F0F11" bkcolor="#FFFFFFFF" hotbkcolor="#FFF2F2F4" pushedbkcolor="#FFE8E8EC" bordersize="1" bordercolor="#FFDCDCE0" borderround="8,8" />
           <Control />
-          <Button name="btnUnInstall" width="120" height="36" font="1" text="卸载" textcolor="#FFFFFFFF" hottextcolor="#FFFFFFFF" pushedtextcolor="#FFFFFFFF" bkcolor="#FF0F0F11" hotbkcolor="#FF26262E" pushedbkcolor="#FF000000" borderround="8,8" />
+          <Button name="btnUnInstall" width="112" height="36" font="1" text="卸载" textcolor="#FFFFFFFF" hottextcolor="#FFFFFFFF" pushedtextcolor="#FFFFFFFF" bkcolor="#FF0F0F11" hotbkcolor="#FF26262E" pushedbkcolor="#FF000000" borderround="8,8" />
         </HorizontalLayout>
-        <Control height="24" />
+        <Control height="20" />
       </VerticalLayout>
     </VerticalLayout>
   </VerticalLayout>
