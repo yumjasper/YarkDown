@@ -2,17 +2,23 @@
 <!--
   The configuration page: the only page a user actually fills in.
 
-  Layout rules that fix the previous revision:
+  Layout rules:
     - no container declares a vertical padding; a container only ever declares the
       horizontal inset, and the vertical rhythm is made of explicit spacer rows, so
       a child's declared height is the height it gets;
     - one row per interactive element, and the row is exactly as tall as the
       control inside it;
-    - the licence row is a single checkbox that spans the full width, instead of a
-      checkbox plus two labels plus an invisible button competing for one line.
+    - there is no licence row. The page used to carry a checkbox plus a link to a
+      separate licence tab, which made the form read as a legal form rather than an
+      install dialog. The licence text still ships (see installer-skin.nsh) but is
+      not part of the wizard any more.
 
-  The hero keeps the brand mark and now also carries the product name, so the
-  window identifies itself before the user reads anything else.
+  The hero keeps the brand mark and also carries the product name, so the window
+  identifies itself before the user reads anything else.
+
+  Height arithmetic, so a change can be checked by reading: the hero is 196, the
+  fixed rows below it sum to 296, and the single flexible <Control /> above the
+  action bar absorbs the remaining 44 of the 536 declared in install.xml.
 -->
 <Windows>
   <VerticalLayout>
@@ -25,7 +31,7 @@
     </VerticalLayout>
 
     <VerticalLayout bkcolor="#FFFFFFFF">
-      <Control height="24" />
+      <Control height="28" />
 
       <VerticalLayout height="22" padding="32,0,32,0">
         <Label font="2" textcolor="#FF0F0F11" text="安装 YarkText" />
@@ -35,7 +41,7 @@
         <Label font="3" textcolor="#FF8A8A90" text="确认安装位置后即可开始，整个过程只需几秒。" />
       </VerticalLayout>
 
-      <Control height="20" />
+      <Control height="24" />
 
       <!-- Row height equals the control height: 40, not 38 padded down to 22. -->
       <HorizontalLayout height="40" padding="32,0,32,0">
@@ -49,10 +55,7 @@
         <Label name="local_space" font="3" textcolor="#FF9A9AA0" />
       </VerticalLayout>
 
-      <!-- 36 rather than 18: the fixed rows plus this gap must sum to 340, the height
-           left over by the 196 hero, otherwise the surplus shows up as a blank band
-           below the action bar. -->
-      <Control height="36" />
+      <Control height="28" />
 
       <!--
         The PDF option is a row, not a paragraph: the two labels sit after the tick
@@ -67,31 +70,26 @@
         <Control />
       </HorizontalLayout>
 
-      <Control height="4" />
-
-      <!--
-        One checkbox, full width: clicking anywhere on the line toggles it, and the
-        agreement link is plain accent-coloured text rather than a button, because a
-        button inside a checkbox row is what made this line read as two controls.
-      -->
-      <HorizontalLayout height="40" padding="32,0,32,0">
-        <CheckBox name="chkAgree" width="18" height="20" normalimage="file='images/check_off.png' dest='0,2,16,18'" selectedimage="file='images/check_on.png' dest='0,2,16,18'" />
-        <Control width="10" />
-        <Label font="0" textcolor="#FF20202A" text="我已阅读并同意" width="120" valign="vcenter" />
-        <Button name="btnAgreement" width="212" height="24" font="0" textcolor="#FF0F0F11" hottextcolor="#FF6A6A72" pushedtextcolor="#FF000000" text="《YarkText 软件许可协议》" bkcolor="#00000000" hotbkcolor="#00000000" pushedbkcolor="#00000000" valign="vcenter" />
-        <Control />
-      </HorizontalLayout>
-
+      <!-- Absorbs the 44px left over by the fixed rows; the action bar stays at the
+           bottom edge whatever the hero height becomes. -->
+      <Control />
 
       <!--
         The action bar. 36 is the button height and the row is 36 plus the bottom
         margin, so nothing overlaps: this row previously declared 42 with an 18px
         bottom padding, which left 24 for a 42px button.
+
+        Cancel sits here rather than in a floating title bar. The floating ✕ that
+        used to live in the top-right corner never received a click: the same row's
+        minimize button responded, the ✕ did not, and renaming the control made no
+        difference, so the plugin is swallowing the hit on that specific cell. A
+        button in the page body is both reachable and unambiguous.
       -->
       <VerticalLayout height="60" padding="32,0,32,0">
         <HorizontalLayout height="36">
+          <Button name="btnCancel" width="96" height="36" font="0" text="取消" textcolor="#FF5B5B62" hottextcolor="#FF0F0F11" bkcolor="#FFFFFFFF" hotbkcolor="#FFF2F2F4" pushedbkcolor="#FFE8E8EC" bordersize="1" bordercolor="#FFDCDCE0" borderround="8,8" />
           <Control />
-          <Button name="btnInstall" width="120" height="36" font="1" text="一键安装" textcolor="#FFFFFFFF" disabledtextcolor="#FFB4B4BA" hottextcolor="#FFFFFFFF" pushedtextcolor="#FFFFFFFF" bkcolor="#FF0F0F11" hotbkcolor="#FF26262E" pushedbkcolor="#FF000000" disabledbkcolor="#FFE6E6E9" borderround="8,8" />
+          <Button name="btnInstall" width="120" height="36" font="1" text="一键安装" textcolor="#FFFFFFFF" hottextcolor="#FFFFFFFF" pushedtextcolor="#FFFFFFFF" bkcolor="#FF0F0F11" hotbkcolor="#FF26262E" pushedbkcolor="#FF000000" borderround="8,8" />
         </HorizontalLayout>
         <Control height="24" />
       </VerticalLayout>

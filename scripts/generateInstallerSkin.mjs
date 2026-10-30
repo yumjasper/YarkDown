@@ -273,7 +273,7 @@ await writeFile(path.join(root, 'packages/desktop/build/nsniuniu/logo.ico'), ico
 // The plugin only ever loads a zip, and it expects the skin at the archive root
 // rather than under a folder, so every entry is added with a relative name.
 const zip = new JSZip()
-const xmlFiles = ['install.xml', 'configpage.xml', 'licensepage.xml', 'installingpage.xml', 'finishpage.xml',
+const xmlFiles = ['install.xml', 'configpage.xml', 'installingpage.xml', 'finishpage.xml',
   'uninstallpage.xml', 'uninstallingpage.xml', 'uninstallfinishpage.xml', 'msgbox.xml']
 for (const name of xmlFiles) {
   zip.file(name, await readFile(path.join(skinDir, name), 'utf8'), { binary: false })
@@ -287,7 +287,10 @@ zip.file('images/check_on.png', checkOn)
 const archive = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE', compressionOptions: { level: 9 } })
 await writeFile(path.join(root, 'packages/desktop/build/nsniuniu/skin.zip'), archive)
 
+// Still shipped even though no page shows it: InitSkinPage takes this file name as
+// an argument and reads it during startup, so removing it would break the skin
+// before the first page is laid out.
 const licenseBytes = toGbk(LICENSE_TEXT)
 await writeFile(path.join(root, 'packages/desktop/build/nsniuniu/license.txt'), licenseBytes)
 
-console.log(`已生成 nsNiuniuSkin 皮肤：9 个页面、5 张位图，skin.zip ${archive.length} 字节；许可证文本 GBK ${licenseBytes.length} 字节。`)
+console.log(`已生成 nsNiuniuSkin 皮肤：8 个页面、5 张位图，skin.zip ${archive.length} 字节；许可证文本 GBK ${licenseBytes.length} 字节。`)

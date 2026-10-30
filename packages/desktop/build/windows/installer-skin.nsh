@@ -76,9 +76,9 @@
 !define YT_PAGE_UNCONFIG 3
 !define YT_PAGE_UNINSTALLING 4
 !define YT_PAGE_UNFINISH 5
-; License is last so the six existing indices keep their meaning; adding it in the
-; middle would renumber the uninstall pages and show the wrong one.
-!define YT_PAGE_LICENSE 6
+; install.xml declares six pages. The licence page used to be the seventh entry;
+; it is gone because the wizard no longer asks for consent, so there is no page to
+; switch to and no index to reserve.
 
 ; Window size per page. The configuration page carries the version, the path, the
 ; PDF option and the licence row; the progress and finish pages need less, and
@@ -121,12 +121,6 @@ Var YtSkinLaunchApp
 ; electron-builder's install-mode page rewrites $INSTDIR from the registry after
 ; this page has already returned.
 Var YtChosenDir
-
-; The licence page is a second view over the configuration page, so the view has
-; to be restored when the user comes back from it. These carry the values across
-; the page switch, because a page laid out from XML comes back blank.
-Var YtPendingDir
-Var YtPendingPdf
 !endif
 
 ;======================================================================
@@ -286,6 +280,25 @@ Var YtPendingPdf
 !macroend
 
 /**
+ * Tears the skin window down before quitting.
+ *
+ * Quit on its own terminates the script but not the plugin's window: the window
+ * lives on a thread the plugin started, so the process keeps a live HWND after
+ * every message handler has stopped running. That is what made a cancel look like
+ * a freeze - the window stayed painted, stopped responding, and only Task Manager
+ * could end it.
+ *
+ * ExitDUISetup is the plugin's own shutdown entry point and destroys that window
+ * and its message loop; measured, the process then exits immediately, whereas the
+ * same script without this call stayed alive with a visible window.
+ */
+!macro ytSkinDestroy HWND
+  ${If} ${HWND} != 0
+    nsNiuniuSkin::ExitDUISetup ${HWND}
+  ${EndIf}
+!macroend
+
+/**
  * Hides the wizard the skin window is standing in for.
  *
  * NSIS shows its own wizard before the first page callback runs, so leaving it
@@ -420,23 +433,14 @@ Var YtPendingPdf
   GetFunctionAddress $0 YtSkinOnSelectDir
   nsNiuniuSkin::BindCallBack $YtSkinHwnd "btnSelectDir" $0
 
-  GetFunctionAddress $0 YtSkinOnShowLicense
-  nsNiuniuSkin::BindCallBack $YtSkinHwnd "btnAgreement" $0
-
   GetFunctionAddress $0 YtSkinOnInstall
   nsNiuniuSkin::BindCallBack $YtSkinHwnd "btnInstall" $0
 
   GetFunctionAddress $0 YtSkinOnPathEdited
   nsNiuniuSkin::BindCallBack $YtSkinHwnd "editDir" $0
 
-  GetFunctionAddress $0 YtSkinOnMinimize
-  nsNiuniuSkin::BindCallBack $YtSkinHwnd "btnMin" $0
-
   GetFunctionAddress $0 YtSkinOnQuit
-  nsNiuniuSkin::BindCallBack $YtSkinHwnd "btnClose" $0
-
-  GetFunctionAddress $0 YtSkinOnQuit
-  nsNiuniuSkin::BindCallBack $YtSkinHwnd "syscommandclose" $0
+  nsNiuniuSkin::BindCallBack $YtSkinHwnd "btnCancel" $0
 !macroend
 
 /**
@@ -533,7 +537,6 @@ Function YtSkinPageCreate
   ${Else}
     nsNiuniuSkin::SetControlAttribute $YtSkinHwnd "chkPdf" "selected" "false"
   ${EndIf}
-  nsNiuniuSkin::SetControlAttribute $YtSkinHwnd "chkAgree" "selected" "false"
 
   !insertmacro ytSkinSpaceHint
 
@@ -548,6 +551,7 @@ Function YtSkinPageCreate
   !insertmacro ytSkinFlush $YtSkinHwnd Config
 
   ${If} $YtSkinQuit == 1
+    !insertmacro ytSkinDestroy $YtSkinHwnd
     Quit
   ${EndIf}
 
@@ -594,83 +598,27 @@ Function YtSkinOnPathEdited
 FunctionEnd
 
 /**
- * The licence is a tab page, so showing it is a page switch rather than a
- * visibility write.
- *
- * The configuration values are copied out first: a page laid out from XML comes
- * back with the defaults, so anything the user typed or ticked has to be carried
- * across the switch and written back before the window is shown again. Binding is
- * redone after every switch for the same reason - BindCallBack stores addresses
- * per control on the page that was just laid out.
- */
-Function YtSkinOnShowLicense
-  nsNiuniuSkin::GetControlAttribute $YtSkinHwnd "editDir" "text"
-  Pop $YtPendingDir
-  nsNiuniuSkin::GetControlAttribute $YtSkinHwnd "chkPdf" "selected"
-  Pop $YtPendingPdf
-
-  !insertmacro ytSkinLayout $YtSkinHwnd ${YT_PAGE_LICENSE} ${YT_SIZE_CONFIG_W} ${YT_SIZE_CONFIG_H}
-
-  GetFunctionAddress $0 YtSkinOnCloseLicense
-  nsNiuniuSkin::BindCallBack $YtSkinHwnd "btnAgree" $0
-  GetFunctionAddress $0 YtSkinOnQuit
-  nsNiuniuSkin::BindCallBack $YtSkinHwnd "btnClose" $0
-  nsNiuniuSkin::BindCallBack $YtSkinHwnd "syscommandclose" $0
-  GetFunctionAddress $0 YtSkinOnMinimize
-  nsNiuniuSkin::BindCallBack $YtSkinHwnd "btnMin" $0
-
-  !insertmacro ytSkinPresent $YtSkinHwnd
-FunctionEnd
-
-/**
- * Returns to the configuration view with the values from before the switch.
- *
- * The writes are issued between the layout and the show, because a write made
- * while the window is already visible only reaches the screen on the next round
- * trip - which here would be the commit that leaves the page.
- */
-Function YtSkinOnCloseLicense
-  !insertmacro ytSkinLayout $YtSkinHwnd ${YT_PAGE_CONFIG} ${YT_SIZE_CONFIG_W} ${YT_SIZE_CONFIG_H}
-
-  nsNiuniuSkin::SetControlAttribute $YtSkinHwnd "lblVersionConfig" "text" "版本 ${VERSION}"
-  nsNiuniuSkin::SetControlAttribute $YtSkinHwnd "editDir" "text" "$YtPendingDir"
-  ${If} $YtPendingPdf == "1"
-    nsNiuniuSkin::SetControlAttribute $YtSkinHwnd "chkPdf" "selected" "true"
-  ${Else}
-    nsNiuniuSkin::SetControlAttribute $YtSkinHwnd "chkPdf" "selected" "false"
-  ${EndIf}
-  nsNiuniuSkin::SetControlAttribute $YtSkinHwnd "chkAgree" "selected" "false"
-  !insertmacro ytSkinSpaceHint
-
-  !insertmacro ytSkinBindInstall
-  !insertmacro ytSkinPresent $YtSkinHwnd
-FunctionEnd
-
-Function YtSkinOnMinimize
-  System::Call 'user32::ShowWindow(p $YtSkinHwnd, i 6)'
-FunctionEnd
-
-/**
- * The close button cancels the whole run, which is what a cancel should do. It
- * has to leave the process instead of letting the page return: returning would
- * continue to the next page and start writing files.
+ * Cancels the whole run. It has to leave the process instead of letting the page
+ * return: returning would continue to the next page and start writing files.
  *
  * Quit is not called here. The bound function runs inside the plugin's window
  * procedure, and terminating from a message handler leaves the window painted on
  * screen while the process lingers, so the button looks dead. The flag ends the
- * pump, and the pump's callers quit once they are back in ordinary script.
+ * pump, and the pump's callers close the window and quit once they are back in
+ * ordinary script.
  */
 Function YtSkinOnQuit
   StrCpy $YtSkinQuit 1
 FunctionEnd
 
 /**
- * The one gate on this page: the licence has to be accepted before the installer
- * writes anything.
+ * The only gate on this page is the install path. There is no licence to accept:
+ * the wizard does not ask for consent any more, so the button writes as soon as
+ * the folder is usable.
  *
- * The path is validated first because $INSTDIR is about to receive a few hundred
- * files; an empty or relative value would scatter them into whatever directory
- * happens to be current.
+ * The path is validated because $INSTDIR is about to receive a few hundred files;
+ * an empty or relative value would scatter them into whatever directory happens
+ * to be current.
  */
 Function YtSkinOnInstall
   nsNiuniuSkin::GetControlAttribute $YtSkinHwnd "editDir" "text"
@@ -686,13 +634,6 @@ Function YtSkinOnInstall
   CreateDirectory "$0"
   ${If} ${Errors}
     MessageBox MB_OK|MB_ICONEXCLAMATION "无法创建目录：$\r$\n$0$\r$\n请换一个位置。"
-    Return
-  ${EndIf}
-
-  nsNiuniuSkin::GetControlAttribute $YtSkinHwnd "chkAgree" "selected"
-  Pop $1
-  ${If} $1 != "1"
-    MessageBox MB_OK|MB_ICONEXCLAMATION "请先阅读并勾选同意许可协议。"
     Return
   ${EndIf}
 
@@ -816,18 +757,12 @@ Function YtSkinInstFilesLeave
   nsNiuniuSkin::BindCallBack $YtSkinHwnd "btnRun" $0
 
   GetFunctionAddress $0 YtSkinOnFinishClose
-  nsNiuniuSkin::BindCallBack $YtSkinHwnd "syscommandclose" $0
-
-  GetFunctionAddress $0 YtSkinOnFinishClose
-  nsNiuniuSkin::BindCallBack $YtSkinHwnd "btnClose" $0
-
-  GetFunctionAddress $0 YtSkinOnMinimize
-  nsNiuniuSkin::BindCallBack $YtSkinHwnd "btnMin" $0
+  nsNiuniuSkin::BindCallBack $YtSkinHwnd "btnFinishClose" $0
 
   !insertmacro ytSkinPump $YtSkinHwnd $YtSkinLeave Finish
   !insertmacro ytSkinFlush $YtSkinHwnd Finish
 
-  !insertmacro ytSkinHide $YtSkinHwnd
+  !insertmacro ytSkinDestroy $YtSkinHwnd
   Call YtSkinLaunchSelected
 
   ; Quit rather than Return. This page replaced MUI's finish page with an empty
@@ -938,19 +873,11 @@ Function un.YtSkinPageCreate
   GetFunctionAddress $0 un.YtSkinOnQuit
   nsNiuniuSkin::BindCallBack $YtSkinHwnd "btnUnCancel" $0
 
-  GetFunctionAddress $0 un.YtSkinOnQuit
-  nsNiuniuSkin::BindCallBack $YtSkinHwnd "btnClose" $0
-
-  GetFunctionAddress $0 un.YtSkinOnQuit
-  nsNiuniuSkin::BindCallBack $YtSkinHwnd "syscommandclose" $0
-
-  GetFunctionAddress $0 un.YtSkinOnMinimize
-  nsNiuniuSkin::BindCallBack $YtSkinHwnd "btnMin" $0
-
   !insertmacro ytSkinPump $YtSkinHwnd $YtSkinLeave Un
   !insertmacro ytSkinFlush $YtSkinHwnd Un
 
   ${If} $YtSkinQuit == 1
+    !insertmacro ytSkinDestroy $YtSkinHwnd
     Quit
   ${EndIf}
 
@@ -968,10 +895,6 @@ Function un.YtSkinPageCreate
 FunctionEnd
 
 Function un.YtSkinPageLeave
-FunctionEnd
-
-Function un.YtSkinOnMinimize
-  System::Call 'user32::ShowWindow(p $YtSkinHwnd, i 6)'
 FunctionEnd
 
 Function un.YtSkinOnQuit

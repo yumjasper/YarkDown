@@ -2,11 +2,12 @@
 <!--
   Window shell shared by every page.
 
-  Two things are deliberate here.
-
-  The fonts mirror the app rather than the Windows default: Segoe UI Variable Text
-  is what the renderer asks for first, and it ships with Windows 11, so it resolves
-  on the machines that have it and the fallbacks keep older systems on Segoe UI.
+  There is no floating window chrome any more. The previous revision drew a
+  minimize and a close glyph in a floating row over the hero, and only the
+  minimize half ever responded: clicking the ✕ cell reached neither the bound
+  btnClose callback nor the syscommandclose one, and renaming the control did not
+  change that, so the plugin was consuming the hit. Every page now carries its own
+  exit control in the body, where the buttons are known to work.
 
   Sizes are in Duilib's logical units, which the plugin scales by the system DPI,
   so the whole page grows with the user's display setting. Every gap and every
@@ -19,13 +20,15 @@
     subtitle      18   one line of 10pt muted text
     row           40   any single-line interactive row (edit box, checkbox row)
     button        36   standard button height; 8px vertical padding + 18px line
-    button small  32   secondary and window-chrome buttons
+    button small  32   secondary buttons
 
-  Nothing is padded on its container any more. The previous revision put the
-  button's height *inside* a row that also declared a vertical padding, and Duilib
-  subtracts padding from the row before laying children out, so a declared 42px
-  button was handed 24px - which is what squashed the labels against their borders
-  and pushed the button text off centre.
+  Nothing is padded on its container. Duilib subtracts a container's vertical
+  padding from the row before laying children out, so a declared 42px button inside
+  a padded row was handed 24px, which squashed its label against the border.
+
+  The fonts mirror the app rather than the Windows default: Segoe UI Variable Text
+  is what the renderer asks for first, and it ships with Windows 11, so it resolves
+  on the machines that have it and the fallbacks keep older systems on Segoe UI.
 -->
 <Window size="480,536" sizebox="0,0,0,0" caption="0,0,0,536" showshadow="false">
   <Font id="0" name="Segoe UI Variable Text" size="13" bold="false" default="true" />
@@ -42,18 +45,6 @@
       <Include source="uninstallpage.xml" />
       <Include source="uninstallingpage.xml" />
       <Include source="uninstallfinishpage.xml" />
-      <Include source="licensepage.xml" />
     </TabLayout>
-
-    <!--
-      Window chrome floats above the hero plate. The glyphs are drawn at 11pt in a
-      muted ink instead of the previous translucent white, because the plate is now
-      a light frosted surface and white-on-light was invisible.
-    -->
-    <HorizontalLayout float="true" pos="0,0,480,36">
-      <Control />
-      <Button name="btnMin" width="40" height="36" font="4" text="&#x2014;" textcolor="#FF7A7A82" hottextcolor="#FF0F0F11" pushedtextcolor="#FF000000" bkcolor="#00000000" hotbkcolor="#14000000" pushedbkcolor="#22000000" />
-      <Button name="btnClose" width="40" height="36" font="4" text="&#x2715;" textcolor="#FF7A7A82" hottextcolor="#FFFFFFFF" pushedtextcolor="#FFFFFFFF" bkcolor="#00000000" hotbkcolor="#FFE0443E" pushedbkcolor="#FFC13A34" />
-    </HorizontalLayout>
   </VerticalLayout>
 </Window>
