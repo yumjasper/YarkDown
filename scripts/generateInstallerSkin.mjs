@@ -22,6 +22,8 @@ import { fileURLToPath } from 'node:url'
 import JSZip from 'jszip'
 import sharp from 'sharp'
 
+if (process.platform === 'win32') await import('./buildInstallerAcrylic.mjs')
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const skinDir = path.join(root, 'packages/desktop/build/nsniuniu/skin')
 const imageDir = path.join(skinDir, 'images')

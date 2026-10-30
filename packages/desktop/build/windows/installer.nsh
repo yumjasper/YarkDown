@@ -44,6 +44,11 @@
 !include "${BUILD_RESOURCES_DIR}\windows\installer-skin.nsh"
 !include "${BUILD_RESOURCES_DIR}\windows\installer-ui.nsh"
 
+!macro customHeader
+  !macroundef ALLOW_ONLY_ONE_INSTALLER_INSTANCE
+  !include "${BUILD_RESOURCES_DIR}\windows\installer-instance.nsh"
+!macroend
+
 !macro customInit
   ; Unpacked here rather than on the progress page: extracting a file prints its
   ; own status line, which would overwrite the row that page is showing.

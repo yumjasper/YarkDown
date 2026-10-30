@@ -28,3 +28,6 @@ playwright-report/
 .codex/
 .agents/
 .agent/
+
+packages/desktop/build/acrylic/out/
+packages/desktop/build/acrylic/plugins/

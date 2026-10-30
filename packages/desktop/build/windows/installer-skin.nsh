@@ -1,58 +1,17 @@
-; installer-skin.nsh - nsNiuniuSkin (Duilib) front end for the Windows installer.
-;
-; The plugin owns one window whose pages are switched with ShowPageItem, and its
-; ShowPage entry point runs a message loop that only ends by killing the process.
-; That makes ShowPage unusable here: electron-builder's install section has to run
-; between the last wizard page and the finish page, and killing the process would
-; skip the registry work, the file associations and the uninstaller that the
-; updater depends on.
-;
-; What is used instead is the plugin's non-blocking half: InitSkinPage returns a
-; window, the caller shows it with ShowWindow, and every control is driven from
-; NSIS with SetControlAttribute/GetControlAttribute. Clicking a button only fires
-; a bound callback while a message loop is dispatching messages, so a page that
-; waits for the user runs a small PeekMessage pump of its own.
-;
-; Repainting. SetControlAttribute only updates the plugin's own model; the window
-; shows the new value the next time it lays out its page. Measured behaviour:
-;
-;   - ShowPageItem applies every pending write, so re-selecting the tab that is
-;     already current is a complete refresh.
-;   - A write made while the window is hidden is applied by ShowPageItem before
-;     the window comes back, which is the only order that also works for the
-;     progress page; re-selecting the current tab while it is visible does not
-;     repaint there at all.
-;   - No InvalidateRect/RedrawWindow/SetWindowPos combination substitutes for it,
-;     and the plugin runs no internal timer that would pick the write up later.
-;
-; Hence ytSkinCommit below: hide, write, switch, show. Every dynamic change goes
-; through it, which keeps one rule instead of a per-page special case. The price
-; is that a value cannot be animated: each commit is a visible hide/show, so the
-; progress page is stepped rather than smooth. The install spends most of its time
-; inside one blocking Nsis7z::Extract call that exposes no progress callback, so
-; there would be nothing to animate against anyway.
-;
-; Page model. The skin window is a full wizard in itself, so none of the stock
-; MUI pages are ever shown. The skin's configuration page replaces the welcome
-; page, the licence page and the directory page - the path is edited inside the
-; skin, so allowToChangeInstallationDirectory is off and the folder name is
-; appended here instead. The stock progress page is hidden behind the skin's own,
-; and the skin's finish page replaces MUI's. The uninstaller uses the skin for the
-; confirmation only: its progress and finish pages are already driven by the
-; section, and the branded stock pages from installer-ui.nsh are good enough there.
-;
-; Colour scheme follows the app icons: ink #0F0F11, muted #5B5B62, paper #FFFFFF,
-; with translucency baked into the hero bitmap, as the skin engine composites
-; nothing at run time.
+; YarkAcrylic supplies a transparent D2D foreground over the Windows Acrylic backdrop.
+; The NSIS section retains ownership of extraction, registration and silent updates.
+
+; Layered Edit children require Windows 8+ compatibility in the host manifest.
+ManifestSupportedOS all
 
 !include "LogicLib.nsh"
 !include "FileFunc.nsh"
 
 ; electron-builder registers its own cached plugin directory and build/x86-unicode,
 ; neither of which is where this plugin lives, so the arch-named folder has to be
-; declared here. The declaration must precede the first nsNiuniuSkin:: call, and
+; declared here. The declaration must precede the first YarkAcrylic:: call, and
 ; this file is included from the generated script's header, before any page.
-!addplugindir /x86-unicode "${BUILD_RESOURCES_DIR}\nsniuniu\plugins\x86-unicode"
+!addplugindir /x86-unicode "${BUILD_RESOURCES_DIR}\acrylic\plugins\x86-unicode"
 
 ; The licence text lives under nsniuniu/ rather than in build/: electron-builder
 ; looks for build/license.txt and would insert its own MUI licence page, which the
@@ -172,53 +131,33 @@ Var YtChosenDir
  * the compositor rebuild the backdrop on each hide/show, which reads as a flicker.
  */
 !macro ytSkinCreate HWND TITLE
-  nsNiuniuSkin::InitSkinPage "$PLUGINSDIR\" "license.txt"
+  YarkAcrylic::InitSkinPage "$PLUGINSDIR\" "license.txt"
   Pop ${HWND}
   ${If} ${HWND} == 0
     Abort
   ${EndIf}
-  nsNiuniuSkin::SetWindowTile ${HWND} "${TITLE}"
+  YarkAcrylic::SetWindowTile ${HWND} "${TITLE}"
   !insertmacro ytSkinGlass ${HWND}
   !insertmacro ytSkinSetIcon ${HWND}
 !macroend
 
-/**
- * Applies every pending control write and puts the window back on screen.
- *
- * The hide/show pair is what makes a write take effect: the plugin lays a page
- * out on ShowPageItem and on show, and only a layout reads the model. The
- * foreground and z-order calls are needed because the window is a plain
- * top-level one - it has no owner to inherit activation from, so without them
- * the installer runs behind whatever the user had focused.
- *
- * SetWindowSize must not be used for a mid-run resize while the window is
- * visible: it lays out immediately and leaves the previous page's pixels behind.
- * Here it is always preceded by the hide, so the resize is invisible.
- */
+; Page changes preserve the model and never activate the installer.
 !macro ytSkinCommit HWND PAGE WIDTH HEIGHT
   !insertmacro ytSkinLayout ${HWND} ${PAGE} ${WIDTH} ${HEIGHT}
   !insertmacro ytSkinPresent ${HWND}
 !macroend
 
-/**
- * The first half of a commit: hide, resize, and lay the page out from its XML.
- *
- * Split from ytSkinPresent because a page rebuilt from XML loses every value the
- * user already typed or ticked. Returning to the configuration page therefore has
- * to lay it out, write the saved values, and only then show it - a write issued
- * after the window is visible would not reach the screen until the next round trip.
- */
+; Hide before resizing so old page pixels cannot survive a layout change.
 !macro ytSkinLayout HWND PAGE WIDTH HEIGHT
   System::Call 'user32::ShowWindow(p ${HWND}, i 0)'
-  nsNiuniuSkin::SetWindowSize ${HWND} ${WIDTH} ${HEIGHT}
-  nsNiuniuSkin::ShowPageItem ${HWND} "wizardTab" ${PAGE}
+  YarkAcrylic::SetWindowSize ${HWND} ${WIDTH} ${HEIGHT}
+  YarkAcrylic::ShowPageItem ${HWND} "wizardTab" ${PAGE}
 !macroend
 
 /** The second half of a commit: put the laid-out window back on screen. */
 !macro ytSkinPresent HWND
-  System::Call 'user32::ShowWindow(p ${HWND}, i 5)'
-  System::Call 'user32::SetForegroundWindow(p ${HWND})'
-  System::Call 'user32::SetWindowPos(p ${HWND}, p 0, i 0, i 0, i 0, i 0, i ${YT_SWP_SHOW})'
+  System::Call 'user32::ShowWindow(p ${HWND}, i 4)'
+  System::Call 'user32::UpdateWindow(p ${HWND})'
 !macroend
 
 /**
@@ -249,6 +188,11 @@ Var YtChosenDir
     ${If} $5 != 0
       System::Call 'user32::TranslateMessage(p $YtSkinMsg)'
       System::Call 'user32::DispatchMessage(p $YtSkinMsg)'
+      YarkAcrylic::ProcessCallbacks
+      Pop $0
+      ${If} $0 != 0
+        Call $0
+      ${EndIf}
     ${Else}
       System::Call 'user32::IsWindow(p ${HWND}) i .r6'
       ${If} $6 == 0
@@ -282,8 +226,9 @@ Var YtChosenDir
 !macro ytSkinFlush HWND SUFFIX
   System::Alloc 64
   Pop $YtSkinMsg
+  ; Never discard WM_PAINT: an unvalidated update region regenerates it forever.
   ytSkinFlush${SUFFIX}:
-    System::Call 'user32::PeekMessage(p $YtSkinMsg, p ${HWND}, i 0, i 0, i 1) i .r5'
+    System::Call 'user32::PeekMessage(p $YtSkinMsg, p ${HWND}, i 0x0200, i 0x020E, i 1) i .r5'
     ${If} $5 != 0
       Goto ytSkinFlush${SUFFIX}
     ${EndIf}
@@ -295,22 +240,10 @@ Var YtChosenDir
   System::Call 'user32::ShowWindow(p ${HWND}, i 0)'
 !macroend
 
-/**
- * Tears the skin window down before quitting.
- *
- * Quit on its own terminates the script but not the plugin's window: the window
- * lives on a thread the plugin started, so the process keeps a live HWND after
- * every message handler has stopped running. That is what made a cancel look like
- * a freeze - the window stayed painted, stopped responding, and only Task Manager
- * could end it.
- *
- * ExitDUISetup is the plugin's own shutdown entry point and destroys that window
- * and its message loop; measured, the process then exits immediately, whereas the
- * same script without this call stayed alive with a visible window.
- */
+; Destroy outside the callback to keep the active window procedure alive.
 !macro ytSkinDestroy HWND
   ${If} ${HWND} != 0
-    nsNiuniuSkin::ExitDUISetup ${HWND}
+    YarkAcrylic::ExitDUISetup ${HWND}
   ${EndIf}
 !macroend
 
@@ -327,51 +260,13 @@ Var YtChosenDir
 
 /** Paints one progress step on the installing page. */
 !macro ytSkinProgress HWND PERCENT TIP
-  nsNiuniuSkin::SetControlAttribute ${HWND} "slrProgress" "value" "${PERCENT}"
-  nsNiuniuSkin::SetControlAttribute ${HWND} "progress_pos" "text" "${PERCENT}%"
-  nsNiuniuSkin::SetControlAttribute ${HWND} "progress_tip" "text" "${TIP}"
+  YarkAcrylic::SetControlAttribute ${HWND} "slrProgress" "value" "${PERCENT}"
+  YarkAcrylic::SetControlAttribute ${HWND} "progress_pos" "text" "${PERCENT}%"
+  YarkAcrylic::SetControlAttribute ${HWND} "progress_tip" "text" "${TIP}"
 !macroend
 
-/**
- * Makes the window translucent and rounds its corners.
- *
- * The plugin paints with GDI and every page background it draws is opaque, so
- * nothing inside its own rendering can be transparent: a `bkcolor` with an alpha
- * channel is flattened before it reaches the screen. The translucency therefore has
- * to come from the window style.
- *
- * WS_EX_LAYERED plus SetLayeredWindowAttributes applies a single alpha to the
- * composed window, which is the only mechanism that works on a GDI-painted surface:
- * UpdateLayeredWindow needs per-pixel premultiplied bitmaps the plugin never
- * produces.
- *
- * The alpha is deliberately high. Measured on this window, 242/255 gave a body-text
- * cell that composites to 243 against a bright desktop while the text itself lost
- * enough contrast to be hard to read, because the plugin anti-aliases its text into
- * the page fill rather than over a transparent surface - every extra percent of
- * transparency costs glyph edge contrast. 250 keeps the plate visibly tinted by the
- * desktop without thinning the text.
- *
- * ACCENT_ENABLE_ACRYLICBLURBEHIND is deliberately *not* used. Combined with a layered
- * window the accent policy and the window alpha compose twice, and the measured
- * result was body text at roughly half its intended contrast.
- *
- * DWMWA_WINDOW_CORNER_PREFERENCE (33) rounds the corners on Windows 11 and is
- * ignored earlier, which is fine - those systems get square corners as before.
- */
+; Acrylic is owned by YarkAcrylic; never apply whole-window alpha.
 !macro ytSkinGlass HWND
-  Push $7
-
-  System::Call 'user32::GetWindowLong(p ${HWND}, i -20) i .r7'
-  IntOp $7 $7 | 0x00080000
-  System::Call 'user32::SetWindowLong(p ${HWND}, i -20, i r7)'
-  ; LWA_ALPHA (2) with a zero colour key: the key only matters with LWA_COLORKEY,
-  ; and enabling that would punch a hole wherever the page ink matches the key.
-  System::Call 'user32::SetLayeredWindowAttributes(p ${HWND}, i 0, i 250, i 2)'
-
-  System::Call 'dwmapi::DwmSetWindowAttribute(p ${HWND}, i 33, *i 2, i 4)'
-
-  Pop $7
 !macroend
 
 /**
@@ -447,16 +342,16 @@ Var YtChosenDir
  */
 !macro ytSkinBindInstall
   GetFunctionAddress $0 YtSkinOnSelectDir
-  nsNiuniuSkin::BindCallBack $YtSkinHwnd "btnSelectDir" $0
+  YarkAcrylic::BindCallBack $YtSkinHwnd "btnSelectDir" $0
 
   GetFunctionAddress $0 YtSkinOnInstall
-  nsNiuniuSkin::BindCallBack $YtSkinHwnd "btnInstall" $0
+  YarkAcrylic::BindCallBack $YtSkinHwnd "btnInstall" $0
 
   GetFunctionAddress $0 YtSkinOnPathEdited
-  nsNiuniuSkin::BindCallBack $YtSkinHwnd "editDir" $0
+  YarkAcrylic::BindCallBack $YtSkinHwnd "editDir" $0
 
   GetFunctionAddress $0 YtSkinOnQuit
-  nsNiuniuSkin::BindCallBack $YtSkinHwnd "btnCancel" $0
+  YarkAcrylic::BindCallBack $YtSkinHwnd "btnCancel" $0
 !macroend
 
 /**
@@ -479,7 +374,7 @@ Var YtChosenDir
   Push $2
   Push $3
   Push $4
-  nsNiuniuSkin::GetControlAttribute $YtSkinHwnd "editDir" "text"
+  YarkAcrylic::GetControlAttribute $YtSkinHwnd "editDir" "text"
   Pop $0
   ${If} $0 == ""
     StrCpy $0 $INSTDIR
@@ -501,7 +396,7 @@ Var YtChosenDir
         StrCpy $3 "$3 MB"
       ${EndIf}
       StrCpy $1 "目标磁盘剩余 $3"
-      nsNiuniuSkin::SetControlAttribute $YtSkinHwnd "local_space" "text" "$1"
+      YarkAcrylic::SetControlAttribute $YtSkinHwnd "local_space" "text" "$1"
     ${EndIf}
   ${EndIf}
   Pop $4
@@ -542,16 +437,16 @@ Function YtSkinPageCreate
 
   ; The version string drives both the label and the window title, so an upgrade
   ; is identifiable before anything is written.
-  nsNiuniuSkin::SetControlAttribute $YtSkinHwnd "lblVersionConfig" "text" "版本 ${VERSION}"
-  nsNiuniuSkin::SetControlAttribute $YtSkinHwnd "editDir" "text" "$INSTDIR"
+  YarkAcrylic::SetControlAttribute $YtSkinHwnd "lblVersionConfig" "text" "版本 ${VERSION}"
+  YarkAcrylic::SetControlAttribute $YtSkinHwnd "editDir" "text" "$INSTDIR"
   ; Writes take true/false but reads answer 1/0, so the getters below compare
   ; against "1" rather than mirroring the literals used here. Measured with the
   ; plugin directly: after ticking the box, GetControlAttribute "selected" gives
   ; "1" for a checked box and "0" for an unchecked one.
   ${If} $YtInstallPdf == 1
-    nsNiuniuSkin::SetControlAttribute $YtSkinHwnd "chkPdf" "selected" "true"
+    YarkAcrylic::SetControlAttribute $YtSkinHwnd "chkPdf" "selected" "true"
   ${Else}
-    nsNiuniuSkin::SetControlAttribute $YtSkinHwnd "chkPdf" "selected" "false"
+    YarkAcrylic::SetControlAttribute $YtSkinHwnd "chkPdf" "selected" "false"
   ${EndIf}
 
   !insertmacro ytSkinSpaceHint
@@ -573,7 +468,7 @@ Function YtSkinPageCreate
 
   ; $INSTDIR was written by the install callback; the getter runs here as well so
   ; a page left by some other route still carries the user's choice.
-  nsNiuniuSkin::GetControlAttribute $YtSkinHwnd "editDir" "text"
+  YarkAcrylic::GetControlAttribute $YtSkinHwnd "editDir" "text"
   Pop $0
   ${If} $0 != ""
     StrCpy $INSTDIR $0
@@ -582,7 +477,7 @@ Function YtSkinPageCreate
   !insertmacro ytSkinEnsureAppFolder $INSTDIR
   StrCpy $YtChosenDir $INSTDIR
 
-  nsNiuniuSkin::GetControlAttribute $YtSkinHwnd "chkPdf" "selected"
+  YarkAcrylic::GetControlAttribute $YtSkinHwnd "chkPdf" "selected"
   Pop $0
   ${If} $0 == "1"
     StrCpy $YtInstallPdf 1
@@ -590,7 +485,7 @@ Function YtSkinPageCreate
     StrCpy $YtInstallPdf 0
   ${EndIf}
 
-  !insertmacro ytSkinHide $YtSkinHwnd
+  Call YtSkinInstFilesShow
 FunctionEnd
 
 ; The leave function runs after the pump returned control, so nothing is left to
@@ -600,11 +495,11 @@ Function YtSkinPageLeave
 FunctionEnd
 
 Function YtSkinOnSelectDir
-  nsNiuniuSkin::SelectInstallDirEx $YtSkinHwnd "选择 YarkText 的安装位置"
+  YarkAcrylic::SelectInstallDirEx $YtSkinHwnd "选择 YarkText 的安装位置"
   Pop $0
   ${If} $0 != ""
     !insertmacro ytSkinTrimSlash $0
-    nsNiuniuSkin::SetControlAttribute $YtSkinHwnd "editDir" "text" "$0"
+    YarkAcrylic::SetControlAttribute $YtSkinHwnd "editDir" "text" "$0"
     !insertmacro ytSkinSpaceHint
   ${EndIf}
 FunctionEnd
@@ -637,7 +532,7 @@ FunctionEnd
  * to be current.
  */
 Function YtSkinOnInstall
-  nsNiuniuSkin::GetControlAttribute $YtSkinHwnd "editDir" "text"
+  YarkAcrylic::GetControlAttribute $YtSkinHwnd "editDir" "text"
   Pop $0
   !insertmacro ytSkinTrimSlash $0
   ${If} $0 == ""
@@ -695,7 +590,10 @@ Function YtSkinInstFilesShow
   ${If} $YtSkinHwnd == 0
     Return
   ${EndIf}
+  ; The hidden wizard has no reachable Next button; advance on section completion.
+  SetAutoClose true
   !insertmacro ytSkinHideWizard
+
 
   ; The install-mode page ran between the skin page and this one, and its
   ; setInstallModePerUser resets $INSTDIR from the registry or from the per-user
@@ -707,9 +605,9 @@ Function YtSkinInstFilesShow
   ; There is no per-file progress callback: the payload is unpacked by one
   ; blocking Nsis7z::Extract, so this commit describes the whole phase and the
   ; next one is made once the section reaches the registry work.
-  nsNiuniuSkin::SetControlAttribute $YtSkinHwnd "lblVersionInstalling" "text" "版本 ${VERSION}"
-  nsNiuniuSkin::SetControlAttribute $YtSkinHwnd "slrProgress" "min" "0"
-  nsNiuniuSkin::SetControlAttribute $YtSkinHwnd "slrProgress" "max" "100"
+  YarkAcrylic::SetControlAttribute $YtSkinHwnd "lblVersionInstalling" "text" "版本 ${VERSION}"
+  YarkAcrylic::SetControlAttribute $YtSkinHwnd "slrProgress" "min" "0"
+  YarkAcrylic::SetControlAttribute $YtSkinHwnd "slrProgress" "max" "100"
   !insertmacro ytSkinProgress $YtSkinHwnd 45 "正在写入程序文件"
   !insertmacro ytSkinCommit $YtSkinHwnd ${YT_PAGE_INSTALLING} ${YT_SIZE_INSTALLING_W} ${YT_SIZE_INSTALLING_H}
 FunctionEnd
@@ -764,16 +662,16 @@ Function YtSkinInstFilesLeave
 
   !insertmacro ytSkinHideWizard
 
-  nsNiuniuSkin::SetControlAttribute $YtSkinHwnd "lblVersionFinish" "text" "版本 ${VERSION}"
-  nsNiuniuSkin::SetControlAttribute $YtSkinHwnd "chkRun" "selected" "true"
+  YarkAcrylic::SetControlAttribute $YtSkinHwnd "lblVersionFinish" "text" "版本 ${VERSION}"
+  YarkAcrylic::SetControlAttribute $YtSkinHwnd "chkRun" "selected" "true"
 
   !insertmacro ytSkinCommit $YtSkinHwnd ${YT_PAGE_FINISH} ${YT_SIZE_FINISH_W} ${YT_SIZE_FINISH_H}
 
   GetFunctionAddress $0 YtSkinOnFinishRun
-  nsNiuniuSkin::BindCallBack $YtSkinHwnd "btnRun" $0
+  YarkAcrylic::BindCallBack $YtSkinHwnd "btnRun" $0
 
   GetFunctionAddress $0 YtSkinOnFinishClose
-  nsNiuniuSkin::BindCallBack $YtSkinHwnd "btnFinishClose" $0
+  YarkAcrylic::BindCallBack $YtSkinHwnd "btnFinishClose" $0
 
   !insertmacro ytSkinPump $YtSkinHwnd $YtSkinLeave Finish
   !insertmacro ytSkinFlush $YtSkinHwnd Finish
@@ -823,7 +721,7 @@ Function YtSkinLaunchSelected
 FunctionEnd
 
 Function YtSkinOnFinishRun
-  nsNiuniuSkin::GetControlAttribute $YtSkinHwnd "chkRun" "selected"
+  YarkAcrylic::GetControlAttribute $YtSkinHwnd "chkRun" "selected"
   Pop $0
   ${If} $0 == "1"
     StrCpy $YtSkinLaunchApp 1
@@ -871,23 +769,23 @@ Function un.YtSkinPageCreate
   !insertmacro ytSkinPrepare
   !insertmacro ytSkinCreate $YtSkinHwnd "YarkText ${VERSION} 卸载程序"
 
-  nsNiuniuSkin::SetControlAttribute $YtSkinHwnd "lblVersionUninstall" "text" "版本 ${VERSION}"
+  YarkAcrylic::SetControlAttribute $YtSkinHwnd "lblVersionUninstall" "text" "版本 ${VERSION}"
   ; The default is "keep": a silent uninstall never reaches this page, and the
   ; quiet path has to stay the safe one.
   ${If} $un.YtKeepSettings == 1
-    nsNiuniuSkin::SetControlAttribute $YtSkinHwnd "chkbox_userdata" "selected" "false"
+    YarkAcrylic::SetControlAttribute $YtSkinHwnd "chkbox_userdata" "selected" "false"
   ${Else}
-    nsNiuniuSkin::SetControlAttribute $YtSkinHwnd "chkbox_userdata" "selected" "true"
+    YarkAcrylic::SetControlAttribute $YtSkinHwnd "chkbox_userdata" "selected" "true"
   ${EndIf}
 
   !insertmacro ytSkinCommit $YtSkinHwnd ${YT_PAGE_UNCONFIG} ${YT_SIZE_UNCONFIG_W} ${YT_SIZE_UNCONFIG_H}
   !insertmacro ytSkinHideWizard
 
   GetFunctionAddress $0 un.YtSkinOnUninstall
-  nsNiuniuSkin::BindCallBack $YtSkinHwnd "btnUnInstall" $0
+  YarkAcrylic::BindCallBack $YtSkinHwnd "btnUnInstall" $0
 
   GetFunctionAddress $0 un.YtSkinOnQuit
-  nsNiuniuSkin::BindCallBack $YtSkinHwnd "btnUnCancel" $0
+  YarkAcrylic::BindCallBack $YtSkinHwnd "btnUnCancel" $0
 
   !insertmacro ytSkinPump $YtSkinHwnd $YtSkinLeave Un
   !insertmacro ytSkinFlush $YtSkinHwnd Un
@@ -897,7 +795,7 @@ Function un.YtSkinPageCreate
     Quit
   ${EndIf}
 
-  nsNiuniuSkin::GetControlAttribute $YtSkinHwnd "chkbox_userdata" "selected"
+  YarkAcrylic::GetControlAttribute $YtSkinHwnd "chkbox_userdata" "selected"
   Pop $0
   ${If} $0 == "1"
     StrCpy $un.YtKeepSettings 0

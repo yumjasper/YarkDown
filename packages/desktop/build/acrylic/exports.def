@@ -1,0 +1,14 @@
+LIBRARY YarkAcrylic
+EXPORTS
+InitSkinPage
+SetWindowTile
+SetWindowSize
+ShowPageItem
+SetControlAttribute
+GetControlAttribute
+BindCallBack
+SelectInstallDirEx
+ExitDUISetup
+ProcessCallbacks
+CheckInstallerInstance
+
