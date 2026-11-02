@@ -27,9 +27,21 @@ Windows 皮肤生成脚本会自动构建该插件。
 ```powershell
 & ./packages/desktop/build/acrylic/out/Release/acrylic-smoke.exe --acrylic-preview
 python packages/desktop/build/acrylic/test-packaged-cancel.py D:/Tools/YarkDown/dist/acrylic-input-fix/yarktext-win-x64-1.0.33-setup.exe
+python packages/desktop/build/acrylic/test-path-contrast.py D:/Tools/YarkDown/dist/yarktext-win-x64-1.0.36-setup.exe
+python packages/desktop/build/acrylic/test-real-click.py D:/Tools/YarkDown/dist/yarktext-win-x64-1.0.36-setup.exe install
+python packages/desktop/build/acrylic/test-install-monitor.py D:/Tools/YarkDown/dist/yarktext-win-x64-1.0.36-setup.exe 120
+python packages/desktop/build/acrylic/test-progress-motion.py D:/Tools/YarkDown/dist/yarktext-win-x64-1.0.36-setup.exe 30
 ```
 
 原生测试验证四页渲染、所有按钮与复选框的按下释放、悬停状态、移出取消、路径配色、事件轮询、销毁及前台焦点不变。smoke.nsi 验证真实 NSIS 参数栈、宿主 Call 与插件生命周期。
+
+进度动画由窗口线程的 WM_TIMER 驱动，`paint()` 直接绘制轨道与运动段，不存在第二个窗口或第二个线程。历史上的两次尝试都是反例：后台线程复用窗口的 D2D 目标会让 UI 线程阻塞在 WM_PAINT；后台线程自持顶层浮层会让安装器的每次 z 序变化变成跨线程同步等待。两者表现相同：文件已写完，按钮全部无响应。
+
+跨线程约束是这里最容易回退的地方。NSIS 在脚本线程执行安装段，插件导出函数可能在该线程被调用；任何窗口 API 都必须经 `onWindowThread` 投递到窗口线程，绝不能在持锁状态下跨线程调用窗口。
+
+`test-real-click.py` 用 `SendInput` 发送真实鼠标事件，因此能发现 PostMessage 掩盖的问题：投递消息绕过了激活与捕获规则，按钮可能对真实用户是死的却仍能通过。`test-install-monitor.py` 逐秒记录页面高度、响应性、安装器 CPU 时间与落盘文件数，用以区分“解压仍在进行”“解压完成但页面未推进”“线程被挂住”三种现象。`test-progress-motion.py` 采样进度条区域暗色像素的重心，输出不同位置数量：冻结的进度条只会产生一个值。
+
+路径文字不能只靠 `WM_CTLCOLOREDIT` 断言：真正决定观感的是合成后的像素。`test-path-contrast.py` 用 `--acrylic-preview` 离屏启动真实安装包，临时置顶后截取路径行像素，输出最深处亮度与笔画占比。1.0.33 正式包的路径文字最深处只有 220/255，几乎与白底同色；改为显式 13px Segoe UI 字体与固定白色画刷后为 33/255，与标题、提示文字一致。
 
 实际安装包测试只离屏启动并点击取消，检查本次进程族全部退出；失败时只清理本次启动的进程，不执行安装。完全离屏的窗口可能不自动产生绘制消息，因此测试显式投递 WM_PAINT 建立控件命中区域。
 

@@ -80,6 +80,24 @@ Var YtSkinMsg
 Var YtSkinPumpTicks
 Var YtSkinLeave
 
+; Diagnostic tracing, compiled in only while YT_SKIN_TRACE is defined. A stuck
+; run has to be told apart from a slow one, and only the script knows which
+; branch it took. $9 is a register rather than a Var because the uninstaller pass
+; compiles none of these call sites, and an unused Var is an error here.
+!ifdef YT_SKIN_TRACE
+!macro ytSkinTrace TEXT
+  Push $9
+  FileOpen $9 "$TEMP\ytskin-trace.log" a
+  FileSeek $9 0 END
+  FileWrite $9 "${TEXT}$\r$\n"
+  FileClose $9
+  Pop $9
+!macroend
+!else
+!macro ytSkinTrace TEXT
+!macroend
+!endif
+
 ; Set by a cancel callback and acted on after the pump returns.
 ;
 ; Quit cannot run inside the callback itself: the plugin invokes the bound function
@@ -461,6 +479,8 @@ Function YtSkinPageCreate
   !insertmacro ytSkinPump $YtSkinHwnd $YtSkinLeave Config
   !insertmacro ytSkinFlush $YtSkinHwnd Config
 
+  !insertmacro ytSkinTrace "config pump left; leave=$YtSkinLeave quit=$YtSkinQuit"
+
   ${If} $YtSkinQuit == 1
     !insertmacro ytSkinDestroy $YtSkinHwnd
     Quit
@@ -590,6 +610,7 @@ Function YtSkinInstFilesShow
   ${If} $YtSkinHwnd == 0
     Return
   ${EndIf}
+  !insertmacro ytSkinTrace "instfiles show: claiming $INSTDIR=$INSTDIR chosen=$YtChosenDir"
   ; The hidden wizard has no reachable Next button; advance on section completion.
   SetAutoClose true
   !insertmacro ytSkinHideWizard
@@ -654,12 +675,15 @@ FunctionEnd
  * a success page, so it returns immediately.
  */
 Function YtSkinInstFilesLeave
+  !insertmacro ytSkinTrace "instfiles leave entered"
   IfAbort ytSkinInstFilesLeaveCancelled
 
   ${If} $YtSkinHwnd == 0
+    !insertmacro ytSkinTrace "instfiles leave: no hwnd"
     Return
   ${EndIf}
 
+  !insertmacro ytSkinTrace "instfiles leave: showing finish"
   !insertmacro ytSkinHideWizard
 
   YarkAcrylic::SetControlAttribute $YtSkinHwnd "lblVersionFinish" "text" "版本 ${VERSION}"
@@ -689,6 +713,7 @@ Function YtSkinInstFilesLeave
   Quit
 
   ytSkinInstFilesLeaveCancelled:
+  !insertmacro ytSkinTrace "instfiles leave: CANCELLED branch"
   !insertmacro ytSkinHide $YtSkinHwnd
 FunctionEnd
 

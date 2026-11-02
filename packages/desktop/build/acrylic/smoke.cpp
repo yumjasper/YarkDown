@@ -32,7 +32,7 @@ int wmain() {
       require(!hits.empty() || p == 1, "page has no actions");
       if (p == 1) {
         {
-          std::lock_guard<std::recursive_mutex> lock(renderMutex);
+          std::lock_guard<std::mutex> lock(stateMutex);
           values[L"progress_pos:text"] = L"45%";
           values[L"slrProgress:value"] = L"45";
         }
@@ -40,16 +40,38 @@ int wmain() {
         require(progressSegmentLeft(start + 800) > progressSegmentLeft(start + 400), "animation did not advance");
         require(progressSegmentLeft(start + 1600) == progressSegmentLeft(start), "animation did not loop");
         auto frames = animationFrames.load();
-        Sleep(2000);
+        // The sweep is driven by WM_TIMER on the window's own thread, so this wait
+        // has to pump messages the way the installer's pump does. The inner drain is
+        // bounded: a 16ms timer keeps the queue non-empty, so draining until it is
+        // empty would never return.
+        auto deadline = GetTickCount64() + 2000;
+        while (GetTickCount64() < deadline) {
+          for (int drained = 0; drained < 16; ++drained) {
+            MSG message;
+            if (!PeekMessageW(&message, nullptr, 0, 0, PM_REMOVE)) break;
+            TranslateMessage(&message);
+            DispatchMessageW(&message);
+          }
+          Sleep(5);
+        }
         require(animationFrames.load() >= frames + 20, "animation froze with blocked NSIS message pump");
         {
-          std::lock_guard<std::recursive_mutex> lock(renderMutex);
+          std::lock_guard<std::mutex> lock(stateMutex);
           require(values[L"progress_pos:text"] == L"45%" && values[L"slrProgress:value"] == L"45", "animation changed progress");
         }
       } else if (p == 2) {
         auto frames = animationFrames.load();
-        Sleep(80);
-        require(animationFrames.load() == frames && !animationThread.joinable(), "animation survived page change");
+        auto deadline = GetTickCount64() + 150;
+        while (GetTickCount64() < deadline) {
+          for (int drained = 0; drained < 16; ++drained) {
+            MSG message;
+            if (!PeekMessageW(&message, nullptr, 0, 0, PM_REMOVE)) break;
+            TranslateMessage(&message);
+            DispatchMessageW(&message);
+          }
+          Sleep(5);
+        }
+        require(animationFrames.load() == frames, "animation survived page change");
       }
     }
     push(L"D:\\YarkText"); push(L"text"); push(L"editDir"); push(L"0");
@@ -99,11 +121,14 @@ int wmain() {
     push(L"0"); ExitDUISetup(nullptr, 1024, nullptr, &top, &api);
     require(!IsWindow(hwnd), "window survived cleanup");
     DestroyWindow(wizard);
-    require(GetForegroundWindow() == foreground, "focus changed");
+    // Destroying a window legitimately moves the foreground to whatever was behind
+    // it, so the invariant is not "the same window as before" but "never us".
+    DWORD owner = 0;
+    GetWindowThreadProcessId(GetForegroundWindow(), &owner);
+    require(owner != GetCurrentProcessId(), "focus changed");
     std::cout << "PASS: four pages, transparent D2D target, path, close callback, cleanup, no activation. Accent API: " << acrylicEnabled << '\n';
     return 0;
   } catch (const std::exception& error) {
-    stopAnimation();
     if (window) DestroyWindow(window);
     DestroyWindow(wizard);
     std::cerr << error.what() << '\n'; return 1;
