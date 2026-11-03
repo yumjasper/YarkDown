@@ -496,3 +496,82 @@ export const sendIpcToRenderer = async(
     { channel, args }
   )
 }
+
+// A diagram block that holds the caret shows its source instead of a toolbar,
+// so park the caret in the leading paragraph before hovering anything.
+export const leaveDiagrams = async(page: Page): Promise<void> => {
+  await page
+    .locator('.editor-component .mu-paragraph-content')
+    .first()
+    .click({ position: { x: 2, y: 2 }, timeout: 5000 })
+    .catch(() => {})
+  await page.waitForTimeout(120)
+}
+
+// baseFloat hides a float by parking it at -9999px with `opacity: 0` rather than
+// unmounting it, so Playwright still calls it visible — the inline opacity is the
+// only reliable shown signal. The toolbar is also a singleton that lingers on the
+// block it last served, so "shown" alone would let a click land on the previous
+// test's diagram; it counts only when tucked inside the block being hovered.
+export const diagramToolbarShown = (page: Page, index: number): Promise<boolean> =>
+  page.evaluate((i) => {
+    const item = document.querySelector('.mu-preview-tools li.item.view')
+    const wrapper = item?.closest('.mu-float-wrapper') as HTMLElement | null
+    if (!wrapper || Number.parseFloat(wrapper.style.opacity || '0') !== 1) return false
+
+    const block = document.querySelectorAll('.editor-component figure.mu-diagram-block')[i]
+    if (!block) return false
+
+    const tools = wrapper.getBoundingClientRect()
+    const box = block.getBoundingClientRect()
+    const x = tools.left + tools.width / 2
+    const y = tools.top + tools.height / 2
+    return x >= box.left - 4 && x <= box.right + 4 && y >= box.top - 4 && y <= box.bottom + 4
+  }, index)
+
+export const diagramToolbarItems = (page: Page): Promise<string[]> =>
+  page.evaluate(() =>
+    Array.from(document.querySelectorAll('.mu-preview-tools li.item')).map((li) =>
+      [...li.classList].find((name) => name !== 'item') ?? ''
+    )
+  )
+
+export const hoverDiagram = async(page: Page, index: number): Promise<void> => {
+  await leaveDiagrams(page)
+  const block = page.locator('.editor-component figure.mu-diagram-block').nth(index)
+  await block.waitFor({ state: 'visible', timeout: 30000 })
+  await block.scrollIntoViewIfNeeded()
+  await page.waitForTimeout(150)
+
+  // Hover a point that is both inside the block and actually over it. A block
+  // taller than the window has its centre off-screen, and clamping that centre
+  // into the viewport is not enough: the bottom strip of the window is covered
+  // by the toolbar and the status bar, so `elementFromPoint` there returns those
+  // and the block never sees the pointer. Probe outwards from the centre so a
+  // block that fits is still hovered the way a reader would.
+  const point = await page.evaluate((i) => {
+    const target = document.querySelectorAll('.editor-component figure.mu-diagram-block')[i]
+    if (!target) return null
+    const box = target.getBoundingClientRect()
+    const pad = 4
+    const left = Math.max(box.left + pad, pad)
+    const right = Math.min(box.right - pad, window.innerWidth - pad)
+    const top = Math.max(box.top + pad, pad)
+    const bottom = Math.min(box.bottom - pad, window.innerHeight - pad)
+    if (right <= left || bottom <= top) return null
+
+    for (const fy of [0.5, 0.3, 0.7, 0.15, 0.85]) {
+      for (const fx of [0.5, 0.25, 0.75]) {
+        const x = left + (right - left) * fx
+        const y = top + (bottom - top) * fy
+        const hit = document.elementFromPoint(x, y)
+        if (hit && target.contains(hit)) return { x: Math.round(x), y: Math.round(y) }
+      }
+    }
+    return null
+  }, index)
+  if (!point) throw new Error(`diagram block ${index} has no point the pointer can reach`)
+
+  await page.mouse.move(point.x, point.y)
+  await expect.poll(() => diagramToolbarShown(page, index), { timeout: 15000 }).toBe(true)
+}

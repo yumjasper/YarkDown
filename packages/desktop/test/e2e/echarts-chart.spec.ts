@@ -3,7 +3,13 @@ import type { ElectronApplication, Page } from 'playwright'
 import { mkdtemp, readFile, rm } from 'fs/promises'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { launchWithMarkdown, expectNoRendererErrors, clearRendererErrors } from './helpers'
+import {
+  launchWithMarkdown,
+  expectNoRendererErrors,
+  clearRendererErrors,
+  diagramToolbarItems,
+  hoverDiagram
+} from './helpers'
 
 // A GL chart is the case the canvas path exists for: `echarts-gl` mounts its
 // WebGL layer through `zr.painter.insertLayer()`, which only the canvas painter
@@ -84,82 +90,6 @@ const viewerVisible = (page: Page): Promise<boolean> =>
     return !!el && getComputedStyle(el).display !== 'none'
   })
 
-// A diagram block holding the caret shows its source instead of a toolbar.
-const leaveDiagrams = async(page: Page): Promise<void> => {
-  await page
-    .locator('.editor-component .mu-paragraph-content')
-    .first()
-    .click({ position: { x: 2, y: 2 }, timeout: 5000 })
-    .catch(() => {})
-  await page.waitForTimeout(120)
-}
-
-// The toolbar is a singleton that lingers on the block it last served, and
-// baseFloat hides it by parking it at -9999px with `opacity: 0` rather than
-// unmounting it — the inline opacity is the only reliable shown signal, and it
-// only counts while the float sits inside the block being hovered.
-const toolbarShownFor = (page: Page, index: number): Promise<boolean> =>
-  page.evaluate((i) => {
-    const item = document.querySelector('.mu-preview-tools li.item.view')
-    const wrapper = item?.closest('.mu-float-wrapper') as HTMLElement | null
-    if (!wrapper || Number.parseFloat(wrapper.style.opacity || '0') !== 1) return false
-
-    const block = document.querySelectorAll('.editor-component figure.mu-diagram-block')[i]
-    if (!block) return false
-
-    const tools = wrapper.getBoundingClientRect()
-    const box = block.getBoundingClientRect()
-    const x = tools.left + tools.width / 2
-    const y = tools.top + tools.height / 2
-    return x >= box.left - 4 && x <= box.right + 4 && y >= box.top - 4 && y <= box.bottom + 4
-  }, index)
-
-const toolbarItems = (page: Page): Promise<string[]> =>
-  page.evaluate(() =>
-    Array.from(document.querySelectorAll('.mu-preview-tools li.item')).map((li) =>
-      [...li.classList].find((name) => name !== 'item') ?? ''
-    )
-  )
-
-const hoverDiagram = async(page: Page, index: number): Promise<void> => {
-  await leaveDiagrams(page)
-  const block = page.locator('.editor-component figure.mu-diagram-block').nth(index)
-  await block.waitFor({ state: 'visible', timeout: 30000 })
-  await block.scrollIntoViewIfNeeded()
-  await page.waitForTimeout(150)
-
-  // Hover a point that is both inside the block and actually over it. A block
-  // taller than the window has its centre off-screen, and clamping that centre
-  // into the viewport is not enough: the bottom strip of the window is covered
-  // by the toolbar and the status bar, so `elementFromPoint` there returns those
-  // and the block never sees the pointer.
-  const point = await page.evaluate((i) => {
-    const target = document.querySelectorAll('.editor-component figure.mu-diagram-block')[i]
-    if (!target) return null
-    const box = target.getBoundingClientRect()
-    const pad = 4
-    const left = Math.max(box.left + pad, pad)
-    const right = Math.min(box.right - pad, window.innerWidth - pad)
-    const top = Math.max(box.top + pad, pad)
-    const bottom = Math.min(box.bottom - pad, window.innerHeight - pad)
-    if (right <= left || bottom <= top) return null
-
-    for (const fy of [0.5, 0.3, 0.7, 0.15, 0.85]) {
-      for (const fx of [0.5, 0.25, 0.75]) {
-        const x = left + (right - left) * fx
-        const y = top + (bottom - top) * fy
-        const hit = document.elementFromPoint(x, y)
-        if (hit && target.contains(hit)) return { x: Math.round(x), y: Math.round(y) }
-      }
-    }
-    return null
-  }, index)
-  if (!point) throw new Error(`diagram block ${index} has no point the pointer can reach`)
-
-  await page.mouse.move(point.x, point.y)
-  await expect.poll(() => toolbarShownFor(page, index), { timeout: 15000 }).toBe(true)
-}
-
 const openDiagram = async(page: Page, index = 0): Promise<void> => {
   await hoverDiagram(page, index)
   await page.locator('.mu-preview-tools li.item.view').click({ timeout: 5000 })
@@ -235,10 +165,10 @@ test.describe('echarts diagrams', () => {
   // exported, so this is the entry point every other case depends on.
   test('a canvas chart offers the same actions as an svg chart', async() => {
     await hoverDiagram(page, 0)
-    expect(await toolbarItems(page)).toEqual(['view', 'edit', 'delete'])
+    expect(await diagramToolbarItems(page)).toEqual(['view', 'edit', 'delete'])
 
     await hoverDiagram(page, 1)
-    expect(await toolbarItems(page)).toEqual(['view', 'edit', 'delete'])
+    expect(await diagramToolbarItems(page)).toEqual(['view', 'edit', 'delete'])
 
     await expectNoRendererErrors(app)
   })
