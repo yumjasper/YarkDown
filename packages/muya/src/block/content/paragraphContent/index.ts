@@ -9,6 +9,7 @@ import type {
     IParagraphState,
     ITaskListItemState,
     ITaskListState,
+    ITocState,
 } from '../../../state/types';
 import type { Nullable } from '../../../types';
 import type Content from '../../base/content';
@@ -76,6 +77,9 @@ const debug = logger('paragraph:content');
 const HTML_BLOCK_REG = /^<([a-z\d-]+)(?=\s|>)[^<>]*>$/i;
 const MATH_BLOCK_REG = /^\$\$[ \t]*$/;
 const MULTILINE_BLOCKQUOTE_REG = /^>>>[ \t]*$/;
+// Mirrors the `[TOC]` test in `markdownToState`, so the marker means the same
+// thing whether it was typed or loaded from a file.
+const TOC_BLOCK_REG = /^\s*\[TOC\]\s*$/i;
 // eslint-disable-next-line regexp/no-super-linear-backtracking
 const TABLE_BLOCK_REG = /^\|.*?(\\*)\|.*?(\\*)\|/;
 
@@ -84,7 +88,8 @@ type BlockConversion
         | { kind: 'code'; lang: string; fenceChar: '`' | '~' }
         | { kind: 'table' }
         | { kind: 'html'; tagName: string }
-        | { kind: 'multiline-blockquote' };
+        | { kind: 'multiline-blockquote' }
+        | { kind: 'toc' };
 
 // Single source of truth for "what block, if any, does this paragraph text
 // convert into on Enter". Shared by the enterHandler guard (to decide whether
@@ -97,6 +102,11 @@ function matchBlockConversion(
 ): BlockConversion | null {
     if (multilineBlockquote && MULTILINE_BLOCKQUOTE_REG.test(text))
         return { kind: 'multiline-blockquote' };
+
+    // A standalone `[TOC]` line is a table-of-contents marker, matching what
+    // `markdownToState` produces when the same line is loaded from a file.
+    if (TOC_BLOCK_REG.test(text))
+        return { kind: 'toc' };
 
     // A `$$` paragraph only becomes a math block while the dollar syntax is
     // recognised; otherwise the block would serialize to markdown this editor
@@ -430,6 +440,27 @@ class ParagraphContent extends Format {
                 );
                 this.parent!.replaceWith(blockQuote);
                 blockQuote.firstContentInDescendant().setCursor(0, 0, true);
+                break;
+            }
+
+            case 'toc': {
+                const state: ITocState = { name: 'toc', text: '[TOC]' };
+                const tocBlock = ScrollPage.loadBlock(state.name).create(
+                    this.muya,
+                    state,
+                );
+                this.parent!.replaceWith(tocBlock);
+
+                // The toc block renders the outline and has no editable content,
+                // so the caret gets a fresh paragraph below it (same shape as
+                // the thematic-break conversion) instead of being left nowhere.
+                const paragraphState = { name: 'paragraph' as const, text: '' };
+                const emptyParagraph = ScrollPage.loadBlock(paragraphState.name).create(
+                    this.muya,
+                    paragraphState,
+                );
+                tocBlock.parent!.insertAfter(emptyParagraph, tocBlock);
+                emptyParagraph.firstContentInDescendant()?.setCursor(0, 0, true);
                 break;
             }
         }

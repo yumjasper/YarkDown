@@ -5,10 +5,9 @@
 // Run: node scripts/bench-only-matches.mjs
 import { performance } from 'node:perf_hooks'
 
-function buildDoc(lines, everyNth, word) {
+function buildDoc (lines, everyNth, word) {
   const parts = []
-  for (let i = 0; i < lines; i++)
-    parts.push(i % everyNth === 0 ? `${word} ${i}` : `filler line ${i} with some padding text`)
+  for (let i = 0; i < lines; i++) { parts.push(i % everyNth === 0 ? `${word} ${i}` : `filler line ${i} with some padding text`) }
   return parts.join('\n')
 }
 
@@ -17,7 +16,7 @@ function buildDoc(lines, everyNth, word) {
 // handles here, exactly like the unit-test fixture. Mirrors sourceSearch.ts:
 // the caret line is always kept visible (Notepad3 rule), modeled here as
 // line 0.
-function applyLineFilter(text, matches, prevHidden) {
+function applyLineFilter (text, matches, prevHidden) {
   const lineCount = text.split('\n').length
   const matched = new Set([0])
   let lastLine = 0
@@ -58,7 +57,7 @@ function applyLineFilter(text, matches, prevHidden) {
   return { hidden, toggles }
 }
 
-function findMatches(text, word) {
+function findMatches (text, word) {
   const matches = []
   let idx = text.indexOf(word)
   while (idx !== -1) {
@@ -101,6 +100,6 @@ for (const s of scenarios) {
   const avg = total / runs
   console.log(
     `${String(s.lines).padStart(6)} lines | ${s.label.padEnd(46)} | ` +
-    `hidden ${String(hidden).padStart(6)} | DOM ops ${String(toggles).padStart(6)} | avg ${avg.toFixed(2)}ms`,
+    `hidden ${String(hidden).padStart(6)} | DOM ops ${String(toggles).padStart(6)} | avg ${avg.toFixed(2)}ms`
   )
 }

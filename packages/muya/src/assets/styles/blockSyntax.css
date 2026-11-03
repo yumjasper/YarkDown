@@ -951,10 +951,15 @@ pre.mu-active[data-role='vega-lite']::before {
     content: '``` vega-lite';
 }
 
+pre.mu-active[data-role='echarts']::before {
+    content: '``` echarts';
+}
+
 pre.mu-active.mu-fenced-code::before,
 pre.mu-active.mu-fenced-code::after,
 pre.mu-active[data-role='mermaid']::after,
-pre.mu-active[data-role='vega-lite']::after {
+pre.mu-active[data-role='vega-lite']::after,
+pre.mu-active[data-role='echarts']::after {
     content: '```';
 }
 
@@ -970,6 +975,8 @@ pre.mu-active[data-role='mermaid']::before,
 pre.mu-active[data-role='mermaid']::after,
 pre.mu-active[data-role='vega-lite']::before,
 pre.mu-active[data-role='vega-lite']::after,
+pre.mu-active[data-role='echarts']::before,
+pre.mu-active[data-role='echarts']::after,
 pre.mu-active.mu-fenced-code::before,
 pre.mu-active.mu-fenced-code::after,
 pre.mu-active.mu-math-container::before,
@@ -984,6 +991,7 @@ pre.mu-active.mu-math-container::after {
 pre.mu-active.mu-frontmatter::before,
 pre.mu-active[data-role='mermaid']::before,
 pre.mu-active[data-role='vega-lite']::before,
+pre.mu-active[data-role='echarts']::before,
 pre.mu-active.mu-math-container::before,
 pre.mu-active.mu-fenced-code::before {
     top: -20px;
@@ -992,6 +1000,7 @@ pre.mu-active.mu-fenced-code::before {
 pre.mu-active.mu-frontmatter::after,
 pre.mu-active[data-role='mermaid']::after,
 pre.mu-active[data-role='vega-lite']::after,
+pre.mu-active[data-role='echarts']::after,
 pre.mu-active.mu-math-container::after,
 pre.mu-active.mu-fenced-code::after {
     bottom: -23px;

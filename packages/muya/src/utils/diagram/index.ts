@@ -32,6 +32,11 @@ async function loadRenderer(name: string) {
                 rendererCache.set(name, m.default);
                 break;
 
+            case 'echarts':
+                m = await import('echarts');
+                rendererCache.set(name, m);
+                break;
+
             default:
                 throw new Error(`Unknown diagram name ${name}`);
         }

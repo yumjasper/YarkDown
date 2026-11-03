@@ -297,6 +297,12 @@ const docClick = (event: MouseEvent) => {
   if (!showSearch.value) return
   const target = event.target as HTMLElement | null
   if (target && target.closest('.search-bar')) return
+  // "Show only matching lines" is a persistent mode, not a transient view. While
+  // it is on, clicking into the filtered document (placing the caret, selecting
+  // a line) must not dismiss the bar: dismissing it emits an empty query, which
+  // turns the filter off and restores every hidden line. The mode ends only by
+  // an explicit exit — Escape, the toggle, or a click outside the document.
+  if (onlyMatches.value && target?.closest('.plain-text-content')) return
   emptySearch()
 }
 

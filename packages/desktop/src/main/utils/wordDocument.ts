@@ -15,6 +15,7 @@ import {
   VerticalAlign,
   Tab,
   TabStopType,
+  TableOfContents,
   TableCell,
   TableRow,
   TextRun,
@@ -90,8 +91,8 @@ const createBlocks = (
   blocks: WordBlock[],
   width = WORD_CONTENT_WIDTH,
   inCell = false
-): (Paragraph | Table)[] =>
-  blocks.flatMap((block, blockIndex) => {
+): (Paragraph | Table | TableOfContents)[] =>
+  blocks.flatMap((block, blockIndex): (Paragraph | Table | TableOfContents)[] => {
     if (block.kind === 'table') {
       const columns = Math.max(1, ...(block.rows || []).map((row) => row.cells.length))
       const border = { style: BorderStyle.SINGLE, size: 4, color: 'D9D9D9' }
@@ -113,11 +114,13 @@ const createBlocks = (
                 children: row.cells.map(
                   (cell, column) =>
                     new TableCell({
+                      // A table cell holds paragraphs and tables only, and an
+                      // outline inside a cell would be meaningless anyway.
                       children: createBlocks(
                         cell.length ? cell : [{ kind: 'paragraph', runs: [] }],
                         columnWidths[column] / 15 - 16,
                         true
-                      ),
+                      ).filter((child): child is Paragraph | Table => !(child instanceof TableOfContents)),
                       width: { size: columnWidths[column], type: WidthType.DXA },
                       verticalAlign: VerticalAlign.CENTER,
                       margins: { top: 80, bottom: 80, left: 100, right: 100 },
@@ -134,6 +137,30 @@ const createBlocks = (
         new Paragraph({
           children: [new TextRun({ text: '\u00a0', size: 2, color: 'FFFFFF' })],
           spacing: { before: 0, after: 0, line: 120, lineRule: LineRuleType.EXACT }
+        })
+      ]
+    }
+    if (block.kind === 'toc') {
+      const entries = block.entries || []
+      // An export always knows its headings, so an empty TOC is dropped rather
+      // than written as a bare title.
+      if (!entries.length) return []
+      return [
+        new Paragraph({
+          style: 'TocTitle',
+          children: [new TextRun({ text: block.text || 'Table of Contents' })]
+        }),
+        // A native TOC field rather than a rendered list: Word then owns the
+        // entries, so page numbers are real and "Update Field" reflows them. The
+        // field is written dirty (see `updateFields`), so Word fills in the page
+        // numbers as soon as the document opens. `docx` also emits the cached
+        // entries and heading bookmarks the field needs, taken from the heading
+        // styles this document applies.
+        new TableOfContents(block.text || undefined, {
+          hyperlink: true,
+          // Markdown's h1..h6 map onto Word's Heading1..Heading6, so this covers
+          // every heading the export can produce — the same set the HTML outline lists.
+          headingStyleRange: '1-6'
         })
       ]
     }
@@ -169,6 +196,7 @@ const createBlocks = (
     const style =
       block.style === 'caption' ? 'Caption' : block.style === 'quote' ? 'Quote' : undefined
     const figure = block.style === 'figure' || block.style === 'equation'
+    const runs = (block.runs || []).map((run) => createRun(run, width))
     return [
       new Paragraph({
         style: style || (inCell ? 'TableBody' : undefined),
@@ -197,7 +225,7 @@ const createBlocks = (
         spacing: figure
           ? { before: 120, after: 120, line: 240, lineRule: LineRuleType.AUTO }
           : undefined,
-        children: (block.runs || []).map((run) => createRun(run, width))
+        children: runs
       })
     ]
   })
@@ -213,6 +241,11 @@ export const createWordDocument = async(content: WordContent): Promise<Buffer> =
   const doc = new Document({
     creator: 'YarkText',
     title: content.title,
+    // Word only computes page numbers while laying out the document, so a TOC
+    // field written here has none until the document is opened. This asks Word to
+    // update fields on load instead: the outline then shows real page numbers
+    // without the user hunting for "Update Field".
+    features: { updateFields: true },
     styles: {
       default: {
         document: {
@@ -247,6 +280,27 @@ export const createWordDocument = async(content: WordContent): Promise<Buffer> =
         }
       },
       paragraphStyles: [
+        {
+          id: 'TocTitle',
+          name: '目录标题',
+          basedOn: 'Normal',
+          run: { font: WORD_TEMPLATE.headingFont, size: 28, bold: true, color: '000000' },
+          paragraph: { spacing: { before: 0, after: 160, line: 276, lineRule: LineRuleType.AUTO } }
+        },
+        // The TOC field tags each entry with `TOC1`..`TOC9` by level, and Word
+        // rebuilds the entries from those styles whenever it updates the field. Any
+        // indentation baked into the entries themselves would be thrown away, so the
+        // hierarchy has to live in the styles.
+        ...Array.from({ length: 6 }, (_, index) => ({
+          id: `TOC${index + 1}`,
+          name: `toc ${index + 1}`,
+          basedOn: 'Normal',
+          run: { size: 21, color: '202020' },
+          paragraph: {
+            spacing: { before: 0, after: 60, line: 276, lineRule: LineRuleType.AUTO },
+            indent: { left: 240 * index }
+          }
+        })),
         {
           id: 'TableBody',
           name: '表格正文',

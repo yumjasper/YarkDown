@@ -170,9 +170,10 @@ function buildDiagramBlock(label: string, muya: Muya) {
         || type === 'vega-lite'
         || type === 'flowchart'
         || type === 'sequence'
+        || type === 'echarts'
     ) {
         diagramState.meta.type = type;
-        diagramState.meta.lang = type === 'vega-lite' ? 'json' : 'yaml';
+        diagramState.meta.lang = type === 'vega-lite' || type === 'echarts' ? 'json' : 'yaml';
     }
 
     return ScrollPage.loadBlock(name).create(muya, diagramState);

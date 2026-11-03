@@ -152,7 +152,12 @@ export default class ExportMarkdown {
 
             case 'toc':
                 this._insertLineBreak(result, indent);
-                result.push(`${indent}[TOC]`);
+                // The marker needs its own trailing newline like every other
+                // block: without it the next block's line break is the only
+                // separator, so a following paragraph joins the marker into one
+                // paragraph (`[TOC]\npara`) and the export no longer recognises
+                // the standalone marker.
+                result.push(`${indent}[TOC]\n`);
                 break;
 
             case 'paragraph':

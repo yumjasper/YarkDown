@@ -34,6 +34,7 @@ import pandoc, {
   getPandocReader,
   getReaderExtensions,
   listLinkedMedia,
+  preparePandocToc,
   shouldMirrorMedia
 } from '../../utils/pandoc'
 import { t, getCurrentLanguage } from '../../i18n'
@@ -205,7 +206,7 @@ const handlePandocExport = async(e: IpcMainEvent, payload: PandocExportPayload):
   }
 
   const {
-    markdown,
+    markdown: rawMarkdown,
     title,
     pathname,
     superSubScript,
@@ -215,6 +216,9 @@ const handlePandocExport = async(e: IpcMainEvent, payload: PandocExportPayload):
     texMathSingleBackslash,
     texMathDoubleBackslash
   } = payload
+  // `[TOC]` is editor syntax; pandoc would print it literally. Convert it to the
+  // writer's own contents directive or to `--toc` before the conversion.
+  const { markdown, toc } = preparePandocToc(rawMarkdown, format.target)
   // The save dialog and pandoc's link resolution both need the document's folder.
   const sourceDir = pathname ? path.dirname(pathname) : undefined
   const stem = sanitizeFilename(pathname ? path.basename(pathname, path.extname(pathname)) : title)
@@ -250,6 +254,7 @@ const handlePandocExport = async(e: IpcMainEvent, payload: PandocExportPayload):
       resourcePath: sourceDir,
       mirrorMedia: linksMedia && shouldMirrorMedia(media, sourceDir, filePath),
       reader,
+      toc,
       // Only EPUB takes a title, for its title page; `lang` is the app's, not the spawn locale.
       metadata: {
         ...(format.target === 'epub3' ? { title: title || stem } : {}),

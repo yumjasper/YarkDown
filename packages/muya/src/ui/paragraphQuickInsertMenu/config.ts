@@ -316,6 +316,12 @@ export const MENU_CONFIG: IQuickInsertMenuItem[] = [
                 icon: mermaidIcon,
             },
             {
+                title: 'ECharts',
+                subTitle: 'By echarts.js',
+                label: 'diagram echarts',
+                icon: mermaidIcon,
+            },
+            {
                 title: 'Plantuml',
                 subTitle: 'By plantuml',
                 label: 'diagram plantuml',

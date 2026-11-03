@@ -93,7 +93,7 @@ export class MarkdownToHtml {
 
     private async _renderDiagram() {
         const selector
-            = 'code.language-vega-lite, code.language-plantuml, code.language-flowchart, code.language-sequence';
+            = 'code.language-vega-lite, code.language-plantuml, code.language-flowchart, code.language-sequence, code.language-echarts';
         const codes = this._exportContainer!.querySelectorAll(selector);
 
         for (const code of codes) {
@@ -105,6 +105,8 @@ export class MarkdownToHtml {
                     return 'flowchart';
                 else if (/sequence/.test(code.className))
                     return 'sequence';
+                else if (/echarts/.test(code.className))
+                    return 'echarts';
                 else
                     return 'vega-lite';
             })();
@@ -149,6 +151,17 @@ export class MarkdownToHtml {
                 }
                 else if (functionType === 'vega-lite') {
                     await render(diagramContainer, JSON.parse(rawCode), options);
+                }
+                else if (functionType === 'echarts') {
+                    // Export uses the light `--editor-bg-color` (white) like
+                    // mermaid/vega do, since the export stylesheet is light-only.
+                    const spec = JSON.parse(rawCode) as Record<string, unknown>;
+                    spec.backgroundColor ??= '#ffffff';
+                    diagramContainer.style.height = '400px';
+                    render.getInstanceByDom(diagramContainer)?.dispose();
+                    const chart = render.init(diagramContainer, undefined, { renderer: 'svg' });
+                    chart.setOption(spec);
+                    chart.resize();
                 }
             }
             catch {

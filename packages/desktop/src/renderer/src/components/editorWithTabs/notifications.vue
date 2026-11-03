@@ -6,30 +6,36 @@
     :class="currentNotification.style"
     :style="{ 'max-width': `calc(100vw - ${effectiveSideBarWidth}px)` }"
   >
-    <div class="msg">
+    <span
+      class="notification-dot"
+      aria-hidden="true"
+    />
+    <p
+      class="msg"
+      role="status"
+    >
       {{ currentNotification.msg }}
-    </div>
-    <div class="controls">
-      <div>
-        <span
-          v-if="currentNotification.showConfirm"
-          class="inline-button"
-          @click.stop="handleClick(true)"
-        >
-          {{ t('common.ok') }}
-        </span>
-        <span
-          class="inline-button"
-          @click.stop="handleClick(false)"
-        >
-          <el-icon
-            class="close-icon"
-            :size="12"
-          >
-            <Close />
-          </el-icon>
-        </span>
-      </div>
+    </p>
+    <div class="notification-actions">
+      <button
+        v-if="currentNotification.showConfirm"
+        type="button"
+        class="notification-button"
+        @click.stop="handleClick(true)"
+      >
+        {{ t('common.ok') }}
+      </button>
+      <button
+        type="button"
+        class="notification-dismiss"
+        :aria-label="t('dialog.close')"
+        :title="t('dialog.close')"
+        @click.stop="handleClick(false)"
+      >
+        <el-icon :size="12">
+          <Close />
+        </el-icon>
+      </button>
     </div>
   </div>
 </template>
@@ -74,53 +80,101 @@ const handleClick = (status: boolean) => {
 
 <style scoped>
 .editor-notifications {
+  /* Accent per severity: the banner tint, border, dot and the action button
+     all derive from this one value so the three variants stay in step. */
+  --notification-accent: var(--notificationPrimaryBg);
+
   position: relative;
+  flex: none;
   display: flex;
-  flex-direction: row;
-  max-height: 100px;
-  margin-top: 4px;
-  background: var(--notificationPrimaryBg);
-  color: var(--notificationPrimaryColor);
-  padding: 8px 10px;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  margin: 6px 10px 10px;
+  padding: 7px 10px 7px 12px;
+  border: 1px solid color-mix(in srgb, var(--notification-accent) 26%, transparent);
+  border-radius: var(--shell-panel-radius, 10px);
+  background: color-mix(in srgb, var(--notification-accent) 9%, var(--editorBgColor));
+  color: var(--editorColor80);
+  font: 13px/1.5 var(--uiFontFamily);
   user-select: none;
-  overflow: hidden;
+
   &.warn {
-    background: var(--notificationWarningBg);
-    color: var(--notificationWarningColor);
+    --notification-accent: var(--notificationWarningBg);
   }
+
   &.crit {
-    background: var(--notificationErrorBg);
-    color: var(--notificationErrorColor);
+    --notification-accent: var(--notificationErrorBg);
   }
 }
+
+.notification-dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--notification-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--notification-accent) 20%, transparent);
+}
+
 .msg {
-  font-size: 13px;
   flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
 }
-.controls {
+
+.notification-actions {
+  flex: none;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.notification-button,
+.notification-dismiss {
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  & > div {
-    display: flex;
-    flex-direction: row;
-  }
-  & .inline-button:not(:last-child) {
-    margin-right: 3px;
-  }
-  & .inline-button {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 24px;
-    height: 24px;
-    font-size: 12px;
-    cursor: pointer;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-  }
-  & .inline-button:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.6);
-  }
+  height: 26px;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.notification-button {
+  padding: 0 12px;
+  border-color: color-mix(in srgb, var(--notification-accent) 42%, transparent);
+  background: var(--editorBgColor);
+  color: var(--editorColor);
+}
+
+.notification-button:hover {
+  background: color-mix(in srgb, var(--notification-accent) 12%, var(--editorBgColor));
+}
+
+.notification-button:active {
+  background: color-mix(in srgb, var(--notification-accent) 18%, var(--editorBgColor));
+}
+
+.notification-dismiss {
+  width: 26px;
+  padding: 0;
+  background: transparent;
+  color: var(--editorColor50);
+}
+
+.notification-dismiss:hover {
+  background: color-mix(in srgb, var(--editorColor) 8%, transparent);
+  color: var(--editorColor);
+}
+
+.notification-button:focus-visible,
+.notification-dismiss:focus-visible {
+  outline: 2px solid var(--themeColor);
+  outline-offset: 1px;
 }
 </style>

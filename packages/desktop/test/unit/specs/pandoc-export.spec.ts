@@ -23,6 +23,7 @@ import pandoc, {
   listLinkedMedia,
   listReaderExtensions,
   pandocLocations,
+  preparePandocToc,
   shouldMirrorMedia,
   type PandocReaderExtensions,
   type PandocToFileOptions
@@ -307,6 +308,66 @@ describe('pandoc export', () => {
     expect(findOnPath('pandoc', 'win32', { PATH: folder, PATHEXT: '.BAT' })).toBeNull()
     expect(findOnPath('pandoc', 'win32', { PATH: 'C:\\nowhere' })).toBeNull()
     expect(findOnPath('pandoc', 'win32', {})).toBeNull()
+  })
+
+  // `[TOC]` is editor syntax: pandoc has never heard of it and prints it verbatim.
+  // The marker becomes the writer's own directive where one exists, and `--toc`
+  // everywhere else.
+  it('turns the [TOC] marker into a real table of contents', () => {
+    const marked = '# Top\n\n[TOC]\n\n## Sub\n'
+
+    // Writers that place a generated TOC from `--toc` get the marker dropped.
+    for (const target of ['docx', 'odt', 'rtf', 'epub3', 'latex', 'rst']) {
+      const prepared = preparePandocToc(marked, target)
+      expect(prepared.toc).toBe(true)
+      expect(prepared.markdown).not.toContain('[TOC]')
+      expect(prepared.markdown).toContain('## Sub')
+    }
+
+    // MediaWiki and Org carry the outline at the marker, so no front TOC as well.
+    const wiki = preparePandocToc(marked, 'mediawiki')
+    expect(wiki).toEqual({ markdown: '# Top\n\n__TOC__\n\n## Sub\n', toc: false })
+    const org = preparePandocToc(marked, 'org')
+    expect(org).toEqual({ markdown: '# Top\n\n#+TOC: headlines 6\n\n## Sub\n', toc: false })
+
+    // Textile has no table of contents at all: the marker just goes away.
+    expect(preparePandocToc(marked, 'textile')).toEqual({ markdown: '# Top\n\n\n## Sub\n', toc: false })
+  })
+
+  it('leaves a document without the marker alone', () => {
+    const plain = '# Top\n\n## Sub\n'
+    expect(preparePandocToc(plain, 'docx')).toEqual({ markdown: plain, toc: false })
+  })
+
+  // Sample text inside a fence is content, not a directive.
+  it('ignores a marker inside a fenced code block', () => {
+    const fenced = '# Top\n\n```\n[TOC]\n```\n\n~~~md\n[TOC]\n~~~\n'
+    const prepared = preparePandocToc(fenced, 'docx')
+
+    expect(prepared.toc).toBe(false)
+    expect(prepared.markdown).toBe(fenced)
+  })
+
+  // Writers disagree on case and a stray trailing space, and both are still markers.
+  it('matches the marker regardless of case or trailing space', () => {
+    const prepared = preparePandocToc('# Top\n\n[toc]  \n', 'docx')
+    expect(prepared.toc).toBe(true)
+    expect(prepared.markdown).toBe('# Top\n\n')
+  })
+
+  it('asks pandoc for --toc only when the marker asked for it', async() => {
+    const { done } = await runToFile('docx', '/tmp/x.docx', { toc: true })
+    await done
+    const args = spawnMock.mock.calls.at(-1)?.[1] as string[]
+    expect(args).toContain('--toc')
+    // `--toc` is inert without `-s`, so both must be there.
+    expect(args).toContain('-s')
+    // Every heading level, matching the HTML export's own outline.
+    expect(args).toContain('--toc-depth=6')
+
+    const { done: without } = await runToFile('docx', '/tmp/x.docx', {})
+    await without
+    expect(spawnMock.mock.calls.at(-1)?.[1] as string[]).not.toContain('--toc')
   })
 
   // The plain-text writers keep `pics/a.png` as a link, so pandoc copies the pictures along.

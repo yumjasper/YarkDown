@@ -66,6 +66,8 @@ vi.mock('main_renderer/utils/pandoc', async(importOriginal) => {
     getPandocLanguage: (locale: string) => locale,
     formatLinksMedia: (target: string) => target === 'rst',
     listLinkedMedia,
+    // The marker rewrite is kept real: this spec pins what the handler passes on.
+    preparePandocToc: actual.preparePandocToc,
     shouldMirrorMedia: actual.shouldMirrorMedia
   }
 })

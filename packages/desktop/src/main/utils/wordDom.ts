@@ -16,8 +16,13 @@ export interface WordInline {
   break?: boolean
 }
 
+export interface WordTocEntry {
+  level: number
+  text: string
+}
+
 export interface WordBlock {
-  kind: 'paragraph' | 'heading' | 'code' | 'table' | 'rule'
+  kind: 'paragraph' | 'heading' | 'code' | 'table' | 'rule' | 'toc'
   runs?: WordInline[]
   level?: number
   text?: string
@@ -25,6 +30,8 @@ export interface WordBlock {
   alignment?: 'left' | 'center' | 'right'
   list?: { id: string; ordered: boolean; level: number; start: number; continuation?: boolean }
   rows?: { header: boolean; cells: WordBlock[][] }[]
+  /** Entries of a table of contents the export injected at `[TOC]`. */
+  entries?: WordTocEntry[]
 }
 
 export interface WordContent {
@@ -147,7 +154,25 @@ export function serializeWordDocument(): WordContent {
       } else if (tag === 'hr') {
         result.push({ kind: 'rule' })
       } else if (/^h[1-6]$/.test(tag)) {
-        result.push({ kind: 'heading', level: Number(tag[1]), runs: inline(node) })
+        result.push({
+          kind: 'heading',
+          level: Number(tag[1]),
+          runs: inline(node)
+        })
+      } else if (node.classList.contains('toc-container')) {
+        // The `[TOC]` marker came back as a live outline. Word gets a native TOC
+        // field instead of a flattened copy: the field collects the document's own
+        // headings, so its entries carry real page numbers and can be refreshed.
+        // The entries here only decide whether there is anything to outline.
+        const title = node.querySelector('.toc-title')?.textContent?.trim() || ''
+        const entries = Array.from(node.querySelectorAll('a[href^="#"]')).map((link) => {
+          const levelMatch = /(?:^|\s)toc-h([1-6])(?:\s|$)/.exec(link.getAttribute('class') || '')
+          return {
+            level: Number(levelMatch?.[1]) || 1,
+            text: (link.textContent || '').trim()
+          }
+        })
+        result.push({ kind: 'toc', text: title, entries })
       } else if (tag === 'blockquote') {
         result.push(...blocks(node, list, true))
       } else if (['p', 'figcaption'].includes(tag) || node.hasAttribute('data-word-equation')) {

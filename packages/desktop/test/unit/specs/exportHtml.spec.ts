@@ -181,6 +181,45 @@ describe('exportStyledHTML — [TOC] expansion and slug matching', () => {
 
     expect(out).not.toContain('toc-container')
   })
+
+  // A document may carry more than one marker; only replacing the first left the
+  // rest as literal `[TOC]` text in the export.
+  it('replaces every marker when the document has more than one', async() => {
+    const toc = getHtmlToc(TOC, {})
+    const out = await exportStyledHTML(
+      NO_MUYA,
+      '# Getting Started\n\n[TOC]\n\nfirst\n\n[TOC]\n\n## Installation\n',
+      { toc }
+    )
+
+    expect(out).not.toMatch(/\[TOC\]/i)
+    // Two markers, two injected outlines.
+    expect((out.match(/toc-container/g) || []).length).toBe(2)
+  })
+
+  // An empty TOC string is what `getHtmlToc` returns when every heading is filtered
+  // out — no headings at all, or only top-level ones with `tocIncludeTopHeading`
+  // off. The marker must still disappear: leaving it turns the outline into the
+  // literal text `[TOC]` in the exported file.
+  it('removes the marker even when the TOC is empty', async() => {
+    const emptyToc = getHtmlToc([{ lvl: 1, content: 'Only' }], {})
+    expect(emptyToc).toBe('')
+
+    const out = await exportStyledHTML(NO_MUYA, '# Only\n\n[TOC]\n\nbody\n', { toc: emptyToc })
+
+    expect(out).not.toMatch(/\[TOC\]/i)
+    expect(out).toContain('<p>body</p>')
+  })
+
+  // `String#replace` reads `$&`, `$1`, `$\`` in the *replacement* as patterns, so a
+  // TOC title containing one would be mangled — or, with `$&`, spliced into itself.
+  it('keeps replacement-pattern characters in the TOC markup literal', async() => {
+    const toc = getHtmlToc([{ lvl: 2, content: 'Sub' }], { tocTitle: 'A $& B' })
+    const out = await exportStyledHTML(NO_MUYA, '# Top\n\n[TOC]\n\n## Sub\n', { toc })
+
+    expect(out).toContain('A $&amp; B')
+    expect(out).toContain('href="#sub"')
+  })
 })
 
 describe('exportStyledHTML — header/footer assembly', () => {

@@ -6,6 +6,7 @@ import { bindSourceSearch } from '../../../src/renderer/src/components/editorWit
 function fixture(initial = 'word and WORD') {
   let text = initial
   let caret = 0
+  let caretLine = 0
   let active = true
   const events = new Map<string, () => void>()
   const cleared = vi.fn()
@@ -16,7 +17,7 @@ function fixture(initial = 'word and WORD') {
   const editor = {
     getValue: () => text,
     getSelection: () => '',
-    getCursor: () => ({ line: 0, ch: caret }),
+    getCursor: () => ({ line: caretLine, ch: caret }),
     indexFromPos: (position: { line: number; ch: number }) => {
       const lines = text.split('\n')
       let index = 0
@@ -52,7 +53,14 @@ function fixture(initial = 'word and WORD') {
     off: (event: string) => events.delete(event)
   } as unknown as CodeMirror.Editor
   const dispose = bindSourceSearch(editor, { SEARCH }, () => active)
-  return { SEARCH, cleared, events, dispose, text: () => text, deactivate: () => { active = false }, addedLines, hiddenLines, wrapperClasses }
+  // Simulate a click/arrow move: reposition the caret, then fire the same
+  // `cursorActivity` event CodeMirror emits so the component's handler runs.
+  const moveCaretTo = (line: number, ch = 0) => {
+    caretLine = line
+    caret = ch
+    events.get('cursorActivity')?.()
+  }
+  return { SEARCH, cleared, events, dispose, text: () => text, deactivate: () => { active = false }, addedLines, hiddenLines, wrapperClasses, moveCaretTo }
 }
 
 describe('independent source search', () => {
@@ -111,6 +119,34 @@ describe('independent source search', () => {
       expect(f.hiddenLines.size).toBe(0)
       expect(f.SEARCH.mock.lastCall?.[0].hiddenCount).toBe(0)
       expect(f.wrapperClasses.has('cm-filtering-search')).toBe(false)
+    } finally { f.dispose() }
+  })
+  it('keeps the caret line visible when the caret moves onto a non-matching line', () => {
+    const f = fixture('alpha\nbeta\ngamma beta\ndelta')
+    try {
+      bus.emit('searchValue', { value: 'beta', opt: { onlyMatches: true } })
+      // Caret sits on line 0 (kept by Notepad3's caret-line rule), so line 3 is
+      // the only hidden one.
+      expect([...f.addedLines].sort()).toEqual([3])
+
+      // Move the caret onto the hidden line; it has to become visible even
+      // though it holds no match, and the previously kept line 0 now hides.
+      f.moveCaretTo(3)
+      expect(f.hiddenLines.has(3)).toBe(false)
+      expect(f.hiddenLines.has(0)).toBe(true)
+      // The badge tracks the hidden set, and only a click was involved, so the
+      // selection must not be re-published as a new active match.
+      expect(f.SEARCH.mock.lastCall?.[0].hiddenCount).toBe(1)
+    } finally { f.dispose() }
+  })
+  it('does not re-run the filter while the caret stays on the same line', () => {
+    const f = fixture('alpha\nbeta\ngamma beta\ndelta')
+    try {
+      bus.emit('searchValue', { value: 'beta', opt: { onlyMatches: true } })
+      const callsAfterSearch = f.SEARCH.mock.calls.length
+      // Same line, different column: a selection drag inside one line.
+      f.moveCaretTo(0, 2)
+      expect(f.SEARCH.mock.calls.length).toBe(callsAfterSearch)
     } finally { f.dispose() }
   })
   it('clears line filter classes on dispose', () => {

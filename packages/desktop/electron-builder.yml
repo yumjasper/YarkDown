@@ -2,6 +2,7 @@ appId: com.github.marktext.marktext
 productName: YarkText
 asar: true
 compression: normal
+afterPack: build/validate-packaged-resources.mjs
 publish:
   provider: github
   owner: yumjasper

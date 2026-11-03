@@ -77,6 +77,11 @@ class DiagramPreview extends Parent {
         if (code) {
             this.domNode!.innerHTML = i18n.t('Loading...');
             const { mermaidTheme, vegaTheme, plantumlServer, sequenceTheme } = this.muya.options;
+            // ECharts draws its own background; hand it the live editor
+            // background so charts follow the active (incl. dark) theme.
+            const echartsTheme = getComputedStyle(this.muya.domNode ?? document.body)
+                .getPropertyValue('--editor-bg-color')
+                .trim() || undefined;
             const { _type: type } = this;
 
             try {
@@ -88,6 +93,7 @@ class DiagramPreview extends Parent {
                     vegaTheme,
                     plantumlServer,
                     sequenceTheme,
+                    echartsTheme,
                 });
                 this._cancelFinalize = finalizeRenderedDiagram(this.domNode!, i18n.t('Diagram'));
             }

@@ -1,6 +1,6 @@
 import type { Token } from 'marked';
-import katex from 'katex';
 import 'katex/dist/contrib/mhchem.mjs';
+import { renderKatex } from '../../latexCompat';
 
 // marked resolves a token's renderer by looking its `type` up among the
 // registered extension names, so each inline tokenizer has to emit its own
@@ -194,7 +194,7 @@ function createRenderer(options: IOptions, newlineAfter: boolean) {
         const { type, text, displayMode, marker = '$', closeMarker = marker, mathStyle } = token;
         if (useKatexRender) {
             return (
-                katex.renderToString(text, {
+                renderKatex(text, {
                     ...otherOpts,
                     displayMode,
                 }) + (newlineAfter ? '\n' : '')

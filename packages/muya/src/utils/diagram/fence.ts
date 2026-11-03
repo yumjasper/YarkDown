@@ -1,6 +1,6 @@
 import type { IDiagramMeta, IDiagramState } from '../../state/types';
 
-const DIAGRAM_TYPES = ['mermaid', 'plantuml', 'vega-lite', 'flowchart', 'sequence'] as const;
+const DIAGRAM_TYPES = ['mermaid', 'plantuml', 'vega-lite', 'flowchart', 'sequence', 'echarts'] as const;
 
 /**
  * The diagram type a fence language renders as, or null for a code language.
@@ -14,6 +14,6 @@ export function createDiagramState(type: IDiagramMeta['type'], text = ''): IDiag
     return {
         name: 'diagram',
         text,
-        meta: { type, lang: type === 'vega-lite' ? 'json' : 'yaml' },
+        meta: { type, lang: type === 'vega-lite' || type === 'echarts' ? 'json' : 'yaml' },
     };
 }

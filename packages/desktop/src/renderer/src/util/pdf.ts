@@ -122,11 +122,15 @@ export interface TocEntry {
   content: string
   contentHtml?: string
   slug?: string
+  /** Level number such as `1.2`, set only when heading auto-numbering is on. */
+  number?: string
 }
 
 export interface HtmlTocOptions {
   tocIncludeTopHeading?: boolean
   tocTitle?: string
+  /** Mirrors `autoNumberingHeadings`: h2..h6 get a `1.2`-style prefix. */
+  autoNumberingHeadings?: boolean
   [key: string]: unknown
 }
 
@@ -151,6 +155,27 @@ const assignHeadingSlugs = (tocList: TocEntry[]): void => {
   }
 }
 
+/**
+ * The `1.2` prefix the export stylesheet's counters print before a heading.
+ *
+ * `autoNumberingHeadings` numbers h2..h6 through CSS counters, which the TOC
+ * entries sit outside of, so the exported outline showed unnumbered text next to
+ * numbered headings. This mirrors those counters: h1 is not counted and does not
+ * reset anything; a heading at level L increments L and clears the levels below.
+ * Runs over the full, in-order heading list (before the `tocIncludeTopHeading`
+ * filter) so the sequence matches the whole-document pass.
+ */
+const assignHeadingNumbers = (tocList: TocEntry[]): void => {
+  const counters = [0, 0, 0, 0, 0]
+  for (const entry of tocList) {
+    const level = Math.min(6, Math.max(1, entry.lvl))
+    if (level === 1) continue
+    counters[level - 2] += 1
+    for (let deeper = level - 1; deeper < 5; deeper++) counters[deeper] = 0
+    entry.number = counters.slice(0, level - 1).join('.')
+  }
+}
+
 const generateHtmlToc = (
   tocList: TocEntry[],
   currentLevel: number,
@@ -169,10 +194,11 @@ const generateHtmlToc = (
   }
 
   const shifted = tocList.shift() as TocEntry
-  const { content, contentHtml, lvl, slug } = shifted
+  const { content, contentHtml, lvl, slug, number } = shifted
 
   const label = contentHtml ?? content
-  let html = `<li><span><a class="toc-h${lvl}" href="#${slug}">${label}</a><span class="dots"></span></span>`
+  const numbered = number ? `${number}. ` : ''
+  let html = `<li><span><a class="toc-h${lvl}" href="#${slug}">${numbered}${label}</a><span class="dots"></span></span>`
 
   // Generate sub-items
   if (tocList.length !== 0 && tocList[0].lvl > lvl) {
@@ -186,6 +212,7 @@ const generateHtmlToc = (
 export const getHtmlToc = (toc: TocEntry[], options: HtmlTocOptions = {}): string => {
   const list = deepClone(toc)
   assignHeadingSlugs(list)
+  if (options.autoNumberingHeadings) assignHeadingNumbers(list)
   const tocList = generateHtmlToc(list, 0, options)
   if (!tocList) {
     return ''

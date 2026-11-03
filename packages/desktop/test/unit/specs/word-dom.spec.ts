@@ -37,4 +37,31 @@ describe('Word semantic structure', () => {
     expect(blocks[3].rows?.[0].cells[0][0]).toMatchObject({ alignment: 'center', runs: [{ text: '表头', bold: true }] })
     expect(blocks[3].rows?.[1].cells[0][0].alignment).toBe('right')
   })
+  // Word builds the entries itself from its own heading bookmarks, so the export
+  // only has to carry the outline's shape and title across the process boundary.
+  it('turns an injected TOC into an outline block', () => {
+    document.body.innerHTML = `<article>
+      <div class="toc-container"><p class="toc-title">Table of Contents</p><ul class="toc-list">
+        <li><span><a class="toc-h2" href="#install">1. Install</a><span class="dots"></span></span>
+          <ul><li><span><a class="toc-h3" href="#install-linux">1.1. Linux</a><span class="dots"></span></span></li></ul>
+        </li>
+        <li><span><a class="toc-h2" href="#usage">2. Usage</a><span class="dots"></span></span></li>
+      </ul></div>
+      <h2 id="install">Install</h2><h3 id="install-linux">Linux</h3><h2 id="usage">Usage</h2>
+    </article>`
+    const { blocks } = serializeWordDocument()
+
+    expect(blocks[0]).toMatchObject({ kind: 'toc', text: 'Table of Contents' })
+    expect(blocks[0].entries).toEqual([
+      { level: 2, text: '1. Install' },
+      { level: 3, text: '1.1. Linux' },
+      { level: 2, text: '2. Usage' }
+    ])
+    // The headings stay ordinary headings: the TOC field anchors itself to them.
+    expect(blocks.slice(1)).toMatchObject([
+      { kind: 'heading', level: 2 },
+      { kind: 'heading', level: 3 },
+      { kind: 'heading', level: 2 }
+    ])
+  })
 })

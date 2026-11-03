@@ -25,7 +25,7 @@ const scenarios = [
   { name: 'md-rendered', file: 'small.md', selector: '.mu-editor' }
 ]
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
-async function until(action, message) {
+async function until (action, message) {
   const deadline = Date.now() + 45000
   let lastError
   while (Date.now() < deadline) {
@@ -34,16 +34,19 @@ async function until(action, message) {
   }
   throw new Error(`${message}: ${lastError?.message || ''}`)
 }
-function sample(pid) {
+function sample (pid) {
   // Creation times prevent an unrelated process from entering the tree after PID reuse.
   const script = `$ErrorActionPreference='Stop'; $root=Get-CimInstance Win32_Process -Filter 'ProcessId=${pid}'; if (!$root) { throw 'Root exited' }; $all=@(Get-CimInstance Win32_Process); $ids=@{[uint32]$root.ProcessId=$root.CreationDate}; do { $changed=$false; foreach ($p in $all) { if (!$ids.ContainsKey([uint32]$p.ProcessId) -and $ids.ContainsKey([uint32]$p.ParentProcessId) -and $p.CreationDate -ge $ids[[uint32]$p.ParentProcessId]) { $ids[[uint32]$p.ProcessId]=$p.CreationDate; $changed=$true } } } while ($changed); $perf=@(Get-CimInstance Win32_PerfFormattedData_PerfProc_Process | Where-Object { $ids.ContainsKey([uint32]$_.IDProcess) }); $rows=@($perf | ForEach-Object { [pscustomobject]@{pid=$_.IDProcess; name=$_.Name; privateWorkingSet=[double]$_.WorkingSetPrivate; privateBytes=[double]$_.PrivateBytes} }); [pscustomobject]@{privateWorkingSet=($rows | Measure-Object privateWorkingSet -Sum).Sum; privateBytes=($rows | Measure-Object privateBytes -Sum).Sum; processes=$rows} | ConvertTo-Json -Depth 4 -Compress`
   return JSON.parse(execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script], { encoding: 'utf8', timeout: 30000 }))
 }
 const report = {
-  executable, startedAt: new Date().toISOString(), rounds,
+  executable,
+  startedAt: new Date().toISOString(),
+  rounds,
   metric: 'Sum of Windows process-tree WorkingSetPrivate and PrivateBytes; no forced GC or working-set trimming',
   conditions: 'Release binary, isolated profiles, default preferences except explicit source mode, CDP used for readiness then disconnected before 15-second idle; two samples 5 seconds apart',
-  files: { txtBytes: Buffer.byteLength(text), mdBytes: Buffer.byteLength(markdown) }, results: []
+  files: { txtBytes: Buffer.byteLength(text), mdBytes: Buffer.byteLength(markdown) },
+  results: []
 }
 await fs.mkdir(path.dirname(reportPath), { recursive: true })
 for (let round = 1; round <= rounds; round++) {
@@ -64,10 +67,12 @@ for (let round = 1; round <= rounds; round++) {
       browser = await chromium.connectOverCDP(`http://127.0.0.1:${port}`)
       page = await until(() => browser.contexts().flatMap(context => context.pages()).find(candidate => candidate.url().includes('index.html')), 'No editor page')
       await page.locator(scenario.selector).waitFor({ state: 'visible', timeout: 30000 })
-      if (scenario.file) await until(() => page.evaluate(() => {
-        const store = document.querySelector('#app').__vue_app__.config.globalProperties.$pinia._s.get('editor')
-        return store.currentFile?.isSaved && store.currentFile?.markdown?.length > 0
-      }), 'Document not ready')
+      if (scenario.file) {
+        await until(() => page.evaluate(() => {
+          const store = document.querySelector('#app').__vue_app__.config.globalProperties.$pinia._s.get('editor')
+          return store.currentFile?.isSaved && store.currentFile?.markdown?.length > 0
+        }), 'Document not ready')
+      }
       const diagnostics = await page.evaluate(() => ({
         resources: performance.getEntriesByType('resource').map(entry => entry.name.split('/').at(-1)),
         jsHeapUsed: performance.memory?.usedJSHeapSize,
@@ -84,7 +89,7 @@ for (let round = 1; round <= rounds; round++) {
       await fs.writeFile(reportPath, JSON.stringify(report, null, 2))
       console.log(`${scenario.name} round ${round}: ${(samples[1].privateWorkingSet / 1048576).toFixed(1)} MiB private WS; ${(samples[1].privateBytes / 1048576).toFixed(1)} MiB private bytes`)
     } catch (error) {
-      throw new Error(`${scenario.name} round ${round}: ${error.message}\n${output.slice(-3000)}`)
+      throw new Error(`${scenario.name} round ${round}: ${error.message}\n${output.slice(-3000)}`, { cause: error })
     } finally {
       if (browser) await browser.close().catch(() => {})
       if (child && child.exitCode === null) {

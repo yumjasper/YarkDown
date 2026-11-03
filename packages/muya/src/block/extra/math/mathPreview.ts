@@ -1,9 +1,9 @@
 import type { Muya } from '../../../muya';
 import type { IMathBlockState, TState } from '../../../state/types';
-import katex from 'katex';
 import { fromEvent } from 'rxjs';
 import { CLASS_NAMES } from '../../../config';
 import { escapeHTML } from '../../../utils';
+import { renderKatex } from '../../../utils/latexCompat';
 import logger from '../../../utils/logger';
 import Parent from '../../base/parent';
 import 'katex/dist/contrib/mhchem.mjs';
@@ -66,7 +66,7 @@ class MathPreview extends Parent {
 
         if (math) {
             try {
-                const html = katex.renderToString(math, {
+                const html = renderKatex(math, {
                     displayMode: true,
                 });
                 this.domNode!.innerHTML = html;

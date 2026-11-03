@@ -16,11 +16,20 @@ const script = readFileSync(
   path.resolve(__dirname, '../../../build/windows/installer.nsh'),
   'utf8'
 )
+// The PDF checkbox UI moved into installer-ui.nsh when the nsNiuniuSkin
+// wizard landed; the association logic stayed in installer.nsh.
+const uiScript = readFileSync(
+  path.resolve(__dirname, '../../../build/windows/installer-ui.nsh'),
+  'utf8'
+)
 
 const EXTENSIONS = ['.md', '.markdown', '.mmd', '.mdown', '.mdtxt', '.mdtext', '.mdx', '.pdf', '.txt']
 
 const macroBody = (name: string): string => {
-  const start = script.indexOf(`!macro ${name}`)
+  // Anchor the macro name to a word boundary: `customUnInstall` would
+  // otherwise match the earlier `customUnInstallCheck` definition, and some
+  // macros take parameters after the name (`!macro mtAssociateExtension EXT`).
+  const start = script.search(new RegExp(`!macro ${name}(?:\\s|$)`))
   expect(start, `the ${name} macro is missing`).toBeGreaterThan(-1)
   const end = script.indexOf('!macroend', start)
   expect(end, `the ${name} macro is not terminated`).toBeGreaterThan(start)
@@ -34,7 +43,7 @@ const pdfComponent = macroBody('ytConfigurePdfComponent')
 describe('Windows document associations (build/windows/installer.nsh)', () => {
   it('defaults to installing PDF and removes its payloads and associations when deselected', () => {
     expect(macroBody('customInit')).toContain('StrCpy $YtInstallPdf 1')
-    expect(script).toContain('同时安装 PDF 阅读器')
+    expect(uiScript).toContain('同时安装 PDF 阅读器')
     expect(pdfComponent).toContain('${If} $YtInstallPdf == 1')
     expect(pdfComponent).toContain('resources\\pdf-disabled')
     expect(pdfComponent).toContain('app.asar.unpacked\\out\\renderer\\pdfjs')

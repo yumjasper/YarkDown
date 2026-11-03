@@ -17,6 +17,7 @@ export default [
       'packages/desktop/vendor/js13k/**',
       'packages/desktop/src/renderer/public/js13k/**',
       '.claude/**',
+      '.cod-analysis/**',
       '**/out/**',
       '**/dist/**',
       'Released/**',

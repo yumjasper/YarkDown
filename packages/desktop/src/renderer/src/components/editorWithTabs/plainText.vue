@@ -128,6 +128,14 @@ const cursorActivity = () => {
   const selected = cm.getSelection()
   store.SET_SELECTION_WORD_COUNT(selected ? wordCount(selected) : null)
   if (!query) store.SEARCH({ value: selected, matches: [], index: -1 })
+  // While the filter is on, the caret line must stay visible even without a
+  // match (Notepad3 behaviour) — and a click on a hidden line can put the caret
+  // somewhere the previous pass hid. Re-apply only when the caret actually
+  // changed lines, so dragging a selection inside one line stays cheap.
+  if (filteringLines() && cm.getCursor().line !== filterCaretLine) {
+    applyLineFilter()
+    publishMatches(false)
+  }
   if (activeId)
     store.PERSIST_CURSOR(activeId, { anchor: cm.getCursor('anchor'), focus: cm.getCursor('head') })
 }
@@ -142,11 +150,18 @@ const clearMarks = () => {
 // never touch the doc; stale handles no-op in CodeMirror; index→line uses a
 // shared offset walk; the apply loop only touches lines that change state.
 let hiddenLines = new Set<CodeMirror.LineHandle>()
+// The caret line the current filter was computed for. Notepad3 keeps that line
+// visible even without a match, so moving the caret needs a re-apply; the
+// cached line lets `cursorActivity` skip the O(lines) pass while the caret
+// stays put (a selection drag inside one line fires it repeatedly).
+let filterCaretLine = -1
+const filteringLines = () => (searchOptions as { onlyMatches?: boolean }).onlyMatches === true
 const applyLineFilter = () => {
   if (!cm) return
-  const onlyMatches = (searchOptions as { onlyMatches?: boolean }).onlyMatches === true
+  const onlyMatches = filteringLines()
   cm.getWrapperElement().classList.toggle('cm-filtering-search', onlyMatches)
   if (!onlyMatches) {
+    filterCaretLine = -1
     if (hiddenLines.size) {
       cm.operation(() => {
         for (const line of hiddenLines) cm!.removeLineClass(line, 'wrap', 'cm-search-hidden-line')
@@ -205,6 +220,7 @@ const applyLineFilter = () => {
     for (const line of hiddenLines) cmInstance.removeLineClass(line, 'wrap', 'cm-search-hidden-line')
   })
   hiddenLines = nextHidden
+  filterCaretLine = cm.getCursor().line
 }
 
 const publishMatches = (reveal = true) => {
@@ -213,7 +229,7 @@ const publishMatches = (reveal = true) => {
     value: query,
     index: matchIndex,
     matches: matches.map(({ start, end }) => ({ start, end })),
-    hiddenCount: (searchOptions as { onlyMatches?: boolean }).onlyMatches === true ? hiddenLines.size : 0
+    hiddenCount: filteringLines() ? hiddenLines.size : 0
   })
   if (reveal && matchIndex >= 0) {
     const match = matches[matchIndex]

@@ -1,9 +1,9 @@
 import type Format from '../../block/base/format';
 import type { CodeEmojiMathToken, ISyntaxRenderOptions, Token } from '../types';
 import type Renderer from './index';
-import katex from 'katex';
 import { CLASS_NAMES } from '../../config';
 import { htmlToVNode } from '../../utils/snabbdom';
+import { renderKatex } from '../../utils/latexCompat';
 import 'katex/dist/contrib/mhchem.mjs';
 
 import 'katex/dist/katex.min.css';
@@ -99,7 +99,7 @@ export default function inlineMath(this: Renderer, {
     }
     else {
         try {
-            const html = katex.renderToString(math, {
+            const html = renderKatex(math, {
                 displayMode,
             });
             mathVnode = htmlToVNode(html);

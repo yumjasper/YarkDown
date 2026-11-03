@@ -262,4 +262,40 @@ describe('getHtmlToc', () => {
     expect(getHtmlToc([{ lvl: 1, content: 'Only' }], {})).toBe('')
     expect(getHtmlToc([], {})).toBe('')
   })
+
+  // The export stylesheet numbers h2..h6 through CSS counters, which the TOC entries
+  // sit outside of — so the outline has to carry the same numbers itself.
+  it('prefixes entries with the heading numbers the export counters print', async() => {
+    const { getHtmlToc } = await loadPdf()
+    const toc = [
+      { lvl: 1, content: 'Top' },
+      { lvl: 2, content: 'One' },
+      { lvl: 3, content: 'One One' },
+      { lvl: 3, content: 'One Two' },
+      { lvl: 2, content: 'Two' },
+      { lvl: 3, content: 'Two One' }
+    ]
+    const html = getHtmlToc(toc, { tocIncludeTopHeading: true, autoNumberingHeadings: true })
+
+    // h1 is not one of the counted levels, so it takes no prefix.
+    expect(html).toContain('>Top</a>')
+    expect(html).toContain('>1. One</a>')
+    expect(html).toContain('>1.1. One One</a>')
+    expect(html).toContain('>1.2. One Two</a>')
+    expect(html).toContain('>2. Two</a>')
+    // A level-2 heading resets the level-3 counter, as the CSS does.
+    expect(html).toContain('>2.1. Two One</a>')
+  })
+
+  it('leaves entries unnumbered unless auto-numbering is on', async() => {
+    const { getHtmlToc } = await loadPdf()
+    const toc = [
+      { lvl: 1, content: 'Top' },
+      { lvl: 2, content: 'Sub' }
+    ]
+    const html = getHtmlToc(toc, { tocIncludeTopHeading: true })
+
+    expect(html).toContain('>Sub</a>')
+    expect(html).not.toContain('1. Sub')
+  })
 })

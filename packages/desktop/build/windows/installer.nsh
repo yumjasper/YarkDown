@@ -226,7 +226,23 @@
 
 ;======================================================================
 ; customInstall macro is invoked by electron-builder after files are in $INSTDIR
+!macro ytRequireInstalledResource RELATIVE_PATH
+  ${IfNot} ${FileExists} "$INSTDIR\resources\${RELATIVE_PATH}"
+    DetailPrint "Missing installed resource: ${RELATIVE_PATH}"
+    IfSilent +2
+    MessageBox MB_OK|MB_ICONSTOP "YarkText 安装不完整：缺少 ${RELATIVE_PATH}。请重新运行完整安装包。"
+    SetErrorLevel 2
+    Abort
+  ${EndIf}
+!macroend
+
 !macro customInstall
+  ; Do not register or show success for a partially extracted payload.
+  !insertmacro ytRequireInstalledResource "app.asar"
+  !insertmacro ytRequireInstalledResource "static\preference.json"
+  !insertmacro ytRequireInstalledResource "static\locales\zh-CN.min.json"
+  !insertmacro ytRequireInstalledResource "static\locales\en.min.json"
+  !insertmacro ytRequireInstalledResource "icons\md.ico"
   ; The payload is unpacked by this point, so the progress page can move past the
   ; file-writing step while the shell registration below runs.
   !insertmacro ytSkinStageRegistering

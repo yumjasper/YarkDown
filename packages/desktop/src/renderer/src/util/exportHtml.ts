@@ -139,8 +139,11 @@ const createTableBody = (article: string): string =>
   </div>
 </td></tr></tbody>`
 
-// Match a standalone `[TOC]` line (mirrors legacy marked TOC block token).
+// Match a standalone `[TOC]` line (mirrors legacy marked TOC block token), and
+// the paragraph the renderer emits for it. Both stay non-global: a global
+// `RegExp` carries `lastIndex` between calls, and these live at module scope.
 const TOC_REG = /^ {0,3}\[TOC\] *$/im
+const TOC_PARAGRAPH_REG = /<p>\s*\[TOC\]\s*<\/p>/i
 
 // Match the `src="…"` of an <img> tag in the (already sanitized, double-quoted)
 // engine output, so relative image paths can be rewritten to absolute `file://`
@@ -219,16 +222,23 @@ export const exportStyledHTML = async(
   // moved out of the source folder (#1688).
   article = rewriteAnchorHrefs(article)
 
-  // Inject the TOC at the `[TOC]` marker (legacy behaviour: only appears when
-  // the document explicitly contains `[TOC]`). The marker is rendered as a
-  // paragraph by marked, so replace the rendered `<p>[TOC]</p>` first, falling
-  // back to a raw `[TOC]` if present.
-  if (toc) {
-    if (/<p>\s*\[TOC\]\s*<\/p>/i.test(article)) {
-      article = article.replace(/<p>\s*\[TOC\]\s*<\/p>/i, toc)
-    } else if (TOC_REG.test(article)) {
-      article = article.replace(TOC_REG, toc)
-    }
+  // Inject the TOC at the `[TOC]` marker. The marker is rendered as a paragraph
+  // by marked, so replace the rendered `<p>[TOC]</p>` first, falling back to a
+  // raw `[TOC]` if present.
+  //
+  // Every occurrence is replaced, not just the first: a document may carry more
+  // than one marker, and leaving the rest behind puts the literal text into the
+  // export.
+  //
+  // The replacement runs even when `toc` is empty: a document whose headings are
+  // all filtered out (`tocIncludeTopHeading: false` with only h1s, or no headings
+  // at all) yields an empty TOC, and skipping the replace would leave the literal
+  // `[TOC]` in the exported file. Both branches use a replacer function so a
+  // `$&`-style sequence in the TOC markup or title is not read as a pattern.
+  if (TOC_PARAGRAPH_REG.test(article)) {
+    article = article.replace(new RegExp(TOC_PARAGRAPH_REG.source, 'gi'), () => toc)
+  } else if (TOC_REG.test(article)) {
+    article = article.replace(new RegExp(TOC_REG.source, 'gim'), () => toc)
   }
 
   let bodyHtml: string

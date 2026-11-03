@@ -31,12 +31,16 @@ export function bindSourceSearch(cm: CodeMirror.Editor, store: SearchStore, isAc
   // - The apply loop is differential: it only toggles lines whose visibility
   //   actually changed, so an unchanged query re-run costs a Set build only.
   let hiddenLines = new Set<CodeMirror.LineHandle>()
+  // Caret line the current filter was computed for; see the re-apply in
+  // `cursorActivity` below.
+  let filterCaretLine = -1
   const onlyMatchesActive = () => (options as { onlyMatches?: boolean }).onlyMatches === true
   const applyLineFilter = () => {
     const onlyMatches = onlyMatchesActive()
     const wrapper = cm.getWrapperElement()
     wrapper.classList.toggle('cm-filtering-search', onlyMatches)
     if (!onlyMatches) {
+      filterCaretLine = -1
       if (hiddenLines.size) {
         cm.operation(() => {
           for (const line of hiddenLines) cm.removeLineClass(line, 'wrap', 'cm-search-hidden-line')
@@ -95,6 +99,7 @@ export function bindSourceSearch(cm: CodeMirror.Editor, store: SearchStore, isAc
       for (const line of hiddenLines) cm.removeLineClass(line, 'wrap', 'cm-search-hidden-line')
     })
     hiddenLines = nextHidden
+    filterCaretLine = cm.getCursor().line
   }
   const publish = (reveal = true) => {
     store.SEARCH({
@@ -152,7 +157,19 @@ export function bindSourceSearch(cm: CodeMirror.Editor, store: SearchStore, isAc
     if (!replacing && query && isActive()) search({ value: query, opt: options })
   }
   const selection = () => {
-    if (isActive() && !query) store.SEARCH({ value: cm.getSelection(), index: -1, matches: [] })
+    if (!isActive()) return
+    if (!query) {
+      store.SEARCH({ value: cm.getSelection(), index: -1, matches: [] })
+      return
+    }
+    // Keep the caret line visible even without a match (Notepad3 behaviour) and
+    // recover when a click leaves the caret on a line the previous pass hid.
+    // Guarded on the line changing: dragging a selection inside one line fires
+    // cursorActivity continuously and must not re-run the O(lines) pass.
+    if (onlyMatchesActive() && cm.getCursor().line !== filterCaretLine) {
+      applyLineFilter()
+      publish(false)
+    }
   }
   bus.on('searchValue', search)
   bus.on('replaceValue', replace)

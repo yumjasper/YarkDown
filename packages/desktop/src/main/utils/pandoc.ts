@@ -31,6 +31,62 @@ export const PANDOC_EXPORT_FORMATS: readonly PandocExportFormat[] = Object.freez
 export const formatLinksMedia = (target: string): boolean =>
   ['latex', 'rst', 'org', 'mediawiki', 'textile'].includes(target)
 
+/** Matches a standalone `[TOC]` line, mirroring the engine's own marker test. */
+const TOC_MARKER_LINE = /^ {0,3}\[TOC\] *$/i
+
+/** A fenced code block's opening or closing line, whose content is not markdown. */
+const FENCE_LINE = /^ {0,3}(`{3,}|~{3,})/
+
+export interface PandocTocMarkdown {
+  markdown: string
+  /** Whether pandoc should be asked for a table of contents (`--toc`). */
+  toc: boolean
+}
+
+/**
+ * Turn the editor's `[TOC]` marker into something pandoc understands.
+ *
+ * The marker is editor syntax: handed to pandoc as-is it comes out as the literal
+ * text `[TOC]`. Two writers keep it in place — MediaWiki's `__TOC__` and Org's
+ * `#+TOC` keyword — so those get the directive exactly where the marker was. The
+ * rest get `--toc`, which pandoc renders where each writer puts a table of
+ * contents (the front of the document for docx/odt/latex/rst), so the marker is
+ * simply dropped there. Textile has no table of contents at all.
+ *
+ * The marker inside a fenced code block is sample text, not a directive, so the
+ * scan tracks fences and only matches at the top level.
+ */
+export const preparePandocToc = (markdown: string, target: string): PandocTocMarkdown => {
+  const directive = target === 'mediawiki' ? '__TOC__' : target === 'org' ? '#+TOC: headlines 6' : ''
+  const lines = markdown.split('\n')
+  const kept: string[] = []
+  let fence: string | null = null
+  let markerFound = false
+
+  for (const line of lines) {
+    const fenceMatch = FENCE_LINE.exec(line)
+    if (fenceMatch) {
+      const delimiter = fenceMatch[1][0]
+      if (fence === null) fence = delimiter
+      else if (fence === delimiter) fence = null
+      kept.push(line)
+      continue
+    }
+    if (fence === null && TOC_MARKER_LINE.test(line)) {
+      markerFound = true
+      if (directive) kept.push(directive)
+      continue
+    }
+    kept.push(line)
+  }
+
+  return {
+    markdown: markerFound ? kept.join('\n') : markdown,
+    // A writer that carries its own directive must not also get pandoc's front TOC.
+    toc: markerFound && !directive && target !== 'textile'
+  }
+}
+
 // What pandoc fetches over the network instead of opening: `https:` or its protocol-
 // relative form. A path written with backslashes is a file, and mirrors like a local one.
 export const isRemoteMedia = (url: string): boolean => /^(https?:)?\/\//i.test(url)
@@ -324,6 +380,8 @@ export interface PandocToFileOptions {
   mirrorMedia?: boolean
   /** Reader used to parse `input`; see `getPandocReader`. */
   reader?: string
+  /** Ask pandoc for a table of contents (`--toc`); see `preparePandocToc`. */
+  toc?: boolean
   metadata?: Record<string, string>
 }
 
@@ -346,9 +404,14 @@ pandoc.toFile = async(
       reader = getPandocReader({ superSubScript: false }),
       metadata = {},
       resourcePath,
-      mirrorMedia
+      mirrorMedia,
+      toc
     } = options
     const option = ['-f', reader, '-t', to, '-s']
+    // `--toc` only has an effect together with `-s`, which is always passed above.
+    // The depth has to match the HTML export, which lists every heading level —
+    // pandoc's own default stops at level 3.
+    if (toc) option.push('--toc', '--toc-depth=6')
     // pandoc splits `--metadata` on the first colon only, so "Q3: plan" survives.
     for (const [key, value] of Object.entries(metadata)) {
       if (value) option.push(`--metadata=${key}:${value}`)

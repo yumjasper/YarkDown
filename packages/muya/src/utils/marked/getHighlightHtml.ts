@@ -21,6 +21,7 @@ const DIAGRAM_TYPE = [
     'vega-lite',
     'flowchart',
     'sequence',
+    'echarts',
 ];
 
 function highlight(code: string, lang: string) {

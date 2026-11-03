@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 const root = fileURLToPath(new URL('..', import.meta.url))
 const profiles = {
   quick: [
+    ['exec', 'node', '--test', 'scripts/validate-packaged-resources.test.mjs'],
     ['-C', 'packages/desktop', 'exec', 'vitest', 'run', '--maxWorkers=4'],
     ['-C', 'packages/muya', 'exec', 'vitest', 'run', '--maxWorkers=4']
   ],

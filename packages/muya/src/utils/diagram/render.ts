@@ -118,6 +118,12 @@ export interface IRenderOptions {
     mermaidTheme: string;
     plantumlServer: string;
     sequenceTheme: 'hand' | 'simple';
+    /**
+     * Editor background color, read live off the theme's CSS variable. ECharts
+     * paints an opaque canvas/svg background of its own, so it must be told the
+     * editor's background explicitly or a dark theme shows a white chart card.
+     */
+    echartsTheme?: string;
 }
 
 export interface IExportRenderOptions extends IRenderOptions {
@@ -149,6 +155,7 @@ export async function renderDiagram({
     mermaidTheme,
     plantumlServer,
     sequenceTheme,
+    echartsTheme,
 }: IRenderOptions) {
     const render = await loadRenderer(type);
     const options = {};
@@ -192,5 +199,24 @@ export async function renderDiagram({
         );
         target.innerHTML = svg;
         bindFunctions?.(target);
+    }
+    else if (type === 'echarts') {
+        const spec = JSON.parse(code) as Record<string, unknown>;
+        // An explicit `backgroundColor` in the spec wins; otherwise follow the
+        // editor theme. `null` keeps the chart transparent.
+        if (spec.backgroundColor == null && echartsTheme)
+            spec.backgroundColor = echartsTheme;
+
+        target.innerHTML = '';
+        // Re-rendering (each keystroke in the fence) would stack instances on
+        // the same node: dispose the previous one before init.
+        render.getInstanceByDom(target)?.dispose();
+        // The preview container is width-constrained but has no fixed height;
+        // ECharts needs an explicit box, so size it here and again on resize.
+        const chart = render.init(target, undefined, { renderer: 'svg' });
+        chart.setOption(spec);
+        if (target.clientHeight === 0)
+            target.style.height = '400px';
+        chart.resize();
     }
 }

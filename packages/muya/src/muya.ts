@@ -92,6 +92,7 @@ const PARAGRAPH_LABEL_MAP: Record<string, string> = {
     'vega-lite': 'diagram vega-lite',
     'flowchart': 'diagram flowchart',
     'sequence': 'diagram sequence',
+    'echarts': 'diagram echarts',
 };
 
 // The outmost-block labels that wrap a cross-block selection into a list.

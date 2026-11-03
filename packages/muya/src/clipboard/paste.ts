@@ -46,10 +46,15 @@ function isSingleCellSelected(clipboard: Clipboard): boolean {
 
 // The deepest last text-bearing leaf of a parsed state (a paragraph inside a
 // list / quote), used to sew the anchor's trailing text onto the last block.
+// A `toc` state carries its markdown marker in `text` but has no editable
+// content, so appending to it would corrupt the `[TOC]` line.
 function lastLeafState(state: TState): Nullable<{ text: string }> {
-    const node = state as { children?: TState[]; text?: string };
+    const node = state as { name?: string; children?: TState[]; text?: string };
     if (Array.isArray(node.children) && node.children.length > 0)
         return lastLeafState(node.children[node.children.length - 1]);
+
+    if (node.name === 'toc')
+        return null;
 
     return typeof node.text === 'string' ? (node as { text: string }) : null;
 }
@@ -78,6 +83,16 @@ function insertStatesAfter(
         const newBlock = ScrollPage.loadBlock(state.name).create(muya, state);
         wb?.parent?.insertAfter(newBlock, wb);
         wb = newBlock;
+    }
+
+    // A trailing block with no editable content (a `[TOC]` marker renders the
+    // outline and takes no caret) would leave the user without a cursor, so
+    // give the seam a paragraph to land in.
+    if (wb && !wb.firstContentInDescendant()) {
+        const paragraphState = { name: 'paragraph' as const, text: '' };
+        const paragraph = ScrollPage.loadBlock(paragraphState.name).create(muya, paragraphState);
+        wb.parent?.insertAfter(paragraph, wb);
+        wb = paragraph;
     }
 
     return wb;
@@ -424,7 +439,15 @@ function applyParsedPaste(
         return;
 
     const head = content.substring(0, start.offset);
-    const tail = content.substring(end.offset);
+    let tail = content.substring(end.offset);
+
+    // A pasted `[TOC]` marker has no editable content, so the anchor's trailing
+    // text cannot be sewn onto it (it would be dropped). Keep that text in its
+    // own paragraph below the marker instead.
+    if (tail.length > 0 && states[states.length - 1].name === 'toc') {
+        states.push({ name: 'paragraph', text: tail });
+        tail = '';
+    }
 
     const remaining = mergePasteIntoHeading(
         anchorBlock,
