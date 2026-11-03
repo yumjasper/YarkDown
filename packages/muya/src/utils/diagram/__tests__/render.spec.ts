@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { afterEach, describe, expect, it } from 'vitest';
-import { finalizeRenderedDiagram, withMermaidInit } from '../render';
+import { finalizeRenderedDiagram, readEchartsPng, withMermaidInit } from '../render';
 
 const hosts: HTMLElement[] = [];
 
@@ -205,5 +205,18 @@ describe('withMermaidInit', () => {
     it('leaves a `---` that is not frontmatter alone', () => {
         expect(withMermaidInit('graph TD\n---\n', { htmlLabels: false }))
             .toBe('%%{init: {"htmlLabels":false}}%%\ngraph TD\n---\n');
+    });
+});
+
+describe('readEchartsPng', () => {
+    // The export path reads pixels back through the chart instance it finds on
+    // the element. When there is none — a chart that never rendered, or one
+    // whose instance was disposed by a re-render — the caller has to be able to
+    // tell that apart from a blank image, so this reports null rather than
+    // throwing into the save path.
+    it('reports null for an element with no chart on it', async () => {
+        const target = makeTarget('<div class="mu-diagram-preview"></div>');
+
+        await expect(readEchartsPng(target)).resolves.toBeNull();
     });
 });
