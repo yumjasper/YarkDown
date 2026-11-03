@@ -52,7 +52,9 @@ function accessibleName(media: Element, fallback: string): string {
 }
 
 function applyFinalizations(target: HTMLElement, fallback: string): boolean {
-    const media = target.querySelector('svg, img');
+    // A GL chart lands as a `<canvas>`, so it has to count as rendered media
+    // here too — otherwise it never gets its role or label.
+    const media = target.querySelector('svg, img, canvas');
     if (!media)
         return false;
     if (media.tagName.toLowerCase() === 'svg' && !sizeSvg(media))
@@ -162,7 +164,26 @@ export async function readEchartsPng(target: HTMLElement): Promise<string | null
     if (!chart)
         return null;
 
-    const url: string = chart.getDataURL({ type: 'png', pixelRatio: 2 });
+    // zrender only composites the non-builtin layers (the WebGL one echarts-gl
+    // adds) while the requested ratio does not exceed the device ratio; above
+    // it, `getRenderedCanvas` walks the display list instead, and GL content
+    // lives outside that list — a 3D chart then exports as a blank image.
+    // Asking for 2× on a 1 dpr screen hit exactly that, so cap at the device
+    // ratio and accept its resolution.
+    //
+    // The GL layer also draws on the animation frame after a resize and
+    // composites by stretching its canvas into the target, so reading right
+    // after a layout change can capture the previous viewport — the chart comes
+    // out stretched. Wait for the frame in which it settles.
+    await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+    });
+
+    const deviceRatio = window.devicePixelRatio || 1;
+    const url: string = chart.getDataURL({
+        type: 'png',
+        pixelRatio: Math.min(2, Math.max(1, deviceRatio)),
+    });
 
     return url.slice(url.indexOf(',') + 1);
 }

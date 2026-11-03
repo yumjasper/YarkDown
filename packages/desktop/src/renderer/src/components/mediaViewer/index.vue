@@ -145,6 +145,7 @@ import { ZoomPanController } from '@/util/zoomPan'
 import {
   exportDiagram,
   naturalSvgSize,
+  snapshotCanvasChart,
   type DiagramSource,
   type ExportFormat
 } from '@/util/diagramExport'
@@ -377,7 +378,7 @@ const onKeydown = (event: KeyboardEvent) => {
 }
 
 const open = async (
-  mount: (stage: HTMLElement) => HTMLElement,
+  mount: (stage: HTMLElement) => HTMLElement | Promise<HTMLElement>,
   name: string,
   source: DiagramSource | null = null
 ) => {
@@ -389,7 +390,7 @@ const open = async (
   clearStage()
   diagram.value = source
   label.value = name
-  const content = mount(stage)
+  const content = await mount(stage)
   controller = new ZoomPanController(stage, content, {
     // The toolbar and the close control are layered over the stage, and are
     // where the pointer sits after using them.
@@ -429,7 +430,7 @@ const openImage = (url: string) =>
 
 const openDiagram = (source: DiagramSource, name: string | null) =>
   open(
-    (stage) => {
+    async(stage) => {
       const figure = document.createElement('figure')
       figure.className = 'mu-diagram-block'
       // Diagram renderers draw dark strokes on an assumed light canvas, so on
@@ -442,6 +443,25 @@ const openDiagram = (source: DiagramSource, name: string | null) =>
       // The dialog already carries this name; announcing it twice helps nobody.
       preview.removeAttribute('role')
       preview.removeAttribute('aria-label')
+
+      // `cloneNode` copies a `<canvas>` element but not its bitmap, so a GL
+      // chart's clone would sit there blank. Ask the chart for its image
+      // instead, which composites the WebGL layer too. The clone and the live
+      // node are in the same order, so the two lists pair up.
+      const liveCanvases = source.preview.querySelectorAll('canvas')
+      const clonedCanvases = preview.querySelectorAll('canvas')
+      if (liveCanvases.length && liveCanvases.length === clonedCanvases.length) {
+        const snapshotUrl = await snapshotCanvasChart(source)
+        liveCanvases.forEach((live, index) => {
+          if (!snapshotUrl) return
+          const snapshot = document.createElement('img')
+          snapshot.src = snapshotUrl
+          const box = live.getBoundingClientRect()
+          snapshot.style.cssText = `display:block;width:${Math.round(box.width)}px;height:${Math.round(box.height)}px`
+          snapshot.alt = ''
+          clonedCanvases[index].replaceWith(snapshot)
+        })
+      }
 
       const live = source.preview.querySelector('svg')
       const clone = preview.querySelector('svg')

@@ -225,6 +225,18 @@ const exportPlantuml = async(source: DiagramSource, format: ExportFormat): Promi
   return { data: result.data, mime: result.mime, extension: format }
 }
 
+/**
+ * A PNG data URL of a canvas-rendered chart, for the viewer to display.
+ *
+ * A DOM clone carries the `<canvas>` element but not its bitmap, so the viewer
+ * would show an empty box. The chart instance is asked for the image instead,
+ * which is also what rounds up the WebGL layer a 3D chart draws into.
+ */
+export const snapshotCanvasChart = async(source: DiagramSource): Promise<string | null> => {
+  const base64 = await readEchartsPng(source.preview)
+  return base64 ? `data:image/png;base64,${base64}` : null
+}
+
 export const exportDiagram = async(
   source: DiagramSource,
   format: ExportFormat,

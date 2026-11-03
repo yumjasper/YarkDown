@@ -120,7 +120,11 @@ export class PreviewToolBar extends BaseFloat {
         if (!block)
             return [];
 
-        const rendered = !!this._previewNode()?.querySelector('svg, img');
+        // A GL chart (3D surface, scatter3D, globe, …) draws into a `<canvas>`:
+        // `echarts-gl` needs the canvas painter. Looking only for `svg`/`img`
+        // left those charts with no way to open the viewer, and so no way to
+        // export or copy them.
+        const rendered = !!this._previewNode()?.querySelector('svg, img, canvas');
 
         return previewToolBarItems(block.blockName, rendered);
     }

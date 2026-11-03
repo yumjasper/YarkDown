@@ -152,6 +152,18 @@ describe('finalizeRenderedDiagram — accessible name', () => {
         expect(target.getAttribute('aria-label')).toBe(FALLBACK);
     });
 
+    // A GL chart (3D surface, scatter3D, globe, …) lands as a `<canvas>`; not
+    // recognising it left those charts without a role or a label, and the
+    // preview toolbar refused to offer its "view" action for them.
+    it('names a canvas chart', () => {
+        const target = makeTarget('<canvas width="640" height="480"></canvas>');
+
+        finalizeRenderedDiagram(target, FALLBACK);
+
+        expect(target.getAttribute('role')).toBe('img');
+        expect(target.getAttribute('aria-label')).toBe(FALLBACK);
+    });
+
     it('ignores a nested title that belongs to a shape rather than the diagram', () => {
         const target = makeTarget(
             '<svg viewBox="0 0 1 1"><g><title>Node A</title></g></svg>',

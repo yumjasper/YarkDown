@@ -124,7 +124,22 @@ export class MarkdownToHtml {
         if (!useGL)
             return;
 
-        const url: string = chart.getDataURL({ type: 'png', pixelRatio: 2 });
+        // Same cap as `readEchartsPng`: zrender only composites the WebGL
+        // layer while the ratio does not exceed the device's, and above that it
+        // redraws from the display list — where GL content never appears — so
+        // 2× on a 1 dpr screen baked a blank image into the export.
+        const deviceRatio = window.devicePixelRatio || 1;
+        // The GL layer draws its scene on the animation frame after a resize and
+        // composites by stretching its canvas into the target, so a container
+        // that was just coalesced into shape is read before its viewport caught
+        // up — the chart then comes out enlarged. Give it the frame it needs.
+        await new Promise<void>((resolve) => {
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+        });
+        const url: string = chart.getDataURL({
+            type: 'png',
+            pixelRatio: Math.min(2, Math.max(1, deviceRatio)),
+        });
         chart.dispose();
 
         const img = document.createElement('img');
