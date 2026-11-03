@@ -93,6 +93,46 @@ describe('needsGL', () => {
         expect(needsGL({ series: { type: 'surface' } })).toBe(true);
         expect(needsGL({ series: { type: 'bar' } })).toBe(false);
     });
+
+    // Each of these was confirmed to render through `echarts-gl` in the desktop
+    // app; recognising only a subset would silently send them down the svg path,
+    // where `zr.painter.insertLayer()` is missing and the chart throws.
+    it.each([
+        'surface',
+        'bar3D',
+        'line3D',
+        'scatter3D',
+        'lines3D',
+        'polygons3D',
+        'map3D',
+        'scatterGL',
+        'graphGL',
+        'flowGL',
+        'linesGL',
+    ])('recognises the %s series type', (type) => {
+        expect(needsGL({ series: [{ type }] })).toBe(true);
+    });
+
+    it.each([
+        'grid3D',
+        'xAxis3D',
+        'yAxis3D',
+        'zAxis3D',
+        'geo3D',
+        'globe',
+        'mapbox3D',
+        'maptalks3D',
+    ])('recognises a spec carrying only %s', (key) => {
+        expect(needsGL({ [key]: {}, series: [] })).toBe(true);
+    });
+
+    it('finds a GL series among flat ones', () => {
+        expect(needsGL({ series: [{ type: 'line' }, { type: 'bar3D' }] })).toBe(true);
+    });
+
+    it('ignores a series whose type is missing or not a string', () => {
+        expect(needsGL({ series: [{}, { type: null }, { type: 3 }] })).toBe(false);
+    });
 });
 
 describe('prepareEchartsSpec', () => {
