@@ -36,7 +36,7 @@ export { TableColumnToolbar } from './ui/tableColumnToolbar';
 export { TableDragBar } from './ui/tableDragBar';
 export { TableRowColumMenu } from './ui/tableRowColumMenu';
 export { EDITOR_ICON_PATHS } from './ui/toolbarIcons';
-export { renderDiagramForExport } from './utils/diagram/render';
+export { readEchartsPng, renderDiagramForExport } from './utils/diagram/render';
 export type { IExportRenderOptions } from './utils/diagram/render';
 export type { IImageInfo } from './utils/image';
 export { getImageInfo } from './utils/image';

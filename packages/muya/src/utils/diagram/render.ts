@@ -1,3 +1,4 @@
+import { ensureEchartsGL, needsGL, prepareEchartsSpec } from './echarts';
 import loadRenderer from './index';
 
 // Mermaid's own `run()` derives the id it stamps on the rendered `<svg>` from
@@ -147,6 +148,25 @@ export async function renderDiagramForExport({
     await renderDiagram({ ...options, code });
 }
 
+/**
+ * Read a live ECharts instance off `target` as PNG bytes (base64 payload only).
+ *
+ * A GL chart renders into a WebGL canvas whose drawing buffer is not retained,
+ * so reading the canvas element directly can come back empty. ECharts keeps its
+ * own reference and composites through the same path, which is why the export
+ * of a 3D chart has to come from here rather than from `querySelector('canvas')`.
+ */
+export async function readEchartsPng(target: HTMLElement): Promise<string | null> {
+    const echarts = await loadRenderer('echarts');
+    const chart = echarts.getInstanceByDom(target);
+    if (!chart)
+        return null;
+
+    const url: string = chart.getDataURL({ type: 'png', pixelRatio: 2 });
+
+    return url.slice(url.indexOf(',') + 1);
+}
+
 export async function renderDiagram({
     type,
     code,
@@ -201,22 +221,88 @@ export async function renderDiagram({
         bindFunctions?.(target);
     }
     else if (type === 'echarts') {
-        const spec = JSON.parse(code) as Record<string, unknown>;
-        // An explicit `backgroundColor` in the spec wins; otherwise follow the
-        // editor theme. `null` keeps the chart transparent.
-        if (spec.backgroundColor == null && echartsTheme)
-            spec.backgroundColor = echartsTheme;
+        await renderEcharts(code, target, echartsTheme);
+    }
+}
 
-        target.innerHTML = '';
-        // Re-rendering (each keystroke in the fence) would stack instances on
-        // the same node: dispose the previous one before init.
-        render.getInstanceByDom(target)?.dispose();
-        // The preview container is width-constrained but has no fixed height;
-        // ECharts needs an explicit box, so size it here and again on resize.
-        const chart = render.init(target, undefined, { renderer: 'svg' });
-        chart.setOption(spec);
-        if (target.clientHeight === 0)
-            target.style.height = '400px';
-        chart.resize();
+/**
+ * Height reserved for a chart whose block has no intrinsic size, in CSS pixels.
+ * Mirrors the 400px the SVG path has always used.
+ */
+const ECHARTS_FALLBACK_HEIGHT = 400;
+
+/**
+ * Below this the plot area is unusable, so the block is given the fallback
+ * height instead. Not zero: the desktop theme pads `.mu-diagram-preview`
+ * vertically, which alone makes an empty block measure ~24px tall.
+ */
+const ECHARTS_MIN_PLOT_HEIGHT = 120;
+
+// A GL canvas has to be resized by hand when its box changes. One observer per
+// host element, dropped and rebuilt on each render of that block.
+const chartResizeObservers = new WeakMap<HTMLElement, ResizeObserver>();
+
+/**
+ * Draw an `echarts` fence. ECharts renders SVG by default — lighter, and the
+ * diagram-export path serialises `<svg>` — but a GL chart (3D surfaces,
+ * scatter3D, globe, …) must use canvas: `echarts-gl` mounts its WebGL layer
+ * through `zr.painter.insertLayer()`, which only the canvas painter provides.
+ */
+async function renderEcharts(
+    code: string,
+    target: HTMLElement,
+    backgroundColor?: string,
+): Promise<void> {
+    const spec = JSON.parse(code) as Record<string, unknown>;
+    // An explicit `backgroundColor` in the spec wins; otherwise follow the
+    // editor theme. `null` keeps the chart transparent.
+    if (spec.backgroundColor == null && backgroundColor)
+        spec.backgroundColor = backgroundColor;
+
+    const useGL = needsGL(spec);
+    if (useGL)
+        await ensureEchartsGL();
+    prepareEchartsSpec(spec);
+
+    const echarts = await loadRenderer('echarts');
+    // Re-rendering (each keystroke in the fence) would stack instances on the
+    // same node: dispose the previous one before init.
+    echarts.getInstanceByDom(target)?.dispose();
+    target.innerHTML = '';
+
+    // The preview container is width-constrained but has no fixed height, and
+    // a block that just mounted can measure as zero. A GL layer sized 0×0
+    // stays blank, so give it a box before init rather than after.
+    //
+    // The check is against the content box, not `clientHeight`: the desktop
+    // theme pads this container vertically, so an empty block still reports
+    // ~24px while ECharts — which subtracts that padding itself — would lay the
+    // plot out at 0 height and draw nothing.
+    const style = getComputedStyle(target);
+    const verticalPadding
+        = (Number.parseFloat(style.paddingTop) || 0) + (Number.parseFloat(style.paddingBottom) || 0);
+    if (target.clientHeight - verticalPadding < ECHARTS_MIN_PLOT_HEIGHT)
+        target.style.height = `${ECHARTS_FALLBACK_HEIGHT}px`;
+
+    const chart = echarts.init(target, undefined, {
+        renderer: useGL ? 'canvas' : 'svg',
+    });
+    chart.setOption(spec);
+    chart.resize();
+
+    // Keep the canvas in step with its column when the window or sidebar
+    // changes width. ECharts emits no `disposed` event, so the observer is
+    // tracked per target and torn down on the next render of the same block.
+    chartResizeObservers.get(target)?.disconnect();
+    if (useGL) {
+        const observer = new ResizeObserver(() => {
+            if (!chart.isDisposed())
+                chart.resize();
+        });
+        observer.observe(target);
+        chartResizeObservers.set(target, observer);
+    }
+    else {
+        chartResizeObservers.delete(target);
     }
 }

@@ -1,4 +1,4 @@
-import { renderDiagramForExport } from '@muyajs/core'
+import { readEchartsPng, renderDiagramForExport } from '@muyajs/core'
 
 export type ExportFormat = 'svg' | 'png'
 
@@ -136,6 +136,15 @@ export const serializeSvg = (svg: SVGSVGElement, options: SerializeOptions): Ser
 
 const toBytes = (text: string): Uint8Array => new TextEncoder().encode(text)
 
+/** Decode the base64 payload of a `data:` URL into raw bytes. */
+const decodeBase64 = (base64: string): Uint8Array => {
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+
+  return bytes
+}
+
 const loadSvgImage = (markup: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
     const image = new Image()
@@ -222,6 +231,17 @@ export const exportDiagram = async(
   background: string
 ): Promise<ExportedImage> => {
   if (source.type === 'plantuml') return exportPlantuml(source, format)
+
+  // A GL chart (3D surface, scatter3D, globe, …) renders into a WebGL canvas
+  // because `echarts-gl` needs the canvas painter. That buffer is not retained
+  // after a frame, so the pixels are read back through the ECharts instance,
+  // and PNG is the only format it can offer.
+  if (source.type === 'echarts' && source.preview.querySelector('canvas')) {
+    const base64 = await readEchartsPng(source.preview)
+    if (!base64) throw new Error('The diagram has not rendered')
+
+    return { data: decodeBase64(base64), mime: 'image/png', extension: 'png' }
+  }
 
   const live = source.preview.querySelector('svg')
   if (!live) throw new Error('The diagram has not rendered')

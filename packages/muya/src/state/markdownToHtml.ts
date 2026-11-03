@@ -6,6 +6,7 @@ import exportStyle from '../assets/styles/exportStyle.css?inline';
 import { EXPORT_DOMPURIFY_CONFIG } from '../config';
 import { isHTMLElement, sanitize, unescapeHTML } from '../utils';
 import loadRenderer from '../utils/diagram';
+import { ensureEchartsGL, needsGL, prepareEchartsSpec } from '../utils/diagram/echarts';
 
 import { getHighlightHtml } from '../utils/marked';
 import { generateGithubSlug } from '../utils/slug';
@@ -91,6 +92,48 @@ export class MarkdownToHtml {
         }
     }
 
+    /**
+     * Render an `echarts` fence into the export container.
+     *
+     * Export always uses the light background, like mermaid and vega do, since
+     * the export stylesheet is light-only. A GL chart draws outside the DOM, so
+     * its pixels are baked into an `<img>`; otherwise the exported HTML would
+     * carry an empty box.
+     */
+    private async _renderEchartsForExport(
+        rawCode: string,
+        container: HTMLElement,
+        render: typeof import('echarts'),
+    ) {
+        const spec = JSON.parse(rawCode) as Record<string, unknown>;
+        spec.backgroundColor ??= '#ffffff';
+        container.style.height = '400px';
+
+        const useGL = needsGL(spec);
+        if (useGL)
+            await ensureEchartsGL();
+        prepareEchartsSpec(spec);
+
+        render.getInstanceByDom(container)?.dispose();
+        const chart = render.init(container, undefined, {
+            renderer: useGL ? 'canvas' : 'svg',
+        });
+        chart.setOption(spec);
+        chart.resize();
+
+        if (!useGL)
+            return;
+
+        const url: string = chart.getDataURL({ type: 'png', pixelRatio: 2 });
+        chart.dispose();
+
+        const img = document.createElement('img');
+        img.src = url;
+        img.style.maxWidth = '100%';
+        container.style.height = '';
+        container.replaceChildren(img);
+    }
+
     private async _renderDiagram() {
         const selector
             = 'code.language-vega-lite, code.language-plantuml, code.language-flowchart, code.language-sequence, code.language-echarts';
@@ -153,15 +196,7 @@ export class MarkdownToHtml {
                     await render(diagramContainer, JSON.parse(rawCode), options);
                 }
                 else if (functionType === 'echarts') {
-                    // Export uses the light `--editor-bg-color` (white) like
-                    // mermaid/vega do, since the export stylesheet is light-only.
-                    const spec = JSON.parse(rawCode) as Record<string, unknown>;
-                    spec.backgroundColor ??= '#ffffff';
-                    diagramContainer.style.height = '400px';
-                    render.getInstanceByDom(diagramContainer)?.dispose();
-                    const chart = render.init(diagramContainer, undefined, { renderer: 'svg' });
-                    chart.setOption(spec);
-                    chart.resize();
+                    await this._renderEchartsForExport(rawCode, diagramContainer, render);
                 }
             }
             catch {
