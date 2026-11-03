@@ -137,17 +137,38 @@ const hoverDiagram = async(page: Page, index: number): Promise<void> => {
   await block.waitFor({ state: 'visible', timeout: 20000 })
   await block.scrollIntoViewIfNeeded()
   await page.waitForTimeout(150)
-  const box = await block.boundingBox()
-  if (!box) throw new Error('diagram block has no box')
-  // A block taller or wider than the window has its centre off-screen, and the
-  // pointer would then land outside the viewport entirely.
-  const view = await page.evaluate(() => ({ w: window.innerWidth, h: window.innerHeight }))
-  const clamp = (lo: number, mid: number, hi: number): number =>
-    Math.min(Math.max(mid, lo), hi)
-  await page.mouse.move(
-    clamp(20, box.x + box.width / 2, view.w - 20),
-    clamp(20, box.y + box.height / 2, view.h - 20)
-  )
+
+  // Hover a point that is both inside the block and actually over it. A block
+  // taller or wider than the window has its centre off-screen, and clamping the
+  // centre into the viewport is not enough: the bottom strip of the window is
+  // covered by the toolbar and the status bar, so `elementFromPoint` there
+  // returns those and the block never sees the pointer.
+  const point = await page.evaluate((i) => {
+    const target = document.querySelectorAll('.editor-component figure.mu-diagram-block')[i]
+    if (!target) return null
+    const box = target.getBoundingClientRect()
+    const pad = 4
+    const left = Math.max(box.left + pad, pad)
+    const right = Math.min(box.right - pad, window.innerWidth - pad)
+    const top = Math.max(box.top + pad, pad)
+    const bottom = Math.min(box.bottom - pad, window.innerHeight - pad)
+    if (right <= left || bottom <= top) return null
+
+    // Centre first, then work outwards, so a block that fits is hovered the way
+    // a reader would.
+    for (const fy of [0.5, 0.3, 0.7, 0.15, 0.85]) {
+      for (const fx of [0.5, 0.25, 0.75]) {
+        const x = left + (right - left) * fx
+        const y = top + (bottom - top) * fy
+        const hit = document.elementFromPoint(x, y)
+        if (hit && target.contains(hit)) return { x: Math.round(x), y: Math.round(y) }
+      }
+    }
+    return null
+  }, index)
+  if (!point) throw new Error(`diagram block ${index} has no point the pointer can reach`)
+
+  await page.mouse.move(point.x, point.y)
   await expect.poll(() => toolbarShownFor(page, index), { timeout: 10000 }).toBe(true)
 }
 
