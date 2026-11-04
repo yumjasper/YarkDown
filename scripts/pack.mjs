@@ -26,6 +26,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { BuildProgress } from './build-progress.mjs'
+import { resolveSpectreToolset } from './msvc-spectre.mjs'
 
 const REPO_ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)))
 const DESKTOP_ROOT = path.join(REPO_ROOT, 'packages', 'desktop')
@@ -243,49 +244,6 @@ function stage7zaFromCache () {
 
   const staged = path.join(target, 'bin', '7za.exe')
   return fs.existsSync(staged) ? staged : null
-}
-
-/** Directories holding MSVC Spectre-mitigated libraries, if any are installed. */
-function findSpectreLibs () {
-  if (process.platform !== 'win32') return []
-
-  const bases = [
-    'C:\\Program Files\\Microsoft Visual Studio\\2022',
-    'C:\\Program Files (x86)\\Microsoft Visual Studio\\2022'
-  ]
-  const found = []
-
-  for (const base of bases) {
-    if (!fs.existsSync(base)) continue
-    for (const edition of fs.readdirSync(base)) {
-      const toolsRoot = path.join(base, edition, 'VC', 'Tools', 'MSVC')
-      if (!fs.existsSync(toolsRoot)) continue
-      for (const version of fs.readdirSync(toolsRoot)) {
-        const spectre = path.join(toolsRoot, version, 'lib', 'spectre')
-        if (fs.existsSync(spectre)) found.push({ version, spectre })
-      }
-    }
-  }
-
-  return found
-}
-
-/**
- * MSVC toolset that ships Spectre-mitigated libraries for the target arch.
- *
- * Visual Studio keeps a default toolset per toolset major (`v143` ->
- * Microsoft.VCToolsVersion.v143.default.txt) that may lag behind the one the
- * Spectre component installs into, so MSBuild picks a toolset whose
- * `lib\spectre\<arch>` folder does not exist and fails with MSB8040. Pinning
- * VCToolsVersion to a toolset that does have the folder resolves it without
- * reinstalling anything.
- */
-function resolveSpectreToolset (arch) {
-  const candidates = findSpectreLibs()
-    .filter((entry) => fs.existsSync(path.join(entry.spectre, arch)))
-    .map((entry) => entry.version)
-    .sort((a, b) => b.localeCompare(a, undefined, { numeric: true }))
-  return candidates[0] ?? null
 }
 
 function requireFile (file, hint) {

@@ -41,7 +41,6 @@ const isPnpm = userAgent.startsWith('pnpm')
 // node_modules/.bin entries directly (hoisted by shamefully-hoist=true).
 const ext = process.platform === 'win32' ? '.cmd' : ''
 const patchPackageBin = path.join(desktopRoot, 'node_modules', '.bin', `patch-package${ext}`)
-const electronRebuildBin = path.join(desktopRoot, 'node_modules', '.bin', `electron-rebuild${ext}`)
 
 // ── 1. Ensure native-keymap source is present (pm removes it on optional failure) ──
 const nativeKeymapDir = path.join(desktopRoot, 'node_modules', 'native-keymap')
@@ -152,8 +151,12 @@ console.log('Applying patches...')
 run(`"${patchPackageBin}"`, { cwd: desktopRoot })
 
 // ── 4. Rebuild native modules for Electron ABI ──────────────────────────────
+// Goes through scripts/rebuild-native.mjs so VCToolsVersion is pinned to a
+// toolset that ships Spectre-mitigated libraries (native-keymap requests them).
 console.log('Rebuilding native modules for Electron...')
-run(`"${electronRebuildBin}" -f`, { cwd: desktopRoot })
+run(`"${process.execPath}" "${path.join(repoRoot, 'scripts', 'rebuild-native.mjs')}" -f`, {
+  cwd: desktopRoot
+})
 
 // ── 5. Generate minified locale files ───────────────────────────────────────
 console.log('Minifying locales...')

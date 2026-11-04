@@ -76,7 +76,7 @@ call build.bat --no-pause
 
 - Node.js 22。CLI 会优先使用当前 Node 22，或探测 `.tools/nodejs/node.exe`、`D:/Tools/nodejs22` 和 `YARKTEXT_NODE_ROOT`。
 - 可用的 pnpm 10 和已安装的工作区依赖。
-- VS 2022 C++ 编译工具、Windows SDK，以及目标架构的 Spectre 缓解库。CLI 会选择装有该库的 MSVC 工具集，不需要删除原生模块的 Spectre 配置。
+- VS 2022 C++ 编译工具、Windows SDK，以及目标架构的 Spectre 缓解库。原生模块重编译统一走 `scripts/rebuild-native.mjs`，它会把 `VCToolsVersion` 固定到实际装有 `lib\spectre\<arch>` 的工具集，因此不需要删除原生模块的 Spectre 配置，也不需要手工导出环境变量。
 - 可选的 `.tools/7zip/bin/7za.exe`，或通过 `ELECTRON_BUILDER_7ZIP_PATH` 指定 7za；未提供时由 electron-builder 自动获取。
 
 显式指定构建用 Node：

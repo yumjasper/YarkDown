@@ -1,6 +1,6 @@
 {
   "name": "yarktext-monorepo",
-  "version": "1.0.45",
+  "version": "1.0.46",
   "description": "YarkText monorepo root",
   "private": true,
   "homepage": "https://github.com/yumjasper/YarkDown",
@@ -14,7 +14,7 @@
     "format": "prettier --write .",
     "lint": "eslint --cache .",
     "minify-locales": "tsx scripts/minify-locales.ts",
-    "rebuild-native": "pnpm --filter marktext rebuild-native",
+    "rebuild-native": "node scripts/rebuild-native.mjs",
     "start": "pnpm --filter marktext start",
     "dev": "pnpm --filter marktext dev",
     "build": "pnpm --filter marktext build",
