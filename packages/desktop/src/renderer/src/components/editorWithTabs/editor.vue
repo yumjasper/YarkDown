@@ -1389,6 +1389,14 @@ const handleExport = async (options: unknown) => {
   const muya = editor.value
   if (!muya) return
 
+  // The status-bar indicator already says a run is in flight; a second one would
+  // race on the same save dialog and leave two write requests queued.
+  if (editorStore.exportingType) return
+
+  // Started before the HTML is built: preparing a long document is the slow half
+  // and the window where a user assumes the click was lost and tries again.
+  if (type !== 'print') editorStore.BEGIN_EXPORT(type)
+
   const extraCss = await getCssForOptions(opts as unknown as PdfCssOptions)
   const htmlToc = getHtmlToc(muya.getTOC(), opts as unknown as HtmlTocOptions)
   const markdown = muya.getMarkdown()
@@ -1411,6 +1419,8 @@ const handleExport = async (options: unknown) => {
         editorStore.EXPORT({ type, content: type === 'html' ? removeHtmlStyles(content) : content })
       } catch (err) {
         log.error('Failed to export document:', err)
+        // Nothing reached main, so no `mt::export-finished` will arrive.
+        editorStore.FINISH_EXPORT(type)
         notice.notify({
           title: t('editor.export.failed', { type: htmlTitle || 'html' }),
           type: 'error',
@@ -1451,14 +1461,14 @@ const handleExport = async (options: unknown) => {
           // Chromium renders an empty trailing page when the content height
           // exactly fills the page; a 1mm cushion prevents that.
           adaptiveHeight =
-            printer!.measureAdaptiveHeightPx(
+            (await printer!.measureAdaptiveHeightPx(
               html,
               pageWidthMm,
               marginTopMm,
               marginBottomMm,
               marginLeftMm,
               marginRightMm
-            ) /
+            )) /
               MM_TO_PX +
             1
 
@@ -1496,6 +1506,7 @@ const handleExport = async (options: unknown) => {
         editorStore.EXPORT({ type, pageOptions })
       } catch (err) {
         log.error('Failed to export document:', err)
+        editorStore.FINISH_EXPORT('pdf')
         notice.notify({
           title: t('editor.export.failed', { type: 'PDF' }),
           type: 'error',

@@ -1,4 +1,7 @@
 {
+  "editorStatusBar": {
+    "exporting": "{type} をエクスポート中…"
+  },
   "menu": {
     "counter": {
       "words": "単語数",
@@ -1016,6 +1019,8 @@
       "exportSuccessTitle": "エクスポートに成功",
       "exportSuccessMessage": "「{name}」を正常にエクスポートしました！",
       "exportLinkedMediaMessage": "「{name}」をエクスポートしました。この形式は画像を埋め込まずファイル参照のままにするため、画像をファイルと同じ場所に置き、フォルダごと共有してください。",
+      "exportSplitTitle": "複数の画像に分割してエクスポートしました",
+      "exportSplitMessage": "ページの高さが {height}px のため、読みやすさを保つために {count} 枚の画像に分割し、「{name}」と同じ場所に保存しました。",
       "fileRemovedOnDisk": "「{name}」はディスク上で削除されました。",
       "fileChangedOnDisk": "「{name}」はディスク上で変更されました。再読み込みしますか？"
     }

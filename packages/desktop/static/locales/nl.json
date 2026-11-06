@@ -1,4 +1,7 @@
 {
+  "editorStatusBar": {
+    "exporting": "{type} wordt geëxporteerd…"
+  },
   "menu": {
     "counter": {
       "words": "Woorden",
@@ -1016,6 +1019,8 @@
       "exportSuccessTitle": "Succesvol geëxporteerd",
       "exportSuccessMessage": "\"{name}\" is succesvol geëxporteerd!",
       "exportLinkedMediaMessage": "\"{name}\" is geëxporteerd. Deze indeling verwijst naar afbeeldingen in plaats van ze in te sluiten — houd de afbeeldingen bij het bestand en deel de hele map.",
+      "exportSplitTitle": "Geëxporteerd als meerdere afbeeldingen",
+      "exportSplitMessage": "De pagina is {height}px hoog en is voor de leesbaarheid opgesplitst in {count} afbeeldingen naast \"{name}\".",
       "fileRemovedOnDisk": "\"{name}\" is verwijderd van schijf.",
       "fileChangedOnDisk": "\"{name}\" is gewijzigd op schijf. Wil je het opnieuw laden?"
     }

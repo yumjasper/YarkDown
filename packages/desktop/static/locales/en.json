@@ -1,4 +1,7 @@
 {
+  "editorStatusBar": {
+    "exporting": "Exporting {type}…"
+  },
   "bottomToolbar": {
     "title": "Editing toolbar",
     "more": "More actions",
@@ -1033,6 +1036,8 @@
       "exportSuccessTitle": "Exported successfully",
       "exportSuccessMessage": "Exported \"{name}\" successfully!",
       "exportLinkedMediaMessage": "Exported \"{name}\". This format links images instead of embedding them, so keep the pictures next to the file and share the whole folder.",
+      "exportSplitTitle": "Exported as several images",
+      "exportSplitMessage": "The page is {height}px tall, so it was split into {count} images next to \"{name}\" for readability.",
       "fileRemovedOnDisk": "\"{name}\" has been removed on disk.",
       "fileChangedOnDisk": "\"{name}\" has been changed on disk. Do you want to reload it?"
     }

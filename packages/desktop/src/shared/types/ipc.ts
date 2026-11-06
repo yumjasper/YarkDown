@@ -331,6 +331,9 @@ export interface IpcMainEventChannels {
   'mt::editor-rename-file': []
   'mt::execute-command-by-id': [commandId: string]
   'mt::export-success': [payload: { type: string; filePath: string; linksMedia?: boolean }]
+  // Sent on every exit path of an export (written, failed, or the save dialog was
+  // cancelled) so the renderer can retire its status-bar progress indicator.
+  'mt::export-finished': [payload: { type: string }]
   'mt::export-with-pandoc': [target: string]
   'mt::file-saved': [tabId: string]
   'mt::force-close-tabs-by-id': [tabIds: string[]]

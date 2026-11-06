@@ -1,4 +1,7 @@
 {
+  "editorStatusBar": {
+    "exporting": "{type} dışa aktarılıyor…"
+  },
   "menu": {
     "counter": {
       "words": "Sözcükler",
@@ -1016,6 +1019,8 @@
       "exportSuccessTitle": "Başarıyla dışa aktarıldı",
       "exportSuccessMessage": "\"{name}\" başarıyla dışa aktarıldı!",
       "exportLinkedMediaMessage": "\"{name}\" dışa aktarıldı. Bu biçim görselleri gömmez, dosya bağlantısı olarak bırakır — görselleri dosyanın yanında tutun ve klasörün tamamını paylaşın.",
+      "exportSplitTitle": "Birden çok görsel olarak dışa aktarıldı",
+      "exportSplitMessage": "Sayfa {height}px yüksekliğinde olduğu için okunabilirlik adına \"{name}\" yanında {count} görsele bölündü.",
       "fileRemovedOnDisk": "\"{name}\" diskten kaldırıldı.",
       "fileChangedOnDisk": "\"{name}\" dosyasında değişiklikler var, yeniden yüklensin mi?"
     }

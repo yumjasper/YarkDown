@@ -50,6 +50,9 @@ interface PageOptions {
   isLandscape?: boolean
 }
 
+/** printToPDF takes custom page dimensions in inches; the settings UI is in mm. */
+const MM_PER_INCH = 25.4
+
 // TODO(refactor): "save" and "save as" should be moved to the editor window (editor.js) and
 // the renderer should communicate only with the editor window for file relevant stuff.
 // E.g. "mt::save-tabs" --> "mt::window-save-tabs$wid:<windowId>"
@@ -86,9 +89,10 @@ const getPdfPageOptions = (options?: PageOptions): Record<string, unknown> => {
 
   const { pageSize, pageSizeWidth, pageSizeHeight, isLandscape } = options
   if (pageSize === 'custom' && pageSizeWidth && pageSizeHeight) {
+    // Callers pass millimetres (the settings UI is in mm) but printToPDF wants
+    // inches, so convert here instead of leaking the unit upstream.
     return {
-      // Note: mm to microns
-      pageSize: { height: pageSizeHeight * 1000, width: pageSizeWidth * 1000 },
+      pageSize: { height: pageSizeHeight / MM_PER_INCH, width: pageSizeWidth / MM_PER_INCH },
       landscape: !!isLandscape
     }
   } else {
@@ -116,7 +120,10 @@ const handleResponseForExport = async(e: IpcMainEvent, payload: ExportPayload): 
     return
   }
   const extension = (EXTENSION_HASN as Record<string, string>)[type]
-  if (!extension) return
+  if (!extension) {
+    win.webContents.send('mt::export-finished', { type })
+    return
+  }
   const dirname = pathname ? path.dirname(pathname) : getPath('documents')
   const nakedFilename = sanitizeFilename(pathname ? path.basename(pathname, '.md') : title)
 
@@ -128,6 +135,9 @@ const handleResponseForExport = async(e: IpcMainEvent, payload: ExportPayload): 
 
   if (filePath && !canceled) {
     try {
+      // A split PNG export lands several files next to the chosen one, so the
+      // success notification and reveal-in-folder use the paths actually written.
+      let paths: string[] = [filePath]
       if (type === 'pdf') {
         // Build a clickable bookmark/outline tree from the document's h1-h6
         // headings so exported PDFs have a navigation pane (#2989). The outline
@@ -148,13 +158,38 @@ const handleResponseForExport = async(e: IpcMainEvent, payload: ExportPayload): 
         }
         if (type === 'png' || type === 'docx') {
           const { exportDocumentBinary } = await import('../../utils/documentExport')
-          const data = await exportDocumentBinary(content, type)
-          await writeFile(filePath, data, extension, 'binary')
+          const { buffers, pageHeight } = await exportDocumentBinary(content, type)
+          // `writeFile` appends the extension when the chosen name lacks it, so the
+          // base is only stripped when it is actually there, and the first part is
+          // spelled out so the notification points at a file that exists.
+          const base = filePath.endsWith(extension)
+            ? filePath.slice(0, filePath.length - extension.length)
+            : filePath
+          paths = buffers.map((_buffer, index) =>
+            index === 0 ? `${base}${extension}` : `${base}-${index + 1}${extension}`
+          )
+          for (const [index, buffer] of buffers.entries()) {
+            await writeFile(paths[index]!, buffer, extension, 'binary')
+          }
+          // A long document is exported as several readable images rather than one
+          // unwieldy strip; say so, otherwise the extra files look like a glitch.
+          if (paths.length > 1) {
+            win.webContents.send('mt::show-notification', {
+              title: t('store.editor.exportSplitTitle'),
+              type: 'primary',
+              message: t('store.editor.exportSplitMessage', {
+                count: String(paths.length),
+                name: path.basename(paths[0]!),
+                height: String(pageHeight ?? 0)
+              })
+            })
+          }
         } else {
           await writeFile(filePath, content, extension, 'utf8')
         }
       }
-      win.webContents.send('mt::export-success', { type, filePath })
+      win.webContents.send('mt::export-success', { type, filePath: paths[0] ?? filePath })
+      win.webContents.send('mt::export-finished', { type })
     } catch (err) {
       log.error('Error while exporting:', err)
       const ERROR_MSG =
@@ -164,12 +199,14 @@ const handleResponseForExport = async(e: IpcMainEvent, payload: ExportPayload): 
         type: 'error',
         message: ERROR_MSG
       })
+      win.webContents.send('mt::export-finished', { type })
     }
   } else {
     // User canceled save dialog
     if (type === 'pdf') {
       removePrintServiceFromWindow(win)
     }
+    win.webContents.send('mt::export-finished', { type })
   }
 }
 
@@ -199,9 +236,15 @@ const handlePandocExport = async(e: IpcMainEvent, payload: PandocExportPayload):
   const win = BrowserWindow.fromWebContents(e.sender)
   if (!win) return
 
+  // Named so every exit below can retire the renderer's status-bar indicator.
+  const finish = (): void => {
+    if (!win.isDestroyed()) win.webContents.send('mt::export-finished', { type: payload.target })
+  }
+
   const format = PANDOC_EXPORT_FORMATS.find((f) => f.id === payload.target)
   if (!format) {
     log.error(`Unknown pandoc export target: ${payload.target}`)
+    finish()
     return
   }
 
@@ -229,7 +272,10 @@ const handlePandocExport = async(e: IpcMainEvent, payload: PandocExportPayload):
       defaultPath: path.join(sourceDir ?? getPath('documents'), `${stem}${format.extension}`),
       filters: [{ name: format.label, extensions: [format.extension.slice(1)] }]
     })
-    if (canceled || !chosen || win.isDestroyed()) return
+    if (canceled || !chosen || win.isDestroyed()) {
+      finish()
+      return
+    }
     // What comes back is the user's answer, "replace this one" included.
     filePath = chosen
     // The reader is built once the export is certain: naming `tex_math_gfm` needs pandoc
@@ -278,6 +324,7 @@ const handlePandocExport = async(e: IpcMainEvent, payload: PandocExportPayload):
     if (!win.isDestroyed()) {
       win.webContents.send('mt::export-success', { type: format.id, filePath, linksMedia })
     }
+    finish()
   } catch (err) {
     log.error('Error while exporting with pandoc:', err)
     if (win.isDestroyed()) return
@@ -289,6 +336,7 @@ const handlePandocExport = async(e: IpcMainEvent, payload: PandocExportPayload):
       type: 'error',
       message: summarizePandocWarnings(ERROR_MSG) || escapeNotificationText(ERROR_MSG)
     })
+    finish()
   }
 }
 

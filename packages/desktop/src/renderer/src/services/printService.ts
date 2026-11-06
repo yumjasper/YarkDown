@@ -3,6 +3,41 @@ import { resolveLocalImageSrc } from '../util/resolveImageSrc'
 // CSS px per mm at Chromium's print resolution (96 dpi).
 export const MM_TO_PX = 96 / 25.4
 
+/** Longest an export waits for images; a stalled remote URL must not hang it. */
+const IMAGE_WAIT_TIMEOUT_MS = 10000
+
+/**
+ * Resolve once every `<img>` under `root` has decoded or failed, so a height
+ * measurement taken afterwards reflects the rendered images instead of their
+ * zero-height placeholders. Never rejects: a broken image resolves on `error`,
+ * and the timeout covers a load that never settles at all.
+ */
+const waitForImages = async(root: HTMLElement): Promise<void> => {
+  const pending = Array.from(root.getElementsByTagName('img')).filter(
+    (img) => !(img.complete && img.naturalWidth > 0)
+  )
+  if (pending.length > 0) {
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const timeout = new Promise<void>((resolve) => {
+      timer = setTimeout(resolve, IMAGE_WAIT_TIMEOUT_MS)
+    })
+    const loaded = Promise.all(
+      pending.map(
+        (img) =>
+          new Promise<void>((resolve) => {
+            img.addEventListener('load', () => resolve(), { once: true })
+            img.addEventListener('error', () => resolve(), { once: true })
+          })
+      )
+    )
+    await Promise.race([loaded, timeout])
+    clearTimeout(timer)
+  }
+  // Layout settles a frame after the last decode; measuring before that can
+  // still read the pre-image height.
+  await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+}
+
 class MarkdownPrint {
   private container: HTMLElement | null = null
 
@@ -56,14 +91,14 @@ class MarkdownPrint {
    * one-page-tall custom PDF page, so nothing is paginated (#adaptive).
    * Returns the height in CSS px, clamped to Chromium's printToPDF maximum.
    */
-  measureAdaptiveHeightPx(
+  async measureAdaptiveHeightPx(
     html: string,
     pageWidthMm: number,
     marginTopMm: number,
     marginBottomMm: number,
     marginLeftMm: number,
     marginRightMm: number
-  ): number {
+  ): Promise<number> {
     const host = document.createElement('div')
     // Offscreen but rendered: fixed placement + opacity keeps layout live
     // (display:none would collapse every element to 0 height). Padding
@@ -91,10 +126,16 @@ class MarkdownPrint {
     host.innerHTML = html
     host.appendChild(style)
     document.body.appendChild(host)
+    // `img` inside `innerHTML` has no intrinsic height until it decodes, so an
+    // immediate `scrollHeight` reports the text-only height and the resulting
+    // page would clip every picture. Wait for the loads (settled, not retried:
+    // a broken image must not block the export) before measuring.
+    await waitForImages(host)
     const heightPx = Math.ceil(host.scrollHeight)
     host.remove()
-    // Chromium caps printToPDF's custom page height; stay safely below it.
-    const MAX_PDF_HEIGHT_MM = 5000
+    // Chromium's printToPDF rejects custom page heights past ~20000mm with
+    // "Printing failed"; clamp well inside that so long documents still export.
+    const MAX_PDF_HEIGHT_MM = 20000
     return Math.min(heightPx, MAX_PDF_HEIGHT_MM * MM_TO_PX)
   }
 }

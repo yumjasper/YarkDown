@@ -1,4 +1,7 @@
 {
+  "editorStatusBar": {
+    "exporting": "正在导出 {type}…"
+  },
   "bottomToolbar": {
     "title": "编辑工具栏",
     "more": "更多操作",
@@ -1033,6 +1036,8 @@
       "exportSuccessTitle": "导出成功",
       "exportSuccessMessage": "已成功导出“{name}”！",
       "exportLinkedMediaMessage": "已导出“{name}”。该格式以链接方式引用图片而不内嵌，请让图片与文件放在一起，分享时带上整个文件夹。",
+      "exportSplitTitle": "已拆分为多张图片",
+      "exportSplitMessage": "页面高度 {height}px，为保证可读性已拆分为 {count} 张图片，与“{name}”保存在同一目录。",
       "fileRemovedOnDisk": "“{name}” 已在磁盘上被删除。",
       "fileChangedOnDisk": "“{name}” 已在磁盘上发生变更。是否重新加载？"
     }

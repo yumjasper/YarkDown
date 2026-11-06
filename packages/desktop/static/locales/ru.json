@@ -1,4 +1,7 @@
 {
+  "editorStatusBar": {
+    "exporting": "Экспорт {type}…"
+  },
   "menu": {
     "counter": {
       "words": "Слова",
@@ -1016,6 +1019,8 @@
       "exportSuccessTitle": "Успешно экспортировано",
       "exportSuccessMessage": "\"{name}\" успешно экспортирован!",
       "exportLinkedMediaMessage": "\"{name}\" экспортирован. Этот формат связывает изображения вместо их встраивания, поэтому держите изображения рядом с файлом и делитесь всей папкой.",
+      "exportSplitTitle": "Экспортировано несколькими изображениями",
+      "exportSplitMessage": "Высота страницы {height}px, поэтому для читаемости она разбита на {count} изображений рядом с \"{name}\".",
       "fileRemovedOnDisk": "\"{name}\" был удалён с диска.",
       "fileChangedOnDisk": "\"{name}\" был изменён на диске. Перезагрузить его?"
     }

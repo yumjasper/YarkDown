@@ -96,10 +96,13 @@
           </svg>
         </button>
       </div>
-      <word-counter
-        :word-count="currentFile?.wordCount"
-        :selection-word-count="selectionWordCount"
-      />
+      <div class="editor-status-bar-tail">
+        <export-progress />
+        <word-counter
+          :word-count="currentFile?.wordCount"
+          :selection-word-count="selectionWordCount"
+        />
+      </div>
     </div>
     <editor-context-menu
       v-if="!pdf"
@@ -131,6 +134,7 @@ const SourceCode = defineAsyncComponent(async() => (await loadMarkdownEditors())
 import TabNotifications from './notifications.vue'
 import BottomToolbar from '../bottomToolbar/index.vue'
 import EditorContextMenu from '../editorContextMenu/index.vue'
+import ExportProgress from './exportProgress.vue'
 import WordCounter from '../wordCounter/index.vue'
 
 const props = defineProps<{
@@ -218,6 +222,13 @@ watch(() => [currentFile.value?.id, plainText.value] as const, ([id, plain], [ol
   align-items: center;
   justify-content: space-between;
   border-top: 1px solid var(--editorColor04);
+}
+.editor-status-bar-tail {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
 }
 .editor-mode-switch {
   display: inline-flex;

@@ -1,4 +1,7 @@
 {
+  "editorStatusBar": {
+    "exporting": "Exportation de {type}…"
+  },
   "menu": {
     "counter": {
       "words": "Mots",
@@ -1016,6 +1019,8 @@
       "exportSuccessTitle": "Exportation réussie",
       "exportSuccessMessage": "« {name} » a été exporté avec succès !",
       "exportLinkedMediaMessage": "« {name} » a été exporté. Ce format lie les images au lieu de les intégrer : gardez les images à côté du fichier et partagez le dossier entier.",
+      "exportSplitTitle": "Exporté en plusieurs images",
+      "exportSplitMessage": "La page mesure {height}px, elle a donc été divisée en {count} images à côté de « {name} » pour rester lisible.",
       "fileRemovedOnDisk": "« {name} » a été supprimé du disque.",
       "fileChangedOnDisk": "« {name} » a été modifié sur le disque. Voulez-vous le recharger ?"
     }

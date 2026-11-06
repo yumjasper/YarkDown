@@ -1,4 +1,7 @@
 {
+  "editorStatusBar": {
+    "exporting": "正在匯出 {type}…"
+  },
   "menu": {
     "counter": {
       "words": "字數",
@@ -1016,6 +1019,8 @@
       "exportSuccessTitle": "匯出成功",
       "exportSuccessMessage": "已成功匯出「{name}」！",
       "exportLinkedMediaMessage": "已匯出“{name}”。此格式以連結方式引用圖片而不內嵌，請讓圖片與檔案放在一起，分享時一併帶上整個資料夾。",
+      "exportSplitTitle": "已拆分為多張圖片",
+      "exportSplitMessage": "頁面高度 {height}px，為確保可讀性已拆分為 {count} 張圖片，與「{name}」儲存在同一目錄。",
       "fileRemovedOnDisk": "「{name}」已在磁碟上被刪除。",
       "fileChangedOnDisk": "「{name}」已在磁碟上發生變更。是否重新載入？"
     }

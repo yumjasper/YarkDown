@@ -1,4 +1,7 @@
 {
+  "editorStatusBar": {
+    "exporting": "Exportando {type}…"
+  },
   "menu": {
     "counter": {
       "words": "Palabras",
@@ -1016,6 +1019,8 @@
       "exportSuccessTitle": "Exportado correctamente",
       "exportSuccessMessage": "¡Se exportó «{name}» correctamente!",
       "exportLinkedMediaMessage": "Se exportó \"{name}\". Este formato enlaza las imágenes en lugar de incrustarlas: mantén las imágenes junto al archivo y comparte la carpeta completa.",
+      "exportSplitTitle": "Exportado como varias imágenes",
+      "exportSplitMessage": "La página mide {height}px, así que se dividió en {count} imágenes junto a \"{name}\" para que se puedan leer.",
       "fileRemovedOnDisk": "«{name}» ha sido eliminado del disco.",
       "fileChangedOnDisk": "«{name}» ha cambiado en el disco. ¿Deseas recargarlo?"
     }

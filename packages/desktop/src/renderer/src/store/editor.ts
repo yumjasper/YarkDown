@@ -163,6 +163,8 @@ export interface EditorState {
   // Heading the cursor is inside, for the TOC highlight; null above the first.
   activeHeadingSlug: string | null
   selectionWordCount: FileWordCount | null
+  // Export target while a write is in flight; drives the status-bar indicator.
+  exportingType: string | null
 }
 
 const autoSaveTimers = new Map<string, ReturnType<typeof setTimeout>>()
@@ -181,7 +183,8 @@ export const useEditorStore = defineStore('editor', {
     listToc: [], // Used for equal check and for searching for the correct github-slug to jump to
     toc: [],
     activeHeadingSlug: null,
-    selectionWordCount: null
+    selectionWordCount: null,
+    exportingType: null
   }),
 
   getters: {
@@ -1776,8 +1779,13 @@ export const useEditorStore = defineStore('editor', {
     },
 
     EXPORT({ type, content, pageOptions }: ExportPayload): void {
-      if (this.currentFile === null) return
-      if (isPdfFile(this.currentFile.filename)) return
+      // Every early return here abandons the export the renderer already started,
+      // so the status-bar indicator has to be retired by hand — main only sends
+      // `mt::export-finished` once it actually receives a request.
+      if (this.currentFile === null || isPdfFile(this.currentFile.filename)) {
+        this.FINISH_EXPORT()
+        return
+      }
 
       const { filename, pathname } = this.currentFile
       window.electron.ipcRenderer.send('mt::response-export', {
@@ -1797,6 +1805,7 @@ export const useEditorStore = defineStore('editor', {
       if (isPdfFile(this.currentFile.filename)) return
 
       this.flushActiveEditor()
+      this.BEGIN_EXPORT(target)
       const { pathname, markdown } = this.currentFile
       const preferencesStore = usePreferencesStore()
       window.electron.ipcRenderer.send('mt::response-pandoc-export', {
@@ -1831,6 +1840,29 @@ export const useEditorStore = defineStore('editor', {
           })
           // Dismissing the notice rejects; declining to reveal is not a failure.
           .catch(() => {})
+      })
+    },
+
+    /**
+     * Marks an export as in flight. Set when the render dialog hands off, not when
+     * the file lands: the renderer's own HTML preparation is the slow half on
+     * large documents, and that is exactly when the user starts clicking again.
+     */
+    BEGIN_EXPORT(type: string): void {
+      this.exportingType = type
+    },
+
+    /** Retires the indicator; main signals this on every exit path of a write. */
+    FINISH_EXPORT(type?: string): void {
+      // A straggler for another target must not retire the indicator of an export
+      // the user has just started — a cancelled PDF should not hide a DOCX run.
+      if (type && this.exportingType && type !== this.exportingType) return
+      this.exportingType = null
+    },
+
+    LISTEN_FOR_EXPORT_FINISHED(): void {
+      window.electron.ipcRenderer.on('mt::export-finished', (_, payload) => {
+        this.FINISH_EXPORT(payload?.type)
       })
     },
 

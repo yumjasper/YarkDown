@@ -1,4 +1,7 @@
 {
+  "editorStatusBar": {
+    "exporting": "{type} wird exportiert…"
+  },
   "menu": {
     "counter": {
       "words": "Wörter",
@@ -1016,6 +1019,8 @@
       "exportSuccessTitle": "Erfolgreich exportiert",
       "exportSuccessMessage": "„{name}“ wurde erfolgreich exportiert!",
       "exportLinkedMediaMessage": "\"{name}\" exportiert. Dieses Format verlinkt Bilder, statt sie einzubetten — legen Sie die Bilder zur Datei und geben Sie den ganzen Ordner weiter.",
+      "exportSplitTitle": "Als mehrere Bilder exportiert",
+      "exportSplitMessage": "Die Seite ist {height}px hoch und wurde für bessere Lesbarkeit in {count} Bilder neben \"{name}\" aufgeteilt.",
       "fileRemovedOnDisk": "„{name}“ wurde auf dem Datenträger gelöscht.",
       "fileChangedOnDisk": "„{name}“ wurde auf dem Datenträger geändert. Möchten Sie neu laden?"
     }

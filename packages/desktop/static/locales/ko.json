@@ -1,4 +1,7 @@
 {
+  "editorStatusBar": {
+    "exporting": "{type} 내보내는 중…"
+  },
   "menu": {
     "counter": {
       "words": "단어 수",
@@ -1016,6 +1019,8 @@
       "exportSuccessTitle": "내보내기 성공",
       "exportSuccessMessage": "“{name}”을(를) 성공적으로 내보냈습니다!",
       "exportLinkedMediaMessage": "\"{name}\" 내보내기 완료. 이 형식은 이미지를 포함하지 않고 파일 링크로 유지하므로, 이미지를 파일과 같은 위치에 두고 폴더 전체를 공유하세요.",
+      "exportSplitTitle": "여러 이미지로 분할하여 내보냈습니다",
+      "exportSplitMessage": "페이지 높이가 {height}px이므로 가독성을 위해 {count}장의 이미지로 나누어 \"{name}\"과(와) 같은 위치에 저장했습니다.",
       "fileRemovedOnDisk": "“{name}”이(가) 디스크에서 삭제되었습니다.",
       "fileChangedOnDisk": "“{name}”이(가) 디스크에서 변경되었습니다. 다시 로드하시겠습니까?"
     }

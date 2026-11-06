@@ -140,17 +140,21 @@ describe('mt::response-pandoc-export notifications', () => {
   // A line break alone is truthy yet summarizes to nothing; warnings go first (#5379).
   it('stays quiet when there is nothing to report, and warns before the success notice', async() => {
     await exportWith()
-    expect(channelsSent()).toEqual(['mt::export-success'])
+    expect(channelsSent()).toEqual(['mt::export-success', 'mt::export-finished'])
 
     sent.length = 0
     toFile.mockResolvedValue({ warnings: '\r\n\n' })
     await exportWith()
-    expect(channelsSent()).toEqual(['mt::export-success'])
+    expect(channelsSent()).toEqual(['mt::export-success', 'mt::export-finished'])
 
     sent.length = 0
     toFile.mockResolvedValue({ warnings: warningLines(1).join('\n') })
     await exportWith()
-    expect(channelsSent()).toEqual(['mt::show-notification', 'mt::export-success'])
+    expect(channelsSent()).toEqual([
+      'mt::show-notification',
+      'mt::export-success',
+      'mt::export-finished'
+    ])
   })
 
   // pandoc warns per unresolved link and the notification has no height cap.
