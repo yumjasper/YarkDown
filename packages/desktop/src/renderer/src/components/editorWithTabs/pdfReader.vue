@@ -285,7 +285,7 @@
           </div>
         </div>
       </pdf-annotations>
-      <pdf-open-code
+      <pdf-reading-assistant
         v-if="translationOpen"
         :source="translationSource"
         :request-id="translationRequest"
@@ -333,7 +333,7 @@ import {
 } from '@/util/pdfImageZoom'
 import { LocalPdfTransport } from '@/services/pdfTransport'
 import PdfDocumentActions from './pdfDocumentActions.vue'
-import PdfOpenCode from './pdfOpenCode.vue'
+import PdfReadingAssistant from './pdfReadingAssistant.vue'
 
 const props = defineProps<{ file: IFileState }>()
 const translationOpen = ref(false), translationSource = ref(''), translationRequest = ref(0)

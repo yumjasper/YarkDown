@@ -31,3 +31,6 @@ playwright-report/
 
 packages/desktop/build/acrylic/out/
 packages/desktop/build/acrylic/plugins/
+
+# PDF reading assistant local build logs
+.devlog*.txt

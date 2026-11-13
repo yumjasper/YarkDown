@@ -14,6 +14,10 @@ function fixture (t) {
   fs.writeFileSync(path.join(resources, 'static', 'preference.json'), '{"theme":"light"}')
   fs.writeFileSync(path.join(resources, 'static', 'icon.ico'), 'icon')
   fs.writeFileSync(path.join(resources, 'icons', 'md.ico'), 'icon')
+  fs.mkdirSync(path.join(resources, 'static', 'reading-dictionary'), { recursive: true })
+  fs.writeFileSync(path.join(resources, 'static', 'reading-dictionary', 'reading-bundle.json.gz'), 'fixture')
+  fs.writeFileSync(path.join(resources, 'static', 'reading-dictionary', 'bundle-metadata.json'), '{"format":3}')
+  for (const name of ['OPEN-DICTIONARY-LICENSE.md', 'CC-BY-SA-4.0.txt', 'ATTRIBUTION.md']) { fs.writeFileSync(path.join(resources, 'static', 'reading-dictionary', name), 'license fixture') }
   for (const locale of ['de', 'en', 'es', 'fr', 'ja', 'ko', 'nl', 'pt', 'ru', 'tr', 'zh-CN', 'zh-TW']) {
     fs.writeFileSync(path.join(resources, 'static', 'locales', `${locale}.min.json`), '{"test":"value"}')
   }
@@ -35,6 +39,12 @@ test('rejects missing association icons', t => {
   const { resources } = fixture(t)
   fs.unlinkSync(path.join(resources, 'icons', 'md.ico'))
   assert.throws(() => validatePackagedResources(resources), /md\.ico/)
+})
+
+test('rejects a package missing the integrated reading dictionary', t => {
+  const { resources } = fixture(t)
+  fs.unlinkSync(path.join(resources, 'static', 'reading-dictionary', 'reading-bundle.json.gz'))
+  assert.throws(() => validatePackagedResources(resources), /reading-bundle/)
 })
 
 test('rejects malformed defaults and invalid locale objects', t => {

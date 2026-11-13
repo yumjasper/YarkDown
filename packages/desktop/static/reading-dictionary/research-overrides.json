@@ -1,0 +1,456 @@
+{
+  "license": "MIT",
+  "source": "YarkText research reading terminology, project-maintained overrides (2026-11)",
+  "entries": {
+    "generative": [
+      {
+        "domain": "computing",
+        "meaning": "生成式的；生成的"
+      }
+    ],
+    "generative ai": [
+      {
+        "domain": "computing",
+        "meaning": "生成式人工智能"
+      }
+    ],
+    "generative model": [
+      {
+        "domain": "computing",
+        "meaning": "生成模型"
+      }
+    ],
+    "generative models": [
+      {
+        "domain": "computing",
+        "meaning": "生成模型"
+      }
+    ],
+    "physically based": [
+      {
+        "domain": "computing",
+        "meaning": "基于物理的"
+      }
+    ],
+    "physically-based": [
+      {
+        "domain": "computing",
+        "meaning": "基于物理的"
+      }
+    ],
+    "physically based materials": [
+      {
+        "domain": "computing",
+        "meaning": "基于物理的材质"
+      }
+    ],
+    "physically based material": [
+      {
+        "domain": "computing",
+        "meaning": "基于物理的材质"
+      }
+    ],
+    "physically based rendering": [
+      {
+        "domain": "computing",
+        "meaning": "基于物理的渲染"
+      }
+    ],
+    "detail enhancement": [
+      {
+        "domain": "computing",
+        "meaning": "细节增强"
+      }
+    ],
+    "enhancement": [
+      {
+        "domain": "computing",
+        "meaning": "增强；改进"
+      }
+    ],
+    "material": [
+      {
+        "domain": "computing",
+        "meaning": "材质"
+      },
+      {
+        "domain": "chemistry",
+        "meaning": "材料；物质"
+      }
+    ],
+    "materials": [
+      {
+        "domain": "computing",
+        "meaning": "材质"
+      },
+      {
+        "domain": "chemistry",
+        "meaning": "材料；物质"
+      }
+    ],
+    "rendering": [
+      {
+        "domain": "computing",
+        "meaning": "渲染"
+      }
+    ],
+    "shader": [
+      {
+        "domain": "computing",
+        "meaning": "着色器"
+      }
+    ],
+    "texture": [
+      {
+        "domain": "computing",
+        "meaning": "纹理"
+      }
+    ],
+    "diffusion": [
+      {
+        "domain": "computing",
+        "meaning": "扩散（生成模型）"
+      },
+      {
+        "domain": "chemistry",
+        "meaning": "扩散"
+      }
+    ],
+    "diffusion model": [
+      {
+        "domain": "computing",
+        "meaning": "扩散模型"
+      }
+    ],
+    "diffusion models": [
+      {
+        "domain": "computing",
+        "meaning": "扩散模型"
+      }
+    ],
+    "latent": [
+      {
+        "domain": "computing",
+        "meaning": "潜在的；隐空间的"
+      }
+    ],
+    "latent space": [
+      {
+        "domain": "computing",
+        "meaning": "潜在空间；隐空间"
+      }
+    ],
+    "embedding": [
+      {
+        "domain": "computing",
+        "meaning": "嵌入；向量表示"
+      }
+    ],
+    "embeddings": [
+      {
+        "domain": "computing",
+        "meaning": "嵌入；向量表示"
+      }
+    ],
+    "transformer": [
+      {
+        "domain": "computing",
+        "meaning": "Transformer 神经网络架构"
+      }
+    ],
+    "attention": [
+      {
+        "domain": "computing",
+        "meaning": "注意力机制"
+      }
+    ],
+    "self-attention": [
+      {
+        "domain": "computing",
+        "meaning": "自注意力"
+      }
+    ],
+    "fine-tuning": [
+      {
+        "domain": "computing",
+        "meaning": "微调"
+      }
+    ],
+    "hallucination": [
+      {
+        "domain": "computing",
+        "meaning": "幻觉（模型生成不实内容）"
+      }
+    ],
+    "inference": [
+      {
+        "domain": "computing",
+        "meaning": "推理（模型计算输出）"
+      }
+    ],
+    "token": [
+      {
+        "domain": "computing",
+        "meaning": "词元（模型处理单位）"
+      }
+    ],
+    "gradient": [
+      {
+        "domain": "computing",
+        "meaning": "梯度"
+      }
+    ],
+    "loss function": [
+      {
+        "domain": "computing",
+        "meaning": "损失函数"
+      }
+    ],
+    "neural network": [
+      {
+        "domain": "computing",
+        "meaning": "神经网络"
+      }
+    ],
+    "neural networks": [
+      {
+        "domain": "computing",
+        "meaning": "神经网络"
+      }
+    ],
+    "neural radiance field": [
+      {
+        "domain": "computing",
+        "meaning": "神经辐射场"
+      }
+    ],
+    "radiance": [
+      {
+        "domain": "computing",
+        "meaning": "辐亮度"
+      }
+    ],
+    "irradiance": [
+      {
+        "domain": "computing",
+        "meaning": "辐照度"
+      }
+    ],
+    "anisotropic": [
+      {
+        "domain": "computing",
+        "meaning": "各向异性的"
+      }
+    ],
+    "stochastic": [
+      {
+        "domain": "computing",
+        "meaning": "随机的"
+      }
+    ],
+    "tensor": [
+      {
+        "domain": "computing",
+        "meaning": "张量"
+      }
+    ],
+    "kernel": [
+      {
+        "domain": "computing",
+        "meaning": "内核；核函数"
+      }
+    ],
+    "regularization": [
+      {
+        "domain": "computing",
+        "meaning": "正则化"
+      }
+    ],
+    "convergence": [
+      {
+        "domain": "computing",
+        "meaning": "收敛"
+      }
+    ],
+    "laplacian": [
+      {
+        "domain": "computing",
+        "meaning": "拉普拉斯算子"
+      }
+    ],
+    "entropy": [
+      {
+        "domain": "chemistry",
+        "meaning": "熵"
+      },
+      {
+        "domain": "computing",
+        "meaning": "熵（信息不确定性）"
+      }
+    ],
+    "enthalpy": [
+      {
+        "domain": "chemistry",
+        "meaning": "焓"
+      }
+    ],
+    "momentum": [
+      {
+        "domain": "computing",
+        "meaning": "动量（优化方法）"
+      }
+    ],
+    "scattering": [
+      {
+        "domain": "computing",
+        "meaning": "散射"
+      }
+    ],
+    "polarization": [
+      {
+        "domain": "chemistry",
+        "meaning": "极化"
+      }
+    ],
+    "band gap": [
+      {
+        "domain": "chemistry",
+        "meaning": "带隙"
+      }
+    ],
+    "catalyst": [
+      {
+        "domain": "chemistry",
+        "meaning": "催化剂"
+      }
+    ],
+    "catalysis": [
+      {
+        "domain": "chemistry",
+        "meaning": "催化"
+      }
+    ],
+    "ligand": [
+      {
+        "domain": "chemistry",
+        "meaning": "配体"
+      }
+    ],
+    "orbital": [
+      {
+        "domain": "chemistry",
+        "meaning": "轨道（电子状态）"
+      }
+    ],
+    "valence": [
+      {
+        "domain": "chemistry",
+        "meaning": "化合价；价态"
+      }
+    ],
+    "oxidation": [
+      {
+        "domain": "chemistry",
+        "meaning": "氧化"
+      }
+    ],
+    "reduction": [
+      {
+        "domain": "chemistry",
+        "meaning": "还原"
+      },
+      {
+        "domain": "computing",
+        "meaning": "归约"
+      }
+    ],
+    "adsorption": [
+      {
+        "domain": "chemistry",
+        "meaning": "吸附"
+      }
+    ],
+    "absorption": [
+      {
+        "domain": "chemistry",
+        "meaning": "吸收"
+      }
+    ],
+    "stoichiometry": [
+      {
+        "domain": "chemistry",
+        "meaning": "化学计量学"
+      }
+    ],
+    "nucleophile": [
+      {
+        "domain": "chemistry",
+        "meaning": "亲核试剂"
+      }
+    ],
+    "electrophile": [
+      {
+        "domain": "chemistry",
+        "meaning": "亲电试剂"
+      }
+    ],
+    "enantiomer": [
+      {
+        "domain": "chemistry",
+        "meaning": "对映异构体"
+      }
+    ],
+    "chirality": [
+      {
+        "domain": "chemistry",
+        "meaning": "手性"
+      }
+    ],
+    "polymer": [
+      {
+        "domain": "chemistry",
+        "meaning": "聚合物"
+      }
+    ],
+    "polymerization": [
+      {
+        "domain": "chemistry",
+        "meaning": "聚合反应"
+      }
+    ],
+    "density functional theory": [
+      {
+        "domain": "chemistry",
+        "meaning": "密度泛函理论"
+      }
+    ],
+    "molecular dynamics": [
+      {
+        "domain": "chemistry",
+        "meaning": "分子动力学"
+      }
+    ],
+    "noise": [
+      {
+        "domain": "computing",
+        "meaning": "噪声"
+      },
+      {
+        "domain": "chemistry",
+        "meaning": "噪声"
+      }
+    ],
+    "inverse-rendering": [
+      {
+        "domain": "computing",
+        "meaning": "逆向渲染；逆渲染"
+      }
+    ],
+    "inverse rendering": [
+      {
+        "domain": "computing",
+        "meaning": "逆向渲染；逆渲染"
+      }
+    ]
+  }
+}

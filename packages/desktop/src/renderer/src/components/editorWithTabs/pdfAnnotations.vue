@@ -221,7 +221,7 @@
         <pdf-icon name="Text" />
       </button>
       <button
-        :aria-label="label('OpenCode 翻译', 'OpenCode translation')"
+        :aria-label="label('翻译', 'Translate')"
         :title="label('翻译', 'Translate')"
         @click="translateSelection"
       >
@@ -358,6 +358,7 @@ import { PdfAnnotationHistory } from '@/util/pdfAnnotationHistory'
 import { PdfAnnotationOverlay } from '@/util/pdfAnnotationOverlay'
 import { movePdfAnnotation } from '@/util/pdfAnnotationMove'
 import { markerPalette, updateMarkerPalette, boundedMarkerPresets } from '@/util/pdfMarkerPresets'
+import { pdfSelectionText } from '@/util/pdfSelectionText'
 
 type Tool = PdfAnnotationKind | 'Select' | 'Hand' | 'Erase'
 interface ListedAnnotation extends PdfAnnotation {
@@ -764,16 +765,28 @@ const updateSelectionMenu = () => {
     }
   })
 }
+const copySelectedText = (event: ClipboardEvent) => {
+  const selection = window.getSelection()
+  if (!selection?.rangeCount || selection.isCollapsed ||
+    !props.viewer?.container.contains(selection.anchorNode) ||
+    !props.viewer.container.contains(selection.focusNode) ||
+    !(selection.anchorNode?.parentElement?.closest('.textLayer'))) return
+  const text = pdfSelectionText(selection.getRangeAt(0), props.viewer.container)
+  if (!text || !event.clipboardData) return
+  event.preventDefault()
+  event.stopImmediatePropagation()
+  event.clipboardData.setData('text/plain', text)
+}
 const copySelection = () => {
-  window.electron.clipboard.writeText(selectedRange?.toString() || '')
+  window.electron.clipboard.writeText(pdfSelectionText(selectedRange, props.viewer?.container))
   hideSelectionMenu()
 }
 const searchSelection = () => {
-  bus.emit('pdf-search-selection', { id: props.file.id, text: selectedRange?.toString() || '' })
+  bus.emit('pdf-search-selection', { id: props.file.id, text: pdfSelectionText(selectedRange, props.viewer?.container) })
   hideSelectionMenu()
 }
 const translateSelection = () => {
-  emit('translate', selectedRange?.toString() || '')
+  emit('translate', pdfSelectionText(selectedRange, props.viewer?.container))
   hideSelectionMenu()
 }
 const commentSelection = () => {
@@ -1254,6 +1267,7 @@ watch(
     container.addEventListener('scroll', scrolled, { passive: true })
     container.addEventListener('pointerdown', pointerDown, true)
     container.addEventListener('keydown', annotationKey)
+    container.addEventListener('copy', copySelectedText, true)
     container.addEventListener('click', importedClick)
     container.addEventListener('contextmenu', annotationContext)
     container.addEventListener('lostpointercapture', stopPanning)
@@ -1300,6 +1314,7 @@ watch(
       hiddenOriginals.clear()
       container.removeEventListener('pointerdown', pointerDown, true)
       container.removeEventListener('keydown', annotationKey)
+      container.removeEventListener('copy', copySelectedText, true)
       container.removeEventListener('click', importedClick)
       container.removeEventListener('contextmenu', annotationContext)
       contextMenu.value = undefined

@@ -111,6 +111,9 @@ importers:
       command-exists:
         specifier: ^1.2.9
         version: 1.2.9
+      compromise:
+        specifier: 14.20.0
+        version: 14.20.0
       deep-equal:
         specifier: ^2.2.3
         version: 2.2.3
@@ -186,6 +189,9 @@ importers:
       native-keymap:
         specifier: ^3.3.9
         version: 3.3.9
+      opencc-js:
+        specifier: 1.4.2
+        version: 1.4.2
       pako:
         specifier: ^3.0.2
         version: 3.0.2
@@ -4792,6 +4798,11 @@ packages:
   compare-versions@6.1.1:
     resolution: {integrity: sha512-4hm4VPpIecmlg59CHXnRDnqGplJFrbLG4aFEl5vl6cK1u76ws3LLvX7ikFnTDl5vo39sjWD6AaDPYodJp/NNHg==}
 
+  compromise@14.20.0:
+    resolution: {integrity: sha512-XFtjCI4hs8jde5uY/3KqlKQ12dt4h1mAYVPnss0o91ia0971VdluY4ZN9GlxbV9zI8DW2YP+NzGqpnsFFidenA==}
+    engines: {node: '>=18'}
+    hasBin: true
+
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
@@ -5348,6 +5359,10 @@ packages:
 
   ee-first@1.1.1:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
+
+  efrt@2.9.0:
+    resolution: {integrity: sha512-ZMAvlcu4AfmtJ4K/0hs0uofVUZPSeLG/w4yOyZawQLl9YEy8iDKIxIIPsUAlS907clC7bgD17e73vi5unwNE/g==}
+    engines: {node: '>=12.0.0'}
 
   ejs@3.1.10:
     resolution: {integrity: sha512-UeJmFfOrAQS8OJWPZ4qtgHyWExa088/MtK5UEyoJGFH67cDEXkZSviOiKRCZ4Xij0zxI3JECgYs3oKx+AizQBA==}
@@ -5999,8 +6014,8 @@ packages:
   file-entry-cache@11.1.5:
     resolution: {integrity: sha512-+PFTHITI08JIGhnNpGNI8T8inUpgZfk3GNEqfT9R2zZV2iFXg3CvqzSl/uEhs7TSGujYRELEANyDvS8Fj7+S7Q==}
 
-  file-icons@https://codeload.github.com/file-icons/atom/tar.gz/fa4bc4850eb5bbc0d192c127fb4be10af3f049b2:
-    resolution: {gitHosted: true, integrity: sha512-vLHNMPsBeKOZzpXzDstjEmOiZwLbCuOOatyc27i++KkV3Gy8zBQVediQx5i1lwLOOsdTi/oZJ3MktNMATgGK9w==, tarball: https://codeload.github.com/file-icons/atom/tar.gz/fa4bc4850eb5bbc0d192c127fb4be10af3f049b2}
+  file-icons@https://codeload.github.com/file-icons/atom/tar.gz/248da1c65beeaad5e8922d66d1d977742260bab2:
+    resolution: {gitHosted: true, tarball: https://codeload.github.com/file-icons/atom/tar.gz/248da1c65beeaad5e8922d66d1d977742260bab2}
     version: 2.1.47
     engines: {atom: '>=1.25.0'}
 
@@ -7733,6 +7748,9 @@ packages:
     resolution: {integrity: sha512-MVHddDVweXZF3awtlAS+6pgKLlm/JgxZ90+/NBurBoQctVOOB/zDdVjcyPzQ+0laDGbsWgrRkflI65sQeOgT9Q==}
     engines: {node: '>=8'}
 
+  opencc-js@1.4.2:
+    resolution: {integrity: sha512-EdcspgdROiCCZDM+jZR6Pa670xW+EW2QhctPBQ8gRjg6lrx4IHEl+2s+kt5izk/TkxVRgdWuFgaGkaEdIUfdaw==}
+
   optionator@0.9.4:
     resolution: {integrity: sha512-6IpQ7mKUxRcZNLIObR0hz7lxsapSSIYNZJwXPGeF0mTVqGKFIXj1DQcMoT22S3ROcLyY/rz0PWaWZ9ayWmad9g==}
     engines: {node: '>= 0.8.0'}
@@ -8915,6 +8933,10 @@ packages:
     resolution: {integrity: sha512-O+Q/SJ8s1X2aMLh4213fQ9X/bND9M3dhSsyTRe+O1OXPcewGLiYmAtKCrnP7FDvDBaXB2ZHPkCt3zi4cJXBlCQ==}
     engines: {node: '>=18'}
     hasBin: true
+
+  suffix-thumb@6.1.0:
+    resolution: {integrity: sha512-Lh1ZP+tj1TWnlw3RsR6eY/ARhZ3fIPrquE2Xts/wnGB7j1od2OZbCrWYsahkuaLqY7omsNKDUA6JITtE4elhfw==}
+    engines: {node: '>=18'}
 
   sumchecker@3.0.1:
     resolution: {integrity: sha512-MvjXzkz/BOfyVDkG0oFOtBxHX2u3gKbMHIF/dXblZsgD3BWOFLmHovIpZY7BykJdAjcqRCBi1WYBNdEC9yI7vg==}
@@ -12086,7 +12108,7 @@ snapshots:
 
   '@marktext/file-icons@1.0.6':
     dependencies:
-      file-icons: https://codeload.github.com/file-icons/atom/tar.gz/fa4bc4850eb5bbc0d192c127fb4be10af3f049b2
+      file-icons: https://codeload.github.com/file-icons/atom/tar.gz/248da1c65beeaad5e8922d66d1d977742260bab2
 
   '@mermaid-js/parser@2.0.1':
     dependencies:
@@ -14292,6 +14314,11 @@ snapshots:
 
   compare-versions@6.1.1: {}
 
+  compromise@14.20.0:
+    dependencies:
+      efrt: 2.9.0
+      suffix-thumb: 6.1.0
+
   concat-map@0.0.1: {}
 
   conf@15.1.0:
@@ -14922,6 +14949,8 @@ snapshots:
       zrender: 6.1.0
 
   ee-first@1.1.1: {}
+
+  efrt@2.9.0: {}
 
   ejs@3.1.10:
     dependencies:
@@ -15945,7 +15974,7 @@ snapshots:
     dependencies:
       flat-cache: 6.1.23
 
-  file-icons@https://codeload.github.com/file-icons/atom/tar.gz/fa4bc4850eb5bbc0d192c127fb4be10af3f049b2:
+  file-icons@https://codeload.github.com/file-icons/atom/tar.gz/248da1c65beeaad5e8922d66d1d977742260bab2:
     dependencies:
       atom-fs: 0.2.1
       lru-cache: 5.1.1
@@ -17721,8 +17750,7 @@ snapshots:
 
   napi-postinstall@0.3.4: {}
 
-  native-keymap@3.3.9:
-    optional: true
+  native-keymap@3.3.9: {}
 
   natural-compare@1.4.0: {}
 
@@ -17933,6 +17961,8 @@ snapshots:
     dependencies:
       is-docker: 2.2.1
       is-wsl: 2.2.0
+
+  opencc-js@1.4.2: {}
 
   optionator@0.9.4:
     dependencies:
@@ -19474,6 +19504,8 @@ snapshots:
   stylus-lookup@6.1.2:
     dependencies:
       commander: 12.1.0
+
+  suffix-thumb@6.1.0: {}
 
   sumchecker@3.0.1:
     dependencies:

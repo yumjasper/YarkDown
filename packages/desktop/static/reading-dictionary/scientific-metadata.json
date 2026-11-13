@@ -1,0 +1,35 @@
+{
+  "termKeys": 141014,
+  "sensesByDomain": {
+    "computing": 117366,
+    "chemistry": 26301
+  },
+  "sources": [
+    {
+      "name": "National Academy for Educational Research: computing",
+      "url": "https://data.gov.tw/dataset/15416",
+      "license": "Open Government Data License 1.0",
+      "sha256": "ed9a713cdbdbd67915796125a13c49875cf225b8f88c5a38ac7d58e2ca9a8360",
+      "rawRows": 134204
+    },
+    {
+      "name": "National Academy for Educational Research: chemistry",
+      "url": "https://data.gov.tw/dataset/14845",
+      "license": "Open Government Data License 1.0",
+      "sha256": "f5e769d062140c598a8b8c6e05610c2825aaba43447f6511cb6b8c1ae56d3465",
+      "rawRows": 25727
+    },
+    {
+      "name": "JingHao-Leon AI/LLM Glossary",
+      "url": "https://github.com/JingHao-Leon/ai-llm-glossary",
+      "revision": "abc74818e14884f0e28fe6465c2328c68f9aae53",
+      "license": "MIT"
+    },
+    {
+      "name": "YarkText research reading terminology, project-maintained overrides (2026-11)",
+      "license": "MIT",
+      "notes": "Project-maintained meanings; not attributed to NAER or the AI/LLM glossary."
+    }
+  ],
+  "changes": "Normalized English lookup keys; retain original traditional Chinese NAER meanings; select at most 8-word ASCII terms; add source/domain metadata and project-maintained priorities. Metadata update dates are not represented as dictionary publication dates."
+}

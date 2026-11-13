@@ -75,6 +75,8 @@ extraResources:
     filter:
       - '**/*'
       - '!locales/**/!(*.min).json'
+      - '!reading-dictionary/dictionary.json.gz'
+      - '!reading-dictionary/scientific.json.gz'
 npmRebuild: false
 electronLanguages: # Keep Chromium/AppKit locales for the UI languages MarkText supports
   # Values must cover both spellings: "xx-YY" .pak files on Windows/Linux and

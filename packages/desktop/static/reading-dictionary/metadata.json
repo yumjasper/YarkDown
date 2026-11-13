@@ -1,0 +1,12 @@
+{
+  "source": "https://github.com/ahpxex/open-dictionary/releases/download/v2.0/distribution.jsonl.gz",
+  "release": "v2.0",
+  "publishedAt": "2026-08-05",
+  "sourceSha256": "69af69cdc685b5dce465613d1cc8fffb598eb46714f57cf73bd6606c2ceb7e43",
+  "rawRows": 84212,
+  "entries": 80736,
+  "aliases": 50554,
+  "commonWords": 1000,
+  "license": "CC BY-SA 4.0",
+  "changes": "ASCII English words and up to eight-word phrases; preserve every meaning and learner explanation, dotted POS prefixes and core/common/rare ordering; omit examples and relations from compact reading index; unique inflection aliases only. Static upstream-generated definitions; no runtime LLM. BNC common list remains a separate frozen MIT frequency filter."
+}

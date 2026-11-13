@@ -44,7 +44,7 @@ import type {
 } from '../pdf'
 import type { MenuTemplate, MenuPopupPosition, MenuBarItem, EditorContextMenuRequest } from './menu'
 import type { PandocCommandInfo } from './pandoc'
-import type { OpenCodeStatus, OpenCodeViewBounds, OpenCodeViewResult, OpenCodeTranslationRequest, OpenCodeTranslationResult } from './opencode'
+import type { ReadingDomain, ReadingResult, ReadingViewBounds, TranslationProvider, TranslationRequest, TranslationUpdate, VocabularyAnalysis } from './reading'
 
 export interface SaveDialogRequest {
   title?: string
@@ -87,13 +87,12 @@ export type PlantumlFetchResult =
 // =================================================================
 
 export interface IpcInvokeChannels {
-  'mt::opencode::status': { args: []; ret: OpenCodeStatus }
-  'mt::opencode::open-web': { args: [id: string, bounds: OpenCodeViewBounds]; ret: OpenCodeViewResult }
-  'mt::opencode::web-layout': { args: [id: string, bounds: OpenCodeViewBounds | null]; ret: boolean }
-  'mt::opencode::close-web': { args: [id: string]; ret: void }
-  'mt::opencode::choose-cli': { args: []; ret: OpenCodeStatus | null }
-  'mt::opencode::translate': { args: [id: string, request: OpenCodeTranslationRequest]; ret: OpenCodeTranslationResult }
-  'mt::opencode::cancel-translation': { args: [id: string]; ret: void }
+  'mt::reading::vocabulary': { args: [source: string, domain?: ReadingDomain]; ret: ReadingResult<VocabularyAnalysis> }
+  'mt::reading::translate': { args: [id: string, request: TranslationRequest]; ret: ReadingResult<string> }
+  'mt::reading::open-web': { args: [id: string, provider: TranslationProvider, bounds: ReadingViewBounds]; ret: ReadingResult }
+  'mt::reading::web-layout': { args: [id: string, bounds: ReadingViewBounds | null]; ret: boolean }
+  'mt::reading::cancel': { args: [id: string]; ret: void }
+  'mt::reading::close-web': { args: [id: string]; ret: void }
   'mt::recent-documents': { args: []; ret: string[] }
   'mt::pdf::open': { args: [pathname: string]; ret: { token: string; size: number } }
   'mt::pdf::read-range': { args: [token: string, begin: number, end: number]; ret: Uint8Array }
@@ -307,6 +306,7 @@ export interface IpcSyncChannels {
 // =================================================================
 
 export interface IpcMainEventChannels {
+  'mt::reading::translation-update': [update: TranslationUpdate]
   'language-changed': [language: string]
   'mt::UPDATE_AVAILABLE': [info?: unknown]
   'mt::UPDATE_DOWNLOADED': [info?: unknown]

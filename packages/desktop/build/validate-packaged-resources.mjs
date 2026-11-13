@@ -2,7 +2,12 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 export function validatePackagedResources (resourcesPath) {
-  const required = ['static/preference.json', 'static/icon.ico', 'icons/md.ico']
+  const required = ['static/preference.json', 'static/icon.ico', 'icons/md.ico',
+    'static/reading-dictionary/reading-bundle.json.gz',
+    'static/reading-dictionary/bundle-metadata.json',
+    'static/reading-dictionary/OPEN-DICTIONARY-LICENSE.md',
+    'static/reading-dictionary/CC-BY-SA-4.0.txt',
+    'static/reading-dictionary/ATTRIBUTION.md']
   const locales = ['de', 'en', 'es', 'fr', 'ja', 'ko', 'nl', 'pt', 'ru', 'tr', 'zh-CN', 'zh-TW']
   required.push(...locales.map(locale => `static/locales/${locale}.min.json`))
   for (const relative of required) {

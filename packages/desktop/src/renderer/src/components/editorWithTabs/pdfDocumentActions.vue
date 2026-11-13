@@ -9,8 +9,8 @@
       <pdf-icon name="print" />
     </button>
     <button
-      :aria-label="label('OpenCode 翻译设置', 'OpenCode translation setup')"
-      :title="label('OpenCode 翻译设置', 'OpenCode translation setup')"
+      :aria-label="label('阅读助手', 'Reading assistant')"
+      :title="label('阅读助手', 'Reading assistant')"
       @click="$emit('translation')"
     >
       <pdf-icon name="translate" />

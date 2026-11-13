@@ -12,7 +12,7 @@ import { registerI18nHandlers } from './i18n'
 import { registerDialogHandlers } from './dialog'
 import { registerDiagramHandlers } from './diagram'
 import { registerPdfHandlers } from './pdf'
-import { registerOpenCodeHandlers } from './opencode'
+import { registerReadingHandlers } from './reading'
 import { registerRendererConfirmHandlers } from '../utils/rendererConfirm'
 
 export const registerSandboxIpcHandlers = (): void => {
@@ -29,6 +29,6 @@ export const registerSandboxIpcHandlers = (): void => {
   registerDialogHandlers()
   registerDiagramHandlers()
   registerPdfHandlers()
-  registerOpenCodeHandlers()
+  registerReadingHandlers()
   registerRendererConfirmHandlers()
 }

@@ -1,0 +1,20 @@
+{
+  "generalSource": "Open Dictionary v2.0 / Wiktionary",
+  "license": "CC BY-SA 4.0 for adapted Open Dictionary data; see accompanying source licenses",
+  "format": 3,
+  "entries": 80736,
+  "aliases": 50554,
+  "commonWords": 1000,
+  "termKeys": 141014,
+  "sourceSenseCount": 143667,
+  "bundledSenseCount": 143667,
+  "phraseHeads": 19458,
+  "rawBytes": 52831754,
+  "compressedBytes": 19207095,
+  "inputSha256": [
+    "bea88e9157a69a7531cb3d78eb26fd9d4ed65167b7e00e9987334031c228d0c6",
+    "5b4ae4e79c237c225f152328abfd8d4ff154c1ce9f0f69532bb3926962dbce59"
+  ],
+  "sha256": "72a9a3dd684cabe6d325cc414df73216c75f52d5de82f233b66c0511ef225837",
+  "changes": "Lossless common/alias/general entries with newline-packed general senses; stable scientific priorities; deduplicate only identical meaning/domain/source/definition tuples; shared domain/source tables; phrase-head length index. Original datasets remain build inputs, not installed runtime duplicates."
+}
